@@ -25,8 +25,15 @@ const router = createRouter({
                 meta: {title: '个人信息'}
             },
         ]
-    },
-    {
+    }, {
+            path: '/addBook',
+            component: () => import('../views/book/addBook.vue'),
+            meta: {title: '添加书籍'}
+    },{
+            path: '/bookMall',
+            component: () => import('../views/book/bookMall.vue'),
+            meta: {title: '书籍商城'}
+    }, {
         path: '/404',
         name: '404',
         component: () => import('../views/NotFound.vue'),
