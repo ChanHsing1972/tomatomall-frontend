@@ -92,9 +92,9 @@ function updatePassword() {
     }
   })
 }
-const createStore = () => {
-  router.push( 'addBook' );
-};
+// const addBook = () => {
+//   router.push( 'addBook' );
+// };
 </script>
 
 
@@ -145,7 +145,7 @@ const createStore = () => {
       </el-descriptions>
 
       <!-- 创建商品按钮 -->
-      <el-button v-if="role === 'MANAGER'" class="create-store-card" type="success" @click="createStore">创建商品</el-button>
+      <el-button v-if="role === 'MANAGER'" class="create-store-card" type="success" @click="addBook">创建商品</el-button>
 
     </el-card>
 
