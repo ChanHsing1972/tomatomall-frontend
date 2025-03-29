@@ -28,11 +28,12 @@ type UpdateInfo = {
 // 如果有“Vue: This may be converted to an async function”警告，可以不管
 // 用户登录
 export const accountLogin = (loginInfo: LoginInfo) => {
-    return axios.post(`${ACCOUNT_MODULE}/login`, null, {params: loginInfo})
-        .then(res => {
-            return res
-        })
-}
+    return axios.post(`${ACCOUNT_MODULE}/login`, loginInfo, {
+        headers: { 'Content-Type': 'application/json' },
+    }).then(res => {
+        return res;
+    });
+};
 
 // 用户注册
 export const accountRegister = (registerInfo: RegisterInfo) => {

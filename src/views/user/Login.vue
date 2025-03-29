@@ -19,6 +19,7 @@ const loginDisabled = computed(() => {
 
 // 登录按钮触发
 function handleLogin() {
+  console.log("登录按钮被点击了！");
   accountLogin({
     username: username.value.trim(),
     password: password.value
