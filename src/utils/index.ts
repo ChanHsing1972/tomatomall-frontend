@@ -5,6 +5,8 @@ export function parseRole(role: string | null) {
     } else if (role === 'CUSTOMER') {
         return "顾客"
     }
+
+
 }
 
 //将时间转化为日常方式

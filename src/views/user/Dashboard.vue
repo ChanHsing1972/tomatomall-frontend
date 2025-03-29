@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import {ref, computed} from 'vue'
-import {accountInfo, userInfoUpdate} from '../../api/account.ts'
+import {accountInfo, accountInfoUpdate} from '../../api/account.ts'
 import {parseRole, parseTime} from "../../utils"
 import {router} from '../../router'
 import {UserFilled} from "@element-plus/icons-vue";
 
 const role = sessionStorage.getItem("role")
 const name = ref('')
-const storeName = ref('')
-const tel = ref('')
-const address = ref('')
-const regTime = ref()
+const username = ref('')
+const telephone = ref('')
+const location = ref('')
+const createTime = ref()
 
 const newName = ref('')
 
@@ -29,20 +29,20 @@ getUserInfo()
 
 function getUserInfo() {
   accountInfo().then(res => {
+    username.value = res.data.username
     name.value = res.data.result.name
-    tel.value = res.data.result.phone
-    storeName.value = res.data.result.storeName
-    address.value = res.data.result.address
-    regTime.value = parseTime(res.data.result.createTime)
+    telephone.value = res.data.result.phone
+    location.value = res.data.result.address
+    createTime.value = parseTime(res.data.result.createTime)
     newName.value = name.value
   })
 }
 
 function updateInfo() {
-  userInfoUpdate({
+  accountInfoUpdate({
     name: newName.value,
     password: undefined,
-    location: address.value,
+    location: location.value,
   }).then(res => {
     if (res.data.code === '000') {
       ElMessage({
@@ -62,7 +62,7 @@ function updateInfo() {
 }
 
 function updatePassword() {
-  userInfoUpdate({
+  accountInfoUpdate({
     name: undefined,
     password: password.value,
     location: undefined
@@ -92,9 +92,9 @@ function updatePassword() {
     }
   })
 }
-// const addBook = () => {
-//   router.push( 'addBook' );
-// };
+const operate = () => {
+
+};
 </script>
 
 
@@ -126,26 +126,22 @@ function updatePassword() {
           <el-tag>{{ parseRole(role) }}</el-tag>
         </el-descriptions-item>
 
-        <el-descriptions-item label="所属商店" v-if="role === 'STAFF'">
-          {{ storeName }}
-        </el-descriptions-item>
-
         <el-descriptions-item label="联系电话">
-          {{ tel }}
+          {{ telephone }}
         </el-descriptions-item>
 
         <el-descriptions-item label="地址" v-if="role === 'CUSTOMER' || role === 'STAFF'">
-          {{ address }}
+          {{ location }}
         </el-descriptions-item>
 
         <el-descriptions-item label="注册时间">
-          {{ regTime }}
+          {{ createTime }}
         </el-descriptions-item>
 
       </el-descriptions>
 
-      <!-- 创建商品按钮 -->
-      <el-button v-if="role === 'MANAGER'" class="create-store-card" type="success" @click="addBook">创建商品</el-button>
+
+      <el-button v-if="role === 'MANAGER'" class="create-store-card" type="success" @click="operate">管理商场</el-button>
 
     </el-card>
 
@@ -165,14 +161,14 @@ function updatePassword() {
 
         <el-form-item>
           <label for="phone">手机号</label>
-          <el-input id="phone" v-model="tel" disabled/>
+          <el-input id="phone" v-model="telephone" disabled/>
         </el-form-item>
 
         <el-form-item v-if="role === 'CUSTOMER' || role === 'STAFF'">
           <label for="address">收货地址</label>
           <el-input id="address" type="textarea"
                     rows="4"
-                    v-model="address" placeholder="中华门"></el-input>
+                    v-model="location" placeholder="中华门"></el-input>
         </el-form-item>
       </el-form>
     </el-card>

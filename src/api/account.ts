@@ -53,7 +53,7 @@ export const accountInfo = () => {
 }
 
 // 更新用户信息
-export const userInfoUpdate = (updateInfo: UpdateInfo) => {
+export const accountInfoUpdate = (updateInfo: UpdateInfo) => {
     return axios.post(`${ACCOUNT_MODULE}`, updateInfo, {headers: {'Content-Type': 'application/json'}})
         .then(res => {
             return res
