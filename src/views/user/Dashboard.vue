@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ref, computed} from 'vue'
-import {userInfo, userInfoUpdate} from '../../api/user.ts'
+import {accountInfo, userInfoUpdate} from '../../api/account.ts'
 import {parseRole, parseTime} from "../../utils"
 import {router} from '../../router'
 import {UserFilled} from "@element-plus/icons-vue";
@@ -28,7 +28,7 @@ const changeDisabled = computed(() => {
 getUserInfo()
 
 function getUserInfo() {
-  userInfo().then(res => {
+  accountInfo().then(res => {
     name.value = res.data.result.name
     tel.value = res.data.result.phone
     storeName.value = res.data.result.storeName
@@ -42,7 +42,7 @@ function updateInfo() {
   userInfoUpdate({
     name: newName.value,
     password: undefined,
-    address: address.value,
+    location: address.value,
   }).then(res => {
     if (res.data.code === '000') {
       ElMessage({
@@ -65,7 +65,7 @@ function updatePassword() {
   userInfoUpdate({
     name: undefined,
     password: password.value,
-    address: undefined
+    location: undefined
   }).then(res => {
     if (res.data.code === '000') {
       password.value = ''
