@@ -7,7 +7,7 @@ import {UserFilled} from "@element-plus/icons-vue";
 
 const role = sessionStorage.getItem("role")
 const name = ref('')
-const username = ref('')
+const username = sessionStorage.getItem("username")?? '默认用户名'
 const telephone = ref('')
 const location = ref('')
 const createTime = ref()
@@ -24,18 +24,19 @@ const isPasswordIdentical = computed(() => password.value == confirmPassword.val
 const changeDisabled = computed(() => {
   return !(hasConfirmPasswordInput.value && isPasswordIdentical.value)
 })
-
+console.log(username)
 getUserInfo()
 
 function getUserInfo() {
-  accountInfo().then(res => {
-    username.value = res.data.username
+  accountInfo(username).then(res => {
+    console.log(res)
     name.value = res.data.result.name
-    telephone.value = res.data.result.phone
-    location.value = res.data.result.address
+    telephone.value = res.data.result.telephone
+    location.value = res.data.result.location
     createTime.value = parseTime(res.data.result.createTime)
-    newName.value = name.value
+    newName.value = username
   })
+
 }
 
 function updateInfo() {
@@ -104,7 +105,7 @@ const operate = () => {
       <div class="avatar-area">
         <el-avatar :icon="UserFilled" :size="80">
         </el-avatar>
-        <span class="avatar-text"> 欢迎您，{{ name }}</span>
+        <span class="avatar-text"> 欢迎您，{{ username }}</span>
       </div>
 
       <el-divider></el-divider>

@@ -28,11 +28,10 @@ type UpdateInfo = {
 // 如果有“Vue: This may be converted to an async function”警告，可以不管
 // 用户登录
 export const accountLogin = (loginInfo: LoginInfo) => {
-    return axios.post(`${ACCOUNT_MODULE}/login`, loginInfo, {
-        headers: { 'Content-Type': 'application/json' },
-    }).then(res => {
-        return res;
-    });
+    const params = new URLSearchParams();
+    params.append("username", loginInfo.username);
+    params.append("password", loginInfo.password);
+    return axios.post(`${ACCOUNT_MODULE}/login`, params); // 默认是 FormData
 };
 
 // 用户注册
@@ -45,11 +44,11 @@ export const accountRegister = (registerInfo: RegisterInfo) => {
 }
 
 // 获取用户信息
-export const accountInfo = () => {
-    return axios.get(`${ACCOUNT_MODULE}`)
+export const accountInfo = (username: string) => {
+    return axios.get(`${ACCOUNT_MODULE}/${username}`)
         .then(res => {
-            return res
-        })
+        return res;
+    })
 }
 
 // 更新用户信息

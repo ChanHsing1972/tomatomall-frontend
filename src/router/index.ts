@@ -7,11 +7,11 @@ const router = createRouter({
         redirect: '/login',
     }, {
         path: '/login',
-        component: () => import('../views/user/Login.vue'),
+        component: () => import('../views/account/Login.vue'),
         meta: {title: '用户登录'}
     }, {
         path: '/register',
-        component: () => import('../views/user/Register.vue'),
+        component: () => import('../views/account/Register.vue'),
         meta: {title: '用户注册'}
     }, {
         path: '/home',
@@ -21,7 +21,7 @@ const router = createRouter({
             {
                 path: '/dashboard',
                 name: 'Dashboard',
-                component: () => import('../views/user/Dashboard.vue'),
+                component: () => import('../views/account/Dashboard.vue'),
                 meta: {title: '个人信息'}
             },
         ]
