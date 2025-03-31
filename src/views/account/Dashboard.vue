@@ -45,7 +45,7 @@ function updateInfo() {
     password: undefined,
     location: location.value,
   }).then(res => {
-    if (res.data.code === '000') {
+    if (res.data.code === '200') {
       ElMessage({
         customClass: 'customMessage',
         type: 'success',
@@ -68,7 +68,7 @@ function updatePassword() {
     password: password.value,
     location: undefined
   }).then(res => {
-    if (res.data.code === '000') {
+    if (res.data.code === '200') {
       password.value = ''
       confirmPassword.value = ''
       ElMessageBox.alert(
