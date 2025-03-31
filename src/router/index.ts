@@ -17,22 +17,19 @@ const router = createRouter({
         path: '/home',
         component: () => import('../views/Home.vue'),
         meta: {title: '商城主页'}
-    },
-    {
+    }, {
         path: '/dashboard',
         component: () => import('../views/account/Dashboard.vue'),
         meta: {title: '个人信息'}
-    }
-    //,{
-    //         path: '/addbook',
-    //         component: () => import('../views/book/Management.vue'),
-    //         meta: {title: '添加书籍'}
-    // },{
-    //         path: '/bookmall',
-    //         component: () => import('../views/book/BookMall.vue'),
-    //         meta: {title: '书籍商城'}
-    // }
-        ,{
+    }, {
+        path: '/cart',
+        component: () => import('../views/account/Cart.vue'),
+        meta: {title: '购物车'}
+    }, {
+        path: '/orders',
+        component: () => import('../views/account/Orders.vue'),
+        meta: {title: '订单'}
+    }, {
         path: '/404',
         name: '404',
         component: () => import('../views/NotFound.vue'),
