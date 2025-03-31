@@ -36,7 +36,7 @@ export const accountLogin = (loginInfo: LoginInfo) => {
 
 // 用户注册
 export const accountRegister = (registerInfo: RegisterInfo) => {
-    return axios.post(`${ACCOUNT_MODULE}/register`, registerInfo,
+    return axios.post(`${ACCOUNT_MODULE}`, registerInfo,
         {headers: {'Content-Type': 'application/json'}})
         .then(res => {
             return res
@@ -53,7 +53,8 @@ export const accountInfo = (username: string) => {
 
 // 更新用户信息
 export const accountInfoUpdate = (updateInfo: UpdateInfo) => {
-    return axios.post(`${ACCOUNT_MODULE}`, updateInfo, {headers: {'Content-Type': 'application/json'}})
+    return axios.put(`${ACCOUNT_MODULE}`, updateInfo,
+        {headers: {'Content-Type': 'application/json'}})
         .then(res => {
             return res
         })
