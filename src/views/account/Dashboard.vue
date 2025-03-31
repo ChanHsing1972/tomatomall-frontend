@@ -93,7 +93,7 @@ function updatePassword() {
   })
 }
 const operate = () => {
-
+  router.push({path:'/Management'});
 };
 </script>
 

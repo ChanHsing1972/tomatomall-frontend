@@ -3,7 +3,6 @@ import { PRODUCT_MODULE } from './_prefix'; // 假设您已经定义了产品模
 
 // 商品信息类型定义
 type ProductInfo = {
-    id: string;
     title: string;
     description: string;
     price: string;

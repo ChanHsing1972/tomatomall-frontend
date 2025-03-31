@@ -30,6 +30,10 @@ const router = createRouter({
         component: () => import('../views/account/Orders.vue'),
         meta: {title: '订单'}
     }, {
+        path: '/management',
+        component: () => import('../views/account/Management.vue'),
+        meta: {title: '管理页面'}
+    }, {
         path: '/404',
         name: '404',
         component: () => import('../views/NotFound.vue'),
