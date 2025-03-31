@@ -25,7 +25,7 @@ const router = createRouter({
     }
     //,{
     //         path: '/addbook',
-    //         component: () => import('../views/book/AddBook.vue'),
+    //         component: () => import('../views/book/Management.vue'),
     //         meta: {title: '添加书籍'}
     // },{
     //         path: '/bookmall',
