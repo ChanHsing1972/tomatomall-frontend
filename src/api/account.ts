@@ -14,7 +14,7 @@ type RegisterInfo = {
     location: string,//地址
     role: string,//身份
     email?: string,//邮箱
-    avator?: string,//头像链接
+    avatar?: string,//头像链接
 }
 //更新昵称，密码，地址,邮箱，头像
 type UpdateInfo = {
@@ -22,7 +22,7 @@ type UpdateInfo = {
     password?: string,
     location?: string,
     email?: string,
-    avator?: string,
+    avatar?: string,
 }
 
 // 如果有“Vue: This may be converted to an async function”警告，可以不管

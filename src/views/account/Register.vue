@@ -15,6 +15,7 @@ const password = ref(''); // 密码
 const confirmPassword = ref(''); // 确认密码
 const email = ref(''); // 邮箱
 const role = ref('CUSTOMER'); // 身份，默认为顾客
+const avatar = ref('');//头像
 
 // 用户名是否为空
 const hasUsernameInput = computed(() => username.value.trim() !== '');
@@ -62,6 +63,7 @@ function handleRegister() {
     password: password.value.trim(),
     location: location.value.trim(),
     email: email.value.trim(),
+    avatar: avatar.value.trim(),
   }).then(res => {
     if (res.data.code === '000') {  // 类型守卫，它检查 res.data 对象中是否存在名为 code 的属性
       ElMessage({
@@ -86,7 +88,6 @@ function handleRegister() {
     <el-card class="login-card">
       <div>
         <h1>创建新账户</h1>
-
         <el-form>
           <el-row>
             <el-col :span="24">
