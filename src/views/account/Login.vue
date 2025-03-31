@@ -41,7 +41,7 @@ function handleLogin() {
         sessionStorage.setItem('name', res.data.result.name);
         sessionStorage.setItem('role', res.data.result.role);
         console.log(res.data);
-        router.push({ path: "/dashboard" });
+        router.push({ path: "/home" });
       })
 
     } else if (res.data.code === '400') {
