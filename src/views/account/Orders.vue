@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Header from "../../components/Header.vue";
-import { ElTable, ElTableColumn, ElButton } from 'element-plus';
 
-// 模拟订单数据
 const orders = ref([
   {
     id: 1,
@@ -43,7 +41,6 @@ const orders = ref([
   },
 ]);
 
-// 查看订单详情
 function viewOrder(orderId: number) {
   const order = orders.value.find((o) => o.id === orderId);
   if (order) {
@@ -56,63 +53,112 @@ function viewOrder(orderId: number) {
   <Header />
   <el-main class="orders-container">
     <h1>我的订单</h1>
-    <el-table :data="orders" border style="width: 100%">
-      <el-table-column prop="orderNumber" label="订单编号" />
-      <el-table-column prop="date" label="下单日期" />
-      <el-table-column label="商品列表">
-        <template #default="{ row }">
-          <div class="order-items">
-            <div v-for="item in row.items" :key="item.title" class="order-item">
-              <img :src="item.cover" alt="book cover" class="item-cover" />
-              <div class="item-info">
-                <p>{{ item.title }}</p>
-                <p>单价：￥{{ item.price }}</p>
-                <p>数量：{{ item.quantity }}</p>
-              </div>
-            </div>
+    <el-card shadow="hover" class="order-card" v-for="order in orders" :key="order.id">
+      <div class="order-header">
+        <div class="order-info">
+          <span class="order-number">订单编号：{{ order.orderNumber }}</span>
+          <span class="order-date">下单日期：{{ order.date }}</span>
+        </div>
+        <el-tag
+          :type="order.status === '已完成' ? 'success' : 'warning'"
+          effect="dark"
+        >
+          {{ order.status }}
+        </el-tag>
+      </div>
+      <el-divider></el-divider>
+      <div class="order-items">
+        <div
+          v-for="item in order.items"
+          :key="item.title"
+          class="order-item"
+        >
+          <img :src="item.cover" alt="book cover" class="item-cover" />
+          <div class="item-detail">
+            <p class="item-title">{{ item.title }}</p>
+            <p class="item-price">￥{{ item.price }} × {{ item.quantity }}</p>
           </div>
-        </template>
-      </el-table-column>
-      <el-table-column prop="totalPrice" label="总价">
-        <template #default="{ row }">
-          ￥{{ row.totalPrice }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="status" label="订单状态" />
-      <el-table-column label="操作" width="120">
-        <template #default="{ row }">
-          <el-button type="primary" @click="viewOrder(row.id)">查看详情</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+        </div>
+      </div>
+      <el-divider></el-divider>
+      <div class="order-footer">
+        <span class="total-price">总价：￥{{ order.totalPrice }}</span>
+        <el-button type="primary" @click="viewOrder(order.id)">查看详情</el-button>
+      </div>
+    </el-card>
   </el-main>
 </template>
 
 <style scoped>
 .orders-container {
-  padding: 20px;
+  width: 90%;
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
+.order-card {
+  margin-bottom: 20px;
+  padding: 10px;
+}
+
+.order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-info {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+}
+
+.order-number,
+.order-date {
+  color: #666;
 }
 
 .order-items {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 20px;
 }
 
 .order-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
 }
 
 .item-cover {
   width: 50px;
-  height: 75px;
+  height: 70px;
   object-fit: cover;
   border-radius: 4px;
 }
 
-.item-info {
-  font-size: 0.9em;
+.item-detail {
+  font-size: 14px;
+}
+
+.item-title {
+  font-weight: bold;
+}
+
+.item-price {
+  color: #999;
+}
+
+.order-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.total-price {
+  font-size: 16px;
+  color: #333;
+  font-weight: bold;
 }
 </style>
