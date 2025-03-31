@@ -11,25 +11,25 @@ onMounted(() => {
     {
       id: 1,
       title: "番茄的世界",
-      cover: "https://via.placeholder.com/200x250/FF7F7F/FFFFFF?text=Tomato%20Book",
+      cover: "https://tse4-mm.cn.bing.net/th/id/OIP-C.McBhzHbp8QPvU4tcNJOjXQHaHa?rs=1&pid=ImgDetMain",
       desc: "探索番茄的生长、品种及文化"
     },
     {
       id: 2,
       title: "Vue 3快速上手",
-      cover: "https://via.placeholder.com/200x250/FFB6C1/FFFFFF?text=Vue%203",
+      cover: "https://pic1.zhimg.com/v2-fba95424ef89a32125bba5daa2937795_720w.jpg?source=172ae18b",
       desc: "价值连城的 Vue 3 前端开发之书"
     },
     {
       id: 3,
       title: "全球摄影集锦",
-      cover: "https://via.placeholder.com/200x250/DB7093/FFFFFF?text=Photos",
+      cover: "https://ts1.tc.mm.bing.net/th/id/R-C.a43573113890e0977723190d1d0bd7e2?rik=fQTkY7Bh25bb1w&riu=http%3a%2f%2fcpnodata.oss-cn-shenzhen.aliyuncs.com%2fportal%2f202001%2f07%2f095044xnmm2mm31vhxa161.jpg&ehk=2FeSdbV%2bKyclRsSJ1a9Aj797nkhkEmi3awQcZdbBa1s%3d&risl=&pid=ImgRaw&r=0",
       desc: "欣赏世界各地的风采与瞬间"
     },
     {
       id: 4,
       title: "快速掌握 TypeScript",
-      cover: "https://via.placeholder.com/200x250/DC143C/FFFFFF?text=TS",
+      cover: "https://www.idcspy.com/wp-content/uploads/2022/01/1-164.jpg",
       desc: "TypeScript 基础与进阶案例"
     },
   ]
