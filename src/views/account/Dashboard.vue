@@ -99,6 +99,8 @@ const operate = () => {
 
 
 <template>
+    <Header />
+
   <el-main class="main-container">
     <el-card class="aside-card">
       <div class="avatar-area">

@@ -31,7 +31,7 @@ function logout() {
   <el-header class="custom-header" height="20">
     <el-row :gutter="10">
       <el-col :span="3" class="header-icon">
-        <router-link to="/dashboard" v-slot="{navigate}" class="no-link">
+        <router-link to="/home" v-slot="{navigate}" class="no-link">
           <h1 @click="navigate" class="header-text"> 番茄书城</h1>
         </router-link>
       </el-col>
@@ -62,9 +62,6 @@ function logout() {
 <style scoped>
 .custom-header {
   background-color: indianred;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
-
   display: flex;
   flex-direction: column;
 }
