@@ -29,12 +29,11 @@ getUserInfo()
 
 function getUserInfo() {
   accountInfo(username).then(res => {
-    console.log(res)
     name.value = res.data.result.name
     telephone.value = res.data.result.telephone
     location.value = res.data.result.location
     createTime.value = parseTime(res.data.result.createTime)
-    newName.value = username
+    newName.value = name.value
   })
 
 }
@@ -42,9 +41,9 @@ function getUserInfo() {
 function updateInfo() {
   accountInfoUpdate({
     name: newName.value,
-    password: undefined,
     location: location.value,
   }).then(res => {
+    console.log(res)
     if (res.data.code === '200') {
       ElMessage({
         customClass: 'customMessage',
@@ -105,7 +104,7 @@ const operate = () => {
       <div class="avatar-area">
         <el-avatar :icon="UserFilled" :size="80">
         </el-avatar>
-        <span class="avatar-text"> 欢迎您，{{ username }}</span>
+        <span class="avatar-text"> 欢迎您，{{ name }}</span>
       </div>
 
       <el-divider></el-divider>
@@ -214,6 +213,8 @@ const operate = () => {
 }
 
 .error-warn-input {
+  --el-input-border-color: red;
+  --el-input-hover-border-color: red;
   --el-input-focus-border-color: red;
 }
 

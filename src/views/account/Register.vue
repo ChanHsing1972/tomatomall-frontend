@@ -27,8 +27,6 @@ const hasPasswordInput = computed(() => password.value.trim() !== '');
 // 重复密码是否为空
 const hasConfirmPasswordInput = computed(() => confirmPassword.value.trim() !== '');
 // 地址是否为空
-const hasAddressInput = computed(() => location.value.trim() !== '');
-// 邮箱是否为空
 const hasEmailInput = computed(() => email.value.trim() !== '');
 // 电话号码的规则
 const chinaMobileRegex = /^1(3[0-9]|4[579]|5[0-35-9]|6[2567]|7[0-8]|8[0-9]|9[189])\d{8}$/;
@@ -42,13 +40,12 @@ const isPasswordIdentical = computed(() => password.value === confirmPassword.va
 const registerDisabled = computed(() => {
   return !(
       hasUsernameInput.value &&
-      hasTelInput.value &&
-      telLegal.value &&
       hasPasswordInput.value &&
       hasConfirmPasswordInput.value &&
       isPasswordIdentical.value &&
-      hasNameInput.value && // 添加昵称校验
-      hasAddressInput.value // 添加地址校验
+      hasNameInput.value &&// 添加昵称校验
+      ((hasEmailInput.value && emailLegal.value) || !hasEmailInput.value) &&
+      ((hasTelInput.value && telLegal.value) || !hasTelInput.value)
   );
 });
 
@@ -102,14 +99,6 @@ function handleRegister() {
             </el-col>
 
             <el-col :span="24">
-              <el-form-item label="手机号" label-width="80px" required>
-                <el-input id="tel"
-                          v-model="telephone" :class="['input-width', { 'error-warn-input': (hasTelInput && !telLegal) }]"
-                          placeholder="请输入手机号" />
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="24">
               <el-form-item label="密码" label-width="80px" required>
                 <el-input type="password" id="password" v-model="password" placeholder="请输入密码" class="input-width" />
               </el-form-item>
@@ -125,12 +114,6 @@ function handleRegister() {
             </el-col>
 
             <el-col :span="24">
-              <el-form-item label="地址" label-width="80px" required>
-                <el-input id="address" v-model="location" placeholder="请输入地址" class="input-width" />
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="24">
               <el-form-item label="身份" label-width="80px" required>
                 <el-select v-model="role" placeholder="请选择身份" class="input-width">
                   <el-option label="顾客" value="CUSTOMER" />
@@ -140,9 +123,23 @@ function handleRegister() {
             </el-col>
 
             <el-col :span="24">
-              <el-form-item label="邮箱" label-width="80px" class="optional-field">
+              <el-form-item label="地址" label-width="80px">
+                <el-input id="address" v-model="location" placeholder="请输入地址（非必填）" class="input-width" />
+              </el-form-item>
+            </el-col>
+
+            <el-col :span="24">
+              <el-form-item label="手机号" label-width="80px">
+                <el-input id="tel"
+                          v-model="telephone" :class="{'error-warn-input': (hasTelInput && !telLegal)}"
+                          placeholder="请输入手机号（非必填）" />
+              </el-form-item>
+            </el-col>
+
+            <el-col :span="24">
+              <el-form-item label="邮箱" label-width="80px">
                 <el-input id="email"
-                          v-model="email" :class="['input-width', { 'error-warn-input': (hasEmailInput && !emailLegal) }]"
+                          v-model="email" :class="{'error-warn-input' :(hasEmailInput && !emailLegal)}"
                           placeholder="请输入邮箱（非必填）" />
               </el-form-item>
             </el-col>
@@ -165,7 +162,7 @@ function handleRegister() {
   </el-main>
 </template>
 
-<style scoped>
+<style>
 .main-frame {
   width: 100%;
   height: 100%;
@@ -189,8 +186,14 @@ function handleRegister() {
   width: 100%; /* 统一输入框宽度 */
 }
 
-.optional-field {
-  margin-top: 20px; /* 邮箱字段与前面的间距 */
+.error-warn {
+  color: red;
+}
+
+.error-warn-input {
+  --el-input-border-color: red;
+  --el-input-hover-border-color: red;
+  --el-input-focus-border-color: red;
 }
 
 .button-group {
