@@ -31,9 +31,13 @@ const router = createRouter({
         meta: {title: '订单'}
     }, {
         path: '/management',
-        component: () => import('../views/account/Management.vue'),
+        component: () => import('../views/product/Management.vue'),
         meta: {title: '管理页面'}
     }, {
+        path: '/booklist',
+        component: () => import('../views/mall/BookList.vue'),
+        meta: {title: '商品页面'}
+    },{
         path: '/404',
         name: '404',
         component: () => import('../views/NotFound.vue'),
