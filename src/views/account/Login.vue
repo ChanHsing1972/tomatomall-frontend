@@ -61,7 +61,7 @@ function handleLogin() {
     <el-card class="login-card">
       <div>
         <h1>登录</h1>
-        <el-form>
+        <el-form @keyup.enter="handleLogin">
           <el-form-item>
             <label for="username">用户名</label>
             <el-input id="username" type="text" v-model="username"

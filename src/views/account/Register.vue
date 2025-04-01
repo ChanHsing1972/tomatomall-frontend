@@ -82,7 +82,7 @@ function handleRegister() {
 
 <template>
   <el-main class="main-frame bgimage">
-    <el-card class="login-card">
+    <el-card class="login-card" @keyup.enter="handleRegister">
       <div>
         <h1>创建新账户</h1>
         <el-form>
