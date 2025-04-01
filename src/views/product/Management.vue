@@ -26,7 +26,13 @@
         </el-table-column>
         <el-table-column prop="price" label="价格" width="100" />
         <el-table-column prop="rate" label="评分" width="80" />
-        <el-table-column prop="description" label="描述" />
+        <el-table-column label="规格" width="150">
+          <template #default="{ row }">
+            <el-tag v-for="spec in row.specifications" :key="spec.id" style="margin: 2px">
+              {{ spec.item }}: {{ spec.value }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="stock" label="库存" width="80" />
         <el-table-column label="操作" width="220">
           <template #default="{ row }">
@@ -66,11 +72,22 @@
         <el-form-item label="详情">
           <el-input type="textarea" v-model="newProduct.detail" />
         </el-form-item>
+
+        <el-form-item label="规格参数">
+          <div v-for="(spec, index) in newProduct.specifications" :key="index" class="spec-item">
+            <el-input v-model="spec.item" placeholder="参数名" style="width: 150px; margin-right: 10px;" />
+            <el-input v-model="spec.value" placeholder="参数值" style="width: 150px; margin-right: 10px;" />
+            <el-button type="danger" size="small" @click="removeSpec(index)" circle>
+              <el-icon><Delete /></el-icon>
+            </el-button>
+          </div>
+          <el-button type="primary" size="small" @click="addSpec">添加规格</el-button>
+        </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 编辑商品对话框 -->
-    <el-dialog v-model="editDialogVisible" title="编辑商品信息" width="50%">
+    <el-dialog v-model="editDialogVisible" title="编辑商品信息" width="60%">
       <el-form :model="currentProduct" label-width="80px">
         <el-form-item label="标题" required>
           <el-input v-model="currentProduct.title" />
@@ -89,6 +106,17 @@
         </el-form-item>
         <el-form-item label="详情">
           <el-input type="textarea" v-model="currentProduct.detail" />
+        </el-form-item>
+
+        <el-form-item label="规格参数">
+          <div v-for="(spec, index) in currentProduct.specifications" :key="spec.id || index" class="spec-item">
+            <el-input v-model="spec.item" placeholder="参数名" style="width: 150px; margin-right: 10px;" />
+            <el-input v-model="spec.value" placeholder="参数值" style="width: 150px; margin-right: 10px;" />
+            <el-button type="danger" size="small" @click="removeEditSpec(index)" circle>
+              <el-icon><Delete /></el-icon>
+            </el-button>
+          </div>
+          <el-button type="primary" size="small" @click="addEditSpec">添加规格</el-button>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -124,7 +152,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { UserFilled } from "@element-plus/icons-vue";
+import { UserFilled, Delete } from "@element-plus/icons-vue";
 import {
   createProduct,
   getProductList,
@@ -133,6 +161,20 @@ import {
   updateStockpile,
   getStockpile
 } from '../../api/product.ts';
+
+// 完整匹配API中的specification类型
+interface Specification {
+  id: string;
+  item: string;
+  value: string;
+  productId: string;
+}
+
+// 用于表单输入的规格类型（创建时）
+interface FormSpecification {
+  item: string;
+  value: string;
+}
 
 interface Product {
   id: string;
@@ -143,16 +185,29 @@ interface Product {
   cover: string;
   detail: string;
   stock?: number;
+  specifications: Specification[];
+}
+
+// 用于创建商品的表单数据
+interface CreateProductForm {
+  title: string;
+  description: string;
+  price: string;
+  rate: number;
+  cover: string;
+  detail: string;
+  specifications: FormSpecification[];
 }
 
 const products = ref<Product[]>([]);
-const newProduct = ref({
+const newProduct = ref<CreateProductForm>({
   title: '',
   description: '',
   price: '',
   rate: 0,
   cover: '',
-  detail: ''
+  detail: '',
+  specifications: []
 });
 const currentProduct = ref<Product>({
   id: '',
@@ -162,13 +217,14 @@ const currentProduct = ref<Product>({
   rate: 0,
   cover: '',
   detail: '',
-  stock: 0
+  stock: 0,
+  specifications: []
 });
 const stockForm = ref({
   productId: '',
   currentStock: 0,
   amount: 0,
-  operation: 'add' // 'add' or 'set'
+  operation: 'add' as 'add' | 'set'
 });
 
 const displayCreateCard = ref(false);
@@ -182,7 +238,11 @@ onMounted(() => {
 const fetchProducts = async () => {
   try {
     const response = await getProductList();
-    products.value = response.data;
+    // 确保specifications总是数组
+    products.value = response.data.map((product: Product) => ({
+      ...product,
+      specifications: product.specifications || []
+    }));
 
     // 获取每个商品的库存信息
     for (const product of products.value) {
@@ -209,8 +269,33 @@ const resetNewProduct = () => {
     price: '',
     rate: 0,
     cover: '',
-    detail: ''
+    detail: '',
+    specifications: []
   };
+};
+
+const addSpec = () => {
+  newProduct.value.specifications.push({
+    item: '',
+    value: ''
+  });
+};
+
+const removeSpec = (index: number) => {
+  newProduct.value.specifications.splice(index, 1);
+};
+
+const addEditSpec = () => {
+  currentProduct.value.specifications.push({
+    id: '', // 临时空值
+    item: '',
+    value: '',
+    productId: currentProduct.value.id // 关联当前商品ID
+  });
+};
+
+const removeEditSpec = (index: number) => {
+  currentProduct.value.specifications.splice(index, 1);
 };
 
 const handleCreateProduct = async () => {
@@ -221,7 +306,22 @@ const handleCreateProduct = async () => {
       return;
     }
 
-    await createProduct(newProduct.value);
+    // 转换表单规格为API需要的完整格式
+    const apiSpecifications: Specification[] = newProduct.value.specifications
+        .filter((spec: FormSpecification) => spec.item && spec.value)
+        .map((spec: FormSpecification) => ({
+          id: '', // 后端会生成
+          item: spec.item,
+          value: spec.value,
+          productId: '' // 创建后关联
+        }));
+
+    // 类型断言，因为我们知道createProduct会处理缺失的id和productId
+    await createProduct({
+      ...newProduct.value,
+      specifications: apiSpecifications
+    } as unknown as Parameters<typeof createProduct>[0]);
+
     ElMessage.success('商品添加成功');
     fetchProducts();
     displayCreateCard.value = false;
@@ -233,7 +333,10 @@ const handleCreateProduct = async () => {
 };
 
 const openEditDialog = (product: Product) => {
-  currentProduct.value = { ...product };
+  currentProduct.value = {
+    ...product,
+    specifications: product.specifications ? [...product.specifications] : []
+  };
   editDialogVisible.value = true;
 };
 
@@ -245,7 +348,21 @@ const handleUpdateProduct = async () => {
       return;
     }
 
-    await updateProduct(currentProduct.value);
+    // 确保规格参数完整
+    const specsToUpdate: Specification[] = currentProduct.value.specifications
+        .filter((spec: Specification) => spec.item && spec.value)
+        .map((spec: Specification) => ({
+          id: spec.id || '', // 保留已有ID或设为空
+          item: spec.item,
+          value: spec.value,
+          productId: currentProduct.value.id // 关联当前商品ID
+        }));
+
+    await updateProduct({
+      ...currentProduct.value,
+      specifications: specsToUpdate
+    });
+
     ElMessage.success('商品更新成功');
     editDialogVisible.value = false;
     fetchProducts();
@@ -274,7 +391,7 @@ const handleDeleteProduct = async (productId: string) => {
   }
 };
 
-const openStockDialog = async (product: Product) => {
+const openStockDialog = (product: Product) => {
   stockForm.value.productId = product.id;
   stockForm.value.currentStock = product.stock || 0;
   stockForm.value.amount = 0;
@@ -299,52 +416,3 @@ const handleUpdateStock = async () => {
   }
 };
 </script>
-
-<style scoped>
-.main-container {
-  display: flex;
-  flex-direction: row;
-  padding: 15px;
-  gap: 20px;
-  justify-content: center;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.change-card {
-  width: 66%;
-  height: fit-content;
-}
-
-.avatar-area {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  gap: 30px;
-}
-
-.avatar-text {
-  font-size: x-large;
-  font-weight: bolder;
-  padding-right: 40px;
-}
-
-.aside-card {
-  width: 100%;
-  max-width: 1200px;
-}
-
-.el-table {
-  margin-top: 20px;
-}
-
-.el-table img {
-  max-width: 100px;
-  max-height: 100px;
-  object-fit: contain;
-}
-</style>
