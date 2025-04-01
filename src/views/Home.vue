@@ -78,6 +78,7 @@ onMounted(() => {
 
 /* Hero 区域 */
 .hero {
+  margin-top: 50px;
   position: relative;
   display: flex;
   align-items: center;
@@ -154,7 +155,7 @@ onMounted(() => {
   width: calc(25% - 20px);
   min-width: 250px;
   transition: box-shadow 0.3s ease;
-  margin-bottom: 60px;
+  margin-bottom: 660px;
 }
 
 .book-card:hover {

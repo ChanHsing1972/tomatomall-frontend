@@ -64,7 +64,16 @@ function logout() {
 
 <style>
 .header {
-  background-color: #f5f5f5;
+  position: fixed;           /* 固定在页面顶部 */
+  top: 0;                    /* 距离页面顶部0 */
+  left: 0;
+  width: 100%;               /* 占满整个页面宽度 */
+  z-index: 100;              /* 保证位于最上层 */
+  
+  /* 半透明背景及毛玻璃效果 */
+  background: rgba(245, 245, 245, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid #e0e0e0;
   padding: 0 20px;
 }
