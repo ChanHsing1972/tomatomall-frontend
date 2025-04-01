@@ -2,19 +2,36 @@ import { axios } from '../utils/request'; // 确保已经创建了 request.ts �
 import { PRODUCT_MODULE } from './_prefix'; // 假设您已经定义了产品模块的基础路径
 
 // 商品信息类型定义
-type ProductInfo = {
-    id: string;
+type createProductInfo = {
     title: string;
     description: string;
     price: string;
     rate: number;
     cover: string;
     detail: string;
+    specifications:specification[];
+};
+type updateProductInfo = {
+    id: string,
+    title: string;
+    description: string;
+    price: string;
+    rate: number;
+    cover: string;
+    detail: string;
+    specifications:specification[];
 };
 
+type specification={
+    id: string,
+    item: string
+    value: string,
+    productId :string,
+}
+
 // 创建商品
-export const createProduct = (productInfo: ProductInfo) => {
-    return axios.post(`${PRODUCT_MODULE}`, productInfo, {
+export const createProduct = (createProductInfo: createProductInfo) => {
+    return axios.post(`${PRODUCT_MODULE}`, createProductInfo, {
         headers: {'Content-Type': 'application/json'}
     });
 };
@@ -30,8 +47,8 @@ export const getProductDetail = (id: string) => {
 };
 
 // 更新商品
-export const updateProduct = (productInfo: ProductInfo) => {
-    return axios.put(`${PRODUCT_MODULE}`, productInfo, {
+export const updateProduct = (updateProductInfo: updateProductInfo) => {
+    return axios.put(`${PRODUCT_MODULE}`, updateProductInfo, {
         headers: {'Content-Type': 'application/json'}
     });
 };

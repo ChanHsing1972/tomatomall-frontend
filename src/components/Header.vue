@@ -47,6 +47,13 @@ function logout() {
         </router-link>
       </el-col>
 
+      <!-- 书库 -->
+      <el-col :span="2" class="header-icon">
+        <router-link to="/booklist" class="no-link">
+          <h2 class="sub-header-text">书库</h2>
+        </router-link>
+      </el-col>
+
       <!-- 购物车 -->
       <el-col :span="2" class="header-icon">
         <router-link to="/cart" class="no-link">
@@ -65,7 +72,7 @@ function logout() {
       </el-col>
 
       <!-- 搜索框 -->
-      <el-col :span="6" class="header-icon">
+      <el-col :span="4" class="header-icon">
         <el-input
             prefix-icon="Search"
             style="--el-input-prefix-icon-color: white;"

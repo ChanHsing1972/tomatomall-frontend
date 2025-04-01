@@ -93,7 +93,7 @@ function updatePassword() {
   })
 }
 const operate = () => {
-
+  router.push({path: '/management'});
 };
 </script>
 
@@ -143,7 +143,7 @@ const operate = () => {
       </el-descriptions>
 
 
-      <el-button v-if="role === 'MANAGER'" class="create-store-card" type="success" @click="operate">管理商场</el-button>
+      <el-button v-if="role === 'MANAGER'" class="manage_product_button" type="success" @click="operate">管理商场</el-button>
 
     </el-card>
 
@@ -250,7 +250,7 @@ const operate = () => {
   font-weight: bolder;
   padding-right: 40px;
 }
-.create-store-card {
+.manage_product_button {
   width: 100%;
   display: flex;
   justify-content: center;
