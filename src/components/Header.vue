@@ -1,24 +1,20 @@
 <script setup lang="ts">
-import { router } from '../router'
-import { ElMessageBox } from 'element-plus'
-import { ref } from 'vue'
-import { User, SwitchButton, Search} from "@element-plus/icons-vue"
+import { router } from "../router";
+import { ElMessageBox } from "element-plus";
+import { ref } from "vue";
+import { User, SwitchButton, Search } from "@element-plus/icons-vue";
 
-const searchQuery = ref("")
+const searchQuery = ref("");
 
 function logout() {
-  ElMessageBox.confirm(
-    '确认退出登录吗？',
-    '提示',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    sessionStorage.setItem('token', '')
-    router.push({ path: "/login" })
-  })
+  ElMessageBox.confirm("确认退出登录吗？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  }).then(() => {
+    sessionStorage.setItem("token", "");
+    router.push({ path: "/login" });
+  });
 }
 </script>
 
@@ -64,12 +60,12 @@ function logout() {
 
 <style>
 .header {
-  position: fixed;           /* 固定在页面顶部 */
-  top: 0;                    /* 距离页面顶部0 */
+  position: fixed; /* 固定在页面顶部 */
+  top: 0; /* 距离页面顶部0 */
   left: 0;
-  width: 100%;               /* 占满整个页面宽度 */
-  z-index: 100;              /* 保证位于最上层 */
-  
+  width: 100%; /* 占满整个页面宽度 */
+  z-index: 100; /* 保证位于最上层 */
+
   /* 半透明背景及毛玻璃效果 */
   background: rgba(245, 245, 245, 0.8);
   backdrop-filter: blur(10px);
@@ -105,7 +101,7 @@ function logout() {
   align-items: center;
   justify-content: center;
   gap: 30px;
-  height: 100%;  /* 占满整个 nav-row 高度 */
+  height: 100%; /* 占满整个 nav-row 高度 */
 }
 
 .nav-item {
@@ -114,7 +110,7 @@ function logout() {
   color: #666;
   text-decoration: none;
   transition: color 0.3s ease;
-  line-height: 60px;    /* 与 nav-row 高度一致 */
+  line-height: 60px; /* 与 nav-row 高度一致 */
 }
 
 .nav-item:hover {
@@ -128,6 +124,10 @@ function logout() {
 }
 
 .user-link.router-link-active {
+  border-bottom: none;
+}
+
+.logo-link.router-link-active {
   border-bottom: none;
 }
 
@@ -171,7 +171,7 @@ function logout() {
   .nav-links {
     gap: 15px;
   }
-  
+
   .nav-search {
     width: 150px;
   }

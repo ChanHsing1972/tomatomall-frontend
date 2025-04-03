@@ -8,7 +8,7 @@ import App from './App.vue'
 import axios from 'axios'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-import './style.css'
+import './assets/global.css'
 // import './mock' //引入mock.js文件，用于模拟数据
 
 //设置后端地址（本地或服务器），会将请求转发到后端端口

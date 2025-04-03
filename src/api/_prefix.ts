@@ -5,4 +5,4 @@ export const API_MODULE = '/api'
 export const ACCOUNT_MODULE = `${API_MODULE}/accounts`
 
 //商品模块
-export const PRODUCT_MODULE = `${API_MODULE}/product`
+export const PRODUCT_MODULE = `${API_MODULE}/products`

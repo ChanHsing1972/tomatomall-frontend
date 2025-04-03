@@ -1,38 +1,42 @@
 <script setup lang="ts">
-import Header from "../components/Header.vue"
-import { ref, onMounted } from 'vue'
+import Header from "../components/Header.vue";
+import { ref, onMounted } from "vue";
 
 // 模拟推荐书籍数据
-const recommendedBooks = ref<{ id: number; title: string; cover: string; desc: string }[]>([])
+const recommendedBooks = ref<
+  { id: number; title: string; cover: string; desc: string }[]
+>([]);
 
 onMounted(() => {
   recommendedBooks.value = [
     {
       id: 1,
       title: "番茄的世界",
-      cover: "https://tse4-mm.cn.bing.net/th/id/OIP-C.McBhzHbp8QPvU4tcNJOjXQHaHa?rs=1&pid=ImgDetMain",
-      desc: "探索番茄生长的奇妙世界"
+      cover:
+        "https://tse4-mm.cn.bing.net/th/id/OIP-C.McBhzHbp8QPvU4tcNJOjXQHaHa?rs=1&pid=ImgDetMain",
+      desc: "探索番茄生长的奇妙世界",
     },
     {
       id: 2,
       title: "Vue 3快速上手",
-      cover: "https://pic1.zhimg.com/v2-fba95424ef89a32125bba5daa2937795_720w.jpg?source=172ae18b",
-      desc: "极简前端开发的秘密武器"
+      cover:
+        "https://pic1.zhimg.com/v2-fba95424ef89a32125bba5daa2937795_720w.jpg?source=172ae18b",
+      desc: "极简前端开发的秘密武器",
     },
     {
       id: 3,
       title: "全球摄影集锦",
       cover: "https://n.sinaimg.cn/sinacn/w960h1440/20171223/d7cd-fypvuqf4642780.png",
-      desc: "捕捉世界之美，每一瞬间都动人"
+      desc: "捕捉世界之美，每一瞬间都动人",
     },
     {
       id: 4,
       title: "快速掌握 TypeScript",
       cover: "https://www.idcspy.com/wp-content/uploads/2022/01/1-164.jpg",
-      desc: "现代开发必备的强大技能"
+      desc: "现代开发必备的强大技能",
     },
-  ]
-})
+  ];
+});
 </script>
 
 <template>
@@ -108,15 +112,16 @@ onMounted(() => {
 }
 
 .hero-text h1 {
-  font-size: 2.5em;
+  font-size: 40px;
   margin-bottom: 0em;
-  font-family: "思源宋体 Heavy", "Source Han Serif SC", serif;
+  font-family: "Source Han Serif SC";
 }
 
 .hero-text p {
   font-size: 1.2em;
   color: #666;
   margin-left: 20px;
+  margin-top: 15px;
 }
 
 /* 内容区域 */
@@ -159,7 +164,7 @@ onMounted(() => {
 }
 
 .book-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .book-cover-wrapper {

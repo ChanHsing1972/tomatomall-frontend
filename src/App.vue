@@ -1,6 +1,4 @@
-<script setup lang="ts">
-
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <el-container direction="vertical">
@@ -8,5 +6,4 @@
   </el-container>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

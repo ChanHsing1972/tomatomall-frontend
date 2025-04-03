@@ -37,6 +37,8 @@ function getUserInfo() {
     createTime.value = parseTime(result.createTime)
     email.value = result.email
     newName.value = name.value
+    newEmail.value = email.value
+    newLocation.value = location.value
   })
 }
 

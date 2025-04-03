@@ -1,0 +1,7 @@
+@font-face {
+  font-family: 'Source Han Serif SC';
+  src: url('./fonts/SourceHanSerifSC-Heavy.otf') format('opentype');
+  font-weight: bold;
+  font-style: bold;
+  font-display: swap;
+}
