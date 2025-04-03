@@ -52,7 +52,6 @@ function viewOrder(orderId: number) {
 <template>
   <Header />
   <el-main class="orders-container">
-    <h1>我的订单</h1>
     <el-card shadow="hover" class="order-card" v-for="order in orders" :key="order.id">
       <div class="order-header">
         <div class="order-info">
@@ -90,32 +89,67 @@ function viewOrder(orderId: number) {
 </template>
 
 <style scoped>
-.orders-container {
-  width: 90%;
-  margin: 0 auto;
-  padding: 20px 0;
+/* 采用系统字体，模仿 Apple 设计风格 */
+* {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
 }
 
+.orders-container {
+  width: 80%;
+  margin: 60px auto;
+  padding: 40px;
+  background-color: #fff;
+  border-radius: 12px;
+}
+
+/* 卡片采用极简风格，不用多余的边框，只在底部添加一条细线分隔 */
 .order-card {
-  margin-bottom: 20px;
-  padding: 10px;
+  border-radius: 20px;
+  margin-bottom: 15px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
 }
 
 .order-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 15px;
 }
 
 .order-info {
   display: flex;
-  gap: 20px;
-  font-size: 14px;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .order-number,
 .order-date {
-  color: #666;
+  font-size: 14px;
+  color: #777;
+}
+
+.el-tag {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  color: #fff;
+  letter-spacing: 1px;
+}
+.el-tag[style*="已完成"] {
+  background-color: #34c759; /* 成功绿色 */
+}
+.el-tag[style*="待发货"] {
+  background-color: #ff9500; /* 暖色调 */
+}
+
+/* 隐藏 Element Plus 默认的 divider 样式，采用细线 */
+.el-divider {
+  margin: 15px 0;
+  border: none;
+  border-top: 1px solid #eee;
 }
 
 .order-items {
@@ -128,21 +162,25 @@ function viewOrder(orderId: number) {
   display: flex;
   align-items: center;
   gap: 15px;
+  padding: 10px 0;
 }
 
 .item-cover {
-  width: 50px;
-  height: 70px;
+  width: 60px;
+  height: 80px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .item-detail {
   font-size: 14px;
+  color: #555;
 }
 
 .item-title {
-  font-weight: bold;
+  font-weight: 500;
+  margin-bottom: 4px;
 }
 
 .item-price {
@@ -154,11 +192,26 @@ function viewOrder(orderId: number) {
   align-items: center;
   justify-content: space-between;
   margin-top: 10px;
+  padding-top: 10px;
 }
 
 .total-price {
   font-size: 16px;
   color: #333;
-  font-weight: bold;
+  font-weight: 500;
+}
+
+/* 优化按钮样式，保持简洁 */
+.el-button {
+  background-color: #0070c9;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #fff;
+  transition: background-color 0.3s ease;
+}
+.el-button:hover {
+  background-color: #005da0;
 }
 </style>

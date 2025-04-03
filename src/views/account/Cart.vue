@@ -95,7 +95,7 @@ function checkout() {
 .cart-container {
   width: 90%;
   margin: 0 auto;
-  padding: 20px 0;
+  padding: 100px 0;
 }
 
 /* 卡片整体样式，给表格和footer一个背景衬托 */

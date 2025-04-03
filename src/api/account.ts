@@ -53,7 +53,6 @@ export const accountInfo = (username: string) => {
 
 // 更新用户信息
 export const accountInfoUpdate = (updateInfo: UpdateInfo) => {
-    console.log(updateInfo)
     return axios.put(`${ACCOUNT_MODULE}`, updateInfo,
         {headers: {'Content-Type': 'application/json'}})
         .then(res => {

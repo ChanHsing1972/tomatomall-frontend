@@ -19,12 +19,10 @@ const loginDisabled = computed(() => {
 
 // 登录按钮触发
 function handleLogin() {
-  console.log("登录按钮被点击了！");
   accountLogin({
     username: username.value.trim(),
     password: password.value
   }).then(res => {
-    console.log("登录响应:", res); // 检查是否进入这里
     if (res.data.code === '200') {
       ElMessage({
         message: "登录成功！",
@@ -34,16 +32,11 @@ function handleLogin() {
       const token = res.data.result;
       sessionStorage.setItem('token', token);
       sessionStorage.setItem('username', username.value);
-      console.log(sessionStorage.getItem('username'));
-      // 调用 accountInfo，传入当前登录的用户名
-      console.log(token);
       accountInfo(username.value.trim()).then(res => {
         sessionStorage.setItem('name', res.data.result.name);
         sessionStorage.setItem('role', res.data.result.role);
-        console.log(res.data);
         router.push({ path: "/home" });
       })
-
     } else if (res.data.code === '400') {
       ElMessage({
         message: res.data.msg,

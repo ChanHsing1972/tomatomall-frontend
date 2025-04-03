@@ -121,6 +121,16 @@ function logout() {
   color: #000;
 }
 
+.router-link-active {
+  font-weight: bold;
+  color: #000;
+  border-bottom: 2px solid #000;
+}
+
+.user-link.router-link-active {
+  border-bottom: none;
+}
+
 /* 右侧区域 */
 .right-section {
   display: flex;
