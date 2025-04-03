@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref } from "vue";
 import Header from "../../components/Header.vue";
 
 const orders = ref([
@@ -10,13 +10,15 @@ const orders = ref([
     items: [
       {
         title: "番茄的世界",
-        cover: "https://tse4-mm.cn.bing.net/th/id/OIP-C.McBhzHbp8QPvU4tcNJOjXQHaHa?rs=1&pid=ImgDetMain",
+        cover:
+          "https://tse4-mm.cn.bing.net/th/id/OIP-C.McBhzHbp8QPvU4tcNJOjXQHaHa?rs=1&pid=ImgDetMain",
         price: 50,
         quantity: 2,
       },
       {
         title: "Vue 3快速上手",
-        cover: "https://pic1.zhimg.com/v2-fba95424ef89a32125bba5daa2937795_720w.jpg?source=172ae18b",
+        cover:
+          "https://pic1.zhimg.com/v2-fba95424ef89a32125bba5daa2937795_720w.jpg?source=172ae18b",
         price: 80,
         quantity: 1,
       },
@@ -31,7 +33,8 @@ const orders = ref([
     items: [
       {
         title: "全球摄影集锦",
-        cover: "https://ts1.tc.mm.bing.net/th/id/R-C.a43573113890e0977723190d1d0bd7e2?rik=fQTkY7Bh25bb1w&riu=http%3a%2f%2fcpnodata.oss-cn-shenzhen.aliyuncs.com%2fportal%2f202001%2f07%2f095044xnmm2mm31vhxa161.jpg&ehk=2FeSdbV%2bKyclRsSJ1a9Aj797nkhkEmi3awQcZdbBa1s%3d&risl=&pid=ImgRaw&r=0",
+        cover:
+          "https://ts1.tc.mm.bing.net/th/id/R-C.a43573113890e0977723190d1d0bd7e2?rik=fQTkY7Bh25bb1w&riu=http%3a%2f%2fcpnodata.oss-cn-shenzhen.aliyuncs.com%2fportal%2f202001%2f07%2f095044xnmm2mm31vhxa161.jpg&ehk=2FeSdbV%2bKyclRsSJ1a9Aj797nkhkEmi3awQcZdbBa1s%3d&risl=&pid=ImgRaw&r=0",
         price: 120,
         quantity: 1,
       },
@@ -58,20 +61,13 @@ function viewOrder(orderId: number) {
           <span class="order-number">订单编号：{{ order.orderNumber }}</span>
           <span class="order-date">下单日期：{{ order.date }}</span>
         </div>
-        <el-tag
-          :type="order.status === '已完成' ? 'success' : 'warning'"
-          effect="dark"
-        >
+        <el-tag :type="order.status === '已完成' ? 'success' : 'warning'" effect="dark">
           {{ order.status }}
         </el-tag>
       </div>
       <el-divider></el-divider>
       <div class="order-items">
-        <div
-          v-for="item in order.items"
-          :key="item.title"
-          class="order-item"
-        >
+        <div v-for="item in order.items" :key="item.title" class="order-item">
           <img :src="item.cover" alt="book cover" class="item-cover" />
           <div class="item-detail">
             <p class="item-title">{{ item.title }}</p>
@@ -91,7 +87,7 @@ function viewOrder(orderId: number) {
 <style scoped>
 /* 采用系统字体，模仿 Apple 设计风格 */
 * {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   box-sizing: border-box;
 }
 
@@ -107,8 +103,9 @@ function viewOrder(orderId: number) {
 .order-card {
   border-radius: 20px;
   margin-bottom: 15px;
+  margin-left: 100px;
+  margin-right: 100px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
 }
 
 .order-header {

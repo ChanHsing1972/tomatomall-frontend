@@ -1,109 +1,107 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { accountInfo, accountInfoUpdate } from '../../api/account.ts'
-import { parseRole, parseTime } from "../../utils"
-import { router } from '../../router'
-import Header from "../../components/Header.vue"
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { UserFilled } from "@element-plus/icons-vue"
+import { ref, computed, onMounted } from "vue";
+import { accountInfo, accountInfoUpdate } from "../../api/account.ts";
+import { parseRole, parseTime } from "../../utils";
+import { router } from "../../router";
+import Header from "../../components/Header.vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { UserFilled } from "@element-plus/icons-vue";
 
-const role = sessionStorage.getItem("role") || 'CUSTOMER'
-const name = ref('')
-const username = sessionStorage.getItem("username") || '默认用户名'
-const telephone = ref('')
-const location = ref('')
-const createTime = ref('')
-const email = ref('')
+const role = sessionStorage.getItem("role") || "CUSTOMER";
+const name = ref("");
+const username = sessionStorage.getItem("username") || "默认用户名";
+const telephone = ref("");
+const location = ref("");
+const createTime = ref("");
+const email = ref("");
 
-const newName = ref('')
-const newEmail = ref('')
-const newLocation = ref('')
+const newName = ref("");
+const newEmail = ref("");
+const newLocation = ref("");
 
-const showInfoEdit = ref(true) // true：编辑个人信息；false：修改密码
+const showInfoEdit = ref(true); // true：编辑个人信息；false：修改密码
 
-const password = ref('')
-const confirmPassword = ref('')
+const password = ref("");
+const confirmPassword = ref("");
 
-const hasConfirmPasswordInput = computed(() => confirmPassword.value !== '')
-const isPasswordIdentical = computed(() => password.value === confirmPassword.value)
-const changeDisabled = computed(() => !(hasConfirmPasswordInput.value && isPasswordIdentical.value))
+const hasConfirmPasswordInput = computed(() => confirmPassword.value !== "");
+const isPasswordIdentical = computed(() => password.value === confirmPassword.value);
+const changeDisabled = computed(
+  () => !(hasConfirmPasswordInput.value && isPasswordIdentical.value)
+);
 
 function getUserInfo() {
-  accountInfo(username).then(res => {
-    const result = res.data.result
-    name.value = result.name
-    telephone.value = result.telephone
-    location.value = result.location
-    createTime.value = parseTime(result.createTime)
-    email.value = result.email
-    newName.value = name.value
-    newEmail.value = email.value
-    newLocation.value = location.value
-  })
+  accountInfo(username).then((res) => {
+    const result = res.data.result;
+    name.value = result.name;
+    telephone.value = result.telephone;
+    location.value = result.location;
+    createTime.value = parseTime(result.createTime);
+    email.value = result.email;
+    newName.value = name.value;
+    newEmail.value = email.value;
+    newLocation.value = location.value;
+  });
 }
 
-onMounted(() => { 
-  getUserInfo() 
-})
+onMounted(() => {
+  getUserInfo();
+});
 
 function updateInfo() {
   accountInfoUpdate({
     name: newName.value,
     location: newLocation.value,
     email: newEmail.value,
-  }).then(res => {
-    if (res.data.code === '200') {
+  }).then((res) => {
+    if (res.data.code === "200") {
       ElMessage({
-        customClass: 'customMessage',
-        type: 'success',
-        message: '更新成功！',
-      })
-      getUserInfo()
-    } else if (res.data.code === '400') {
+        customClass: "customMessage",
+        type: "success",
+        message: "更新成功！",
+      });
+      getUserInfo();
+    } else if (res.data.code === "400") {
       ElMessage({
-        customClass: 'customMessage',
-        type: 'error',
+        customClass: "customMessage",
+        type: "error",
         message: res.data.msg,
-      })
+      });
     }
-  })
+  });
 }
 
 function updatePassword() {
   accountInfoUpdate({
     name: undefined,
     password: password.value,
-    location: undefined
-  }).then(res => {
-    if (res.data.code === '200') {
-      password.value = ''
-      confirmPassword.value = ''
-      ElMessageBox.alert(
-        `请重新登录`,
-        '修改成功',
-        {
-          customClass: "customDialog",
-          confirmButtonText: '跳转到登录',
-          type: "success",
-          showClose: false,
-          roundButton: true,
-          center: true
-        }
-      ).then(() => router.push({ path: "/login" }))
-    } else if (res.data.code === '400') {
+    location: undefined,
+  }).then((res) => {
+    if (res.data.code === "200") {
+      password.value = "";
+      confirmPassword.value = "";
+      ElMessageBox.alert(`请重新登录`, "修改成功", {
+        customClass: "customDialog",
+        confirmButtonText: "跳转到登录",
+        type: "success",
+        showClose: false,
+        roundButton: true,
+        center: true,
+      }).then(() => router.push({ path: "/login" }));
+    } else if (res.data.code === "400") {
       ElMessage({
-        customClass: 'customMessage',
-        type: 'error',
+        customClass: "customMessage",
+        type: "error",
         message: res.data.msg,
-      })
-      password.value = ''
-      confirmPassword.value = ''
+      });
+      password.value = "";
+      confirmPassword.value = "";
     }
-  })
+  });
 }
 
 const goToManagement = () => {
-  router.push({ path: '/management' });
+  router.push({ path: "/management" });
 };
 </script>
 
@@ -151,18 +149,27 @@ const goToManagement = () => {
         </div>
 
         <div v-if="role === 'MANAGER'" class="management-btn">
-          <el-button class="button" type="primary" @click="goToManagement">管理商场</el-button>
+          <el-button class="button" type="primary" @click="goToManagement"
+            >管理商场</el-button
+          >
         </div>
       </div>
-
     </div>
     <!-- 右侧：编辑/修改表单区域 -->
     <div class="edit-section">
       <div class="tab-bar">
-        <div class="tab-item" :class="{ active: showInfoEdit }" @click="showInfoEdit = true">
+        <div
+          class="tab-item"
+          :class="{ active: showInfoEdit }"
+          @click="showInfoEdit = true"
+        >
           个人信息
         </div>
-        <div class="tab-item" :class="{ active: !showInfoEdit }" @click="showInfoEdit = false">
+        <div
+          class="tab-item"
+          :class="{ active: !showInfoEdit }"
+          @click="showInfoEdit = false"
+        >
           修改密码
         </div>
       </div>
@@ -190,11 +197,26 @@ const goToManagement = () => {
           <el-form-item label="新密码">
             <el-input type="password" v-model="password" placeholder="••••••••" />
           </el-form-item>
-          <el-form-item :label="hasConfirmPasswordInput && !isPasswordIdentical ? '密码不一致' : '确认新密码'">
-            <el-input type="password" v-model="confirmPassword" placeholder="••••••••" :class="{'error-warn-input': hasConfirmPasswordInput && !isPasswordIdentical}" />
+          <el-form-item
+            :label="
+              hasConfirmPasswordInput && !isPasswordIdentical
+                ? '密码不一致'
+                : '确认新密码'
+            "
+          >
+            <el-input
+              type="password"
+              v-model="confirmPassword"
+              placeholder="••••••••"
+              :class="{
+                'error-warn-input': hasConfirmPasswordInput && !isPasswordIdentical,
+              }"
+            />
           </el-form-item>
           <el-form-item>
-            <el-button class="button" @click="updatePassword" :disabled="changeDisabled">修改密码</el-button>
+            <el-button class="button" @click="updatePassword" :disabled="changeDisabled"
+              >修改密码</el-button
+            >
           </el-form-item>
         </el-form>
       </div>
@@ -206,19 +228,18 @@ const goToManagement = () => {
 /* 修改后的 dashboard-container */
 .dashboard-container {
   margin-left: 10%;
-  padding: 100px;           /* 增大整体内边距 */
+  padding: 100px; /* 增大整体内边距 */
   display: flex;
-  gap: 20px;                /* 增加左右两侧卡片之间的间距 */
+  gap: 20px; /* 增加左右两侧卡片之间的间距 */
   font-family: "Segoe UI", Helvetica, "PingFang SC", sans-serif;
   color: #333;
-
 }
 
 /* 修改后的左侧：用户信息展示卡片 */
 .user-summary {
   background-color: #f9f9f9;
   border-radius: 12px;
-  padding: 60px 50px 250px;       /* 增大内边距 */
+  padding: 60px 50px 250px; /* 增大内边距 */
   flex: 1 1 40%;
   text-align: left;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -250,7 +271,7 @@ const goToManagement = () => {
 .info-details {
   display: flex;
   flex-direction: column;
-  gap: 20px;               /* 增大每项间距 */
+  gap: 20px; /* 增大每项间距 */
   margin-left: 10px;
 }
 
@@ -262,7 +283,7 @@ const goToManagement = () => {
 .info-label {
   font-size: 12px;
   color: #999;
-  margin-bottom: 0px;      /* 稍微增加间距 */
+  margin-bottom: 0px; /* 稍微增加间距 */
 }
 
 .info-value {
@@ -274,7 +295,7 @@ const goToManagement = () => {
 .edit-section {
   background-color: #ffffff;
   border-radius: 12px;
-  padding: 60px;           /* 保持足够的内边距 */
+  padding: 60px; /* 保持足够的内边距 */
   flex: 1 1 100%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   margin-right: 12%;
@@ -285,7 +306,7 @@ const goToManagement = () => {
   display: flex;
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 40px;
-  gap: 30px;               /* 为切换按钮增加间距 */
+  gap: 30px; /* 为切换按钮增加间距 */
 }
 
 .tab-item {
@@ -303,12 +324,12 @@ const goToManagement = () => {
 
 /* 修改表单区域 */
 .form-container {
-  max-width: 600px;       /* 限制表单宽度 */
+  max-width: 600px; /* 限制表单宽度 */
 }
 
 /* 调整每个表单项间距 */
 .el-form-item {
-  margin-bottom: 28px;     /* 稍大一些 */
+  margin-bottom: 28px; /* 稍大一些 */
 }
 
 /* 错误输入样式保持不变 */
@@ -330,7 +351,8 @@ const goToManagement = () => {
     padding: 20px;
     gap: 20px;
   }
-  .user-summary, .edit-section {
+  .user-summary,
+  .edit-section {
     flex: none;
   }
   .form-container {

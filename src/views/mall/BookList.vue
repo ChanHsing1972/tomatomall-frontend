@@ -106,7 +106,7 @@ const addToCart = () => {
       v-model="detailDialogVisible"
       width="60%"
       top="10vh"
-      custom-class="detail-dialog"
+      class="detail-dialog"
     >
       <div class="dialog-content">
         <!-- 左侧大图区域 -->
@@ -155,7 +155,7 @@ const addToCart = () => {
 <style>
 /* 全局基础样式 */
 * {
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   box-sizing: border-box;
 }
 
@@ -205,14 +205,14 @@ const addToCart = () => {
   margin-bottom: 0;
 }
 .product-card:hover .product-image {
-  transform: scale(1.05);
+  transform: scale(1.07);
 }
 
 /* 卡片信息 */
 
 .product-title {
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
   color: #000;
   overflow: hidden;
   margin-bottom: 0px;
@@ -222,10 +222,13 @@ const addToCart = () => {
 .product-description {
   font-size: 12px;
   color: #666;
-  margin-top: 5px;
-  margin-bottom: 15px;
-  height: 40px;
+  margin-top: 4px;
+  height: 20px;
   overflow: hidden;
+  flex-grow: 0; /* 不让第一项继续扩展 */
+  white-space: nowrap; /* 防止内容换行 */
+  overflow: hidden; /* 隐藏超出部分 */
+  text-overflow: ellipsis; /* 显示省略号 */
 }
 .price-rate {
   display: flex;
