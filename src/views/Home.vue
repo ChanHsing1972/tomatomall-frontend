@@ -113,7 +113,7 @@ onMounted(() => {
 
 .hero-text h1 {
   font-size: 40px;
-  margin-bottom: 0em;
+  margin-bottom: 0;
   font-family: "Source Han Serif SC";
 }
 
@@ -188,12 +188,20 @@ onMounted(() => {
   font-size: 1.3em;
   margin-bottom: -12px;
   color: #333;
+  flex-grow: 0; /* 不让第一项继续扩展 */
+  white-space: nowrap; /* 防止内容换行 */
+  overflow: hidden; /* 隐藏超出部分 */
+  text-overflow: ellipsis; /* 显示省略号 */
 }
 
 .book-info p {
   font-size: 1em;
   color: #666;
   margin-bottom: 15px;
+  flex-grow: 0; /* 不让第一项继续扩展 */
+  white-space: nowrap; /* 防止内容换行 */
+  overflow: hidden; /* 隐藏超出部分 */
+  text-overflow: ellipsis; /* 显示省略号 */
 }
 
 .buy-btn {
