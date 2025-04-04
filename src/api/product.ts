@@ -71,7 +71,7 @@ export const deleteProduct = (id: string) => {
 // 更新库存
 export const updateStockpile = (id: string, amount: number) => {
   return axios
-    .post(`${PRODUCT_MODULE}/stockpile/${id}?amount=${amount}`, null, {
+    .patch(`${PRODUCT_MODULE}/stockpile/${id}?amount=${amount}`, null, {
       headers: { "Content-Type": "application/json" },
     })
     .then((res) => {

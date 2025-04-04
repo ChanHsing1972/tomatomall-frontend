@@ -1,68 +1,63 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ElForm, ElFormItem, ElInput, ElButton, ElMessage, ElSelect, ElOption } from 'element-plus';
+import { ElInput, ElButton, ElMessage } from "element-plus";
 import { accountRegister } from "../../api/account.ts";
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
-// 输入框值（需要在前端拦截不合法输入：是否为空+额外规则）
-const username = ref(''); // 用户名
-const name = ref(''); // 昵称
-const telephone = ref(''); // 电话号码
-const location = ref(''); // 地址
-const password = ref(''); // 密码
-const confirmPassword = ref(''); // 确认密码
-const email = ref(''); // 邮箱
-const role = ref('CUSTOMER'); // 身份，默认为顾客
-const avatar = ref('');//头像
+// 输入框值
+const username = ref('');
+const name = ref('');
+const telephone = ref('');
+const location = ref('');
+const password = ref('');
+const confirmPassword = ref('');
+const email = ref('');
+const role = ref('CUSTOMER');
+const avatar = ref('');
 
-// 用户名是否为空
+// 校验逻辑
 const hasUsernameInput = computed(() => username.value.trim() !== '');
-// 昵称是否为空
 const hasNameInput = computed(() => name.value.trim() !== '');
-// 电话号码是否为空
-const hasTelInput = computed(() => telephone.value.trim() !== '');
-// 密码是否为空
 const hasPasswordInput = computed(() => password.value.trim() !== '');
-// 重复密码是否为空
 const hasConfirmPasswordInput = computed(() => confirmPassword.value.trim() !== '');
-// 地址是否为空
-const hasEmailInput = computed(() => email.value.trim() !== '');
-// 电话号码的规则
-const chinaMobileRegex = /^1(3[0-9]|4[579]|5[0-35-9]|6[2567]|7[0-8]|8[0-9]|9[189])\d{8}$/;
-const telLegal = computed(() => chinaMobileRegex.test(telephone.value));
-// 邮箱的规则
-const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-const emailLegal = computed(() => emailRegex.test(email.value));
-// 重复密码的规则
 const isPasswordIdentical = computed(() => password.value === confirmPassword.value);
-// 注册按钮可用性
+
+const telLegal = computed(() => {
+  const chinaMobileRegex = /^1(3[0-9]|4[579]|5[0-35-9]|6[2567]|7[0-8]|8[0-9]|9[189])\d{8}$/;
+  return telephone.value.trim() === '' || chinaMobileRegex.test(telephone.value.trim());
+});
+const emailLegal = computed(() => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return email.value.trim() === '' || emailRegex.test(email.value.trim());
+});
+
 const registerDisabled = computed(() => {
   return !(
-      hasUsernameInput.value &&
-      hasPasswordInput.value &&
-      hasConfirmPasswordInput.value &&
-      isPasswordIdentical.value &&
-      hasNameInput.value &&// 添加昵称校验
-      ((hasEmailInput.value && emailLegal.value) || !hasEmailInput.value) &&
-      ((hasTelInput.value && telLegal.value) || !hasTelInput.value)
+    hasUsernameInput.value &&
+    hasNameInput.value &&
+    hasPasswordInput.value &&
+    hasConfirmPasswordInput.value &&
+    isPasswordIdentical.value &&
+    telLegal.value &&
+    emailLegal.value
   );
 });
 
-// 注册按钮触发
+// 注册操作
 function handleRegister() {
   accountRegister({
-    role: role.value, // 根据选择的身份注册
+    role: role.value,
     username: username.value.trim(),
     name: name.value.trim(),
     telephone: telephone.value.trim(),
-    password: password.value.trim(),
+    password: password.value,
     location: location.value.trim(),
     email: email.value.trim(),
     avatar: avatar.value.trim(),
   }).then(res => {
-    if (res.data.code === '200') {  // 类型守卫，它检查 res.data 对象中是否存在名为 code 的属性
+    if (res.data.code === '200') {
       ElMessage({
         message: "注册成功！请登录账号",
         type: 'success',
@@ -81,128 +76,203 @@ function handleRegister() {
 </script>
 
 <template>
-  <el-main class="main-frame bgimage">
-    <el-card class="login-card" @keyup.enter="handleRegister">
-      <div>
-        <h1>创建新账户</h1>
-        <el-form>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="用户名" label-width="80px" required>
-                <el-input id="username" v-model="username" placeholder="请输入用户名" class="input-width" />
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="24">
-              <el-form-item label="昵称" label-width="80px" required>
-                <el-input id="name" v-model="name" placeholder="请输入昵称" class="input-width" />
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="24">
-              <el-form-item label="密码" label-width="80px" required>
-                <el-input type="password" id="password" v-model="password" placeholder="请输入密码" class="input-width" />
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="24">
-              <el-form-item label="确认密码" label-width="80px" required>
-                <el-input type="password" id="confirm-password"
-                          v-model="confirmPassword"
-                          :class="['input-width', { 'error-warn-input': (hasConfirmPasswordInput && !isPasswordIdentical) }]"
-                          placeholder="请再次输入密码" />
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="24">
-              <el-form-item label="身份" label-width="80px" required>
-                <el-select v-model="role" placeholder="请选择身份" class="input-width">
-                  <el-option label="顾客" value="CUSTOMER" />
-                  <el-option label="管理员" value="ADMIN" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="24">
-              <el-form-item label="地址" label-width="80px">
-                <el-input id="address" v-model="location" placeholder="请输入地址（非必填）" class="input-width" />
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="24">
-              <el-form-item label="手机号" label-width="80px">
-                <el-input id="tel"
-                          v-model="telephone" :class="{'error-warn-input': (hasTelInput && !telLegal)}"
-                          placeholder="请输入手机号（非必填）" />
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="24">
-              <el-form-item label="邮箱" label-width="80px">
-                <el-input id="email"
-                          v-model="email" :class="{'error-warn-input' :(hasEmailInput && !emailLegal)}"
-                          placeholder="请输入邮箱（非必填）" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <span class="button-group">
-            <el-button @click.prevent="handleRegister"
-                       :disabled="registerDisabled"
-                       type="primary">
+  <div class="register-container">
+    <div class="apple-login-wrapper">
+      <div class="login-box">
+        <h1 class="title">创建新账户</h1>
+        <p class="subtitle">番茄书城欢迎您</p>
+        <div class="form-box" @keyup.enter="handleRegister">
+          <!-- 用户名 -->
+          <div class="input-group">
+            <label for="username" class="input-label">
+              用户名<span class="required">*</span>
+            </label>
+            <el-input id="username" v-model="username" placeholder="请输入用户名" class="input-field" />
+          </div>
+          <!-- 昵称 -->
+          <div class="input-group">
+            <label for="name" class="input-label">
+              昵称<span class="required">*</span>
+            </label>
+            <el-input id="name" v-model="name" placeholder="请输入昵称" class="input-field" />
+          </div>
+          <!-- 密码 -->
+          <div class="input-group">
+            <label for="password" class="input-label">
+              密码<span class="required">*</span>
+            </label>
+            <el-input id="password" type="password" v-model="password" placeholder="请输入密码" class="input-field" />
+          </div>
+          <!-- 确认密码 -->
+          <div class="input-group">
+            <label for="confirmPassword" class="input-label">
+              确认密码<span class="required">*</span>
+            </label>
+            <el-input id="confirmPassword" type="password" v-model="confirmPassword" placeholder="请再次输入密码"
+              class="input-field" />
+          </div>
+          <!-- 手机号 -->
+          <div class="input-group">
+            <label for="telephone" class="input-label">手机号</label>
+            <el-input id="telephone" v-model="telephone" placeholder="请输入手机号" class="input-field" />
+          </div>
+          <div v-if="telephone && !telLegal" class="error-message">
+            手机号格式不正确
+          </div>
+          <!-- 邮箱 -->
+          <div class="input-group">
+            <label for="email" class="input-label">邮箱</label>
+            <el-input id="email" v-model="email" placeholder="请输入邮箱" class="input-field" />
+          </div>
+          <div v-if="email && !emailLegal" class="error-message">
+            邮箱格式不正确
+          </div>
+          <!-- 地址 -->
+          <div class="input-group">
+            <label for="location" class="input-label">地址</label>
+            <el-input id="location" v-model="location" placeholder="请输入地址" class="input-field" />
+          </div>
+          <!-- 按钮区域 -->
+          <div class="button-group">
+            <el-button type="primary" @click.prevent="handleRegister" :disabled="registerDisabled" class="login-button">
               创建账户
             </el-button>
-            <router-link to="/login" v-slot="{navigate}">
-              <el-button @click="navigate">
+            <router-link to="/login" custom v-slot="{ navigate }">
+              <el-button type="default" @click="navigate" class="register-button">
                 去登录
               </el-button>
             </router-link>
-          </span>
-        </el-form>
+          </div>
+        </div>
       </div>
-    </el-card>
-  </el-main>
+    </div>
+  </div>
 </template>
 
 <style>
-.main-frame {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.register-container {
+  .apple-login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #f5f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .login-box {
+    background: #fff;
+    padding: 90px 60px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .title {
+    margin-top: 0px;
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0;
+    text-align: center;
+  }
+
+  .subtitle {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  .form-box {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  /* 信息项左右排列 */
+  .input-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .input-label {
+    margin-left: 10px;
+    width: 90px;
+    font-size: 14px;
+    color: #444;
+  }
 }
 
-.bgimage {
-  background-image: url("../../assets/pattern.svg");
-}
-
-.login-card {
-  width: 60%;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.input-width {
-  width: 100%; /* 统一输入框宽度 */
-}
-
-.error-warn {
+.required {
   color: red;
+  margin-left: 2px;
 }
 
-.error-warn-input {
-  --el-input-border-color: red;
-  --el-input-hover-border-color: red;
-  --el-input-focus-border-color: red;
+.input-field {
+  flex: 1;
+}
+
+/* 自定义输入框样式 */
+.input-field>>>.el-input__inner {
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.input-field>>>.el-input__inner:focus {
+  border-color: #0071e3;
+}
+
+/* 错误提示 */
+.error-message {
+  color: red;
+  font-size: 12px;
+  margin-top: -12px;
+  margin-left: 120px;
+  margin-bottom: 0px;
+}
+
+.router-link {
+  display: inline-block;
 }
 
 .button-group {
-  padding-top: 10px;
   display: flex;
-  flex-direction: row;
-  gap: 30px;
+  flex-direction: column;
+  /* 保持垂直排列 */
+  gap: 2px;
+  margin-top: 30px;
   align-items: center;
-  justify-content: right;
+  /* 让各个按钮在垂直方向对齐 */
+}
+
+.login-button,
+.register-button {
+  border-radius: 6px;
+  font-size: 16px;
+  height: 42px;
+  /* 去掉或改为和 login-button 一致的宽度 */
+  /* min-width: 400px; */
+  /* 或者统一都为 100% */
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+
+.login-button {
+  background-color: #0071e3;
+  color: #fff;
+}
+
+.register-button {
+  background-color: #eaeaea;
+  color: #333;
+  margin-right: 10px;
 }
 </style>
