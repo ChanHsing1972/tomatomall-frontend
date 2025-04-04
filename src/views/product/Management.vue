@@ -198,6 +198,9 @@ const handleCreateProduct = async () => {
     ElMessage.error("添加商品失败");
     console.error(error);
   }
+  setTimeout(() => {
+    ElMessage.closeAll();
+  }, 1500);
 };
 
 const openEditDialog = (product: Product) => {
@@ -242,6 +245,9 @@ const handleUpdateProduct = async () => {
     ElMessage.error("更新商品失败");
     console.error(error);
   }
+  setTimeout(() => {
+    ElMessage.closeAll();
+  }, 1500);
 };
 
 const handleDeleteProduct = async (productId: string) => {
@@ -251,7 +257,6 @@ const handleDeleteProduct = async (productId: string) => {
       cancelButtonText: "取消",
       type: "warning",
     });
-
     await deleteProduct(productId);
     ElMessage.success("商品删除成功");
     fetchProducts();
@@ -261,6 +266,9 @@ const handleDeleteProduct = async (productId: string) => {
       console.error(error);
     }
   }
+  setTimeout(() => {
+    ElMessage.closeAll();
+  }, 1500);
 };
 
 const openStockDialog = (product: Product) => {
@@ -286,6 +294,9 @@ const handleUpdateStock = async () => {
     ElMessage.error("更新库存失败");
     console.error(error);
   }
+  setTimeout(() => {
+    ElMessage.closeAll();
+  }, 1500);
 };
 </script>
 

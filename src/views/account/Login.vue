@@ -25,6 +25,9 @@ function handleLogin() {
         type: 'success',
         center: true,
       });
+      setTimeout(() => {
+        ElMessage.closeAll();
+      }, 1500);
       const token = res.data.result;
       sessionStorage.setItem('token', token);
       sessionStorage.setItem('username', username.value);
