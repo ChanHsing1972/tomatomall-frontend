@@ -171,7 +171,7 @@ function handleRegister() {
   }
 
   .title {
-    margin-top: 0px;
+    margin-top: 0;
     font-size: 28px;
     font-weight: 600;
     color: #333;
@@ -235,7 +235,7 @@ function handleRegister() {
   font-size: 12px;
   margin-top: -12px;
   margin-left: 120px;
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 
 .router-link {
