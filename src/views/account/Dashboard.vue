@@ -134,8 +134,8 @@ const handleAvatarSuccess = (res: any) => {
 
 
 const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
-  if (rawFile.size / 1024 / 1024 > 1) {
-    ElMessage.error('图片大小需要小于 1 MB!')
+  if (rawFile.size / 1024 / 1024 > 10) {
+    ElMessage.error('图片大小需要小于 10 MB!')
     return false
   }
   avatar.value = URL.createObjectURL(rawFile);
