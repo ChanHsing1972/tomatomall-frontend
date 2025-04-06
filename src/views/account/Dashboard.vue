@@ -4,7 +4,7 @@ import { accountInfo, accountInfoUpdate } from "../../api/account.ts";
 import { parseRole, parseTime } from "../../utils";
 import { router } from "../../router";
 import Header from "../../components/Header.vue";
-import {ElMessage, ElMessageBox, UploadProps} from "element-plus";
+import { ElMessage, ElMessageBox, UploadProps } from "element-plus";
 import { UserFilled } from "@element-plus/icons-vue";
 
 const role = sessionStorage.getItem("role") || "CUSTOMER";
@@ -19,7 +19,6 @@ const avatar = ref(''); // 用于存储头像的 URL
 const newName = ref("");
 const newEmail = ref("");
 const newLocation = ref("");
-const newAvatar = ref("");
 
 const showInfoEdit = ref(true); // true：编辑个人信息；false：修改密码
 
@@ -44,7 +43,6 @@ function getUserInfo() {
     newName.value = name.value;
     newEmail.value = email.value;
     newLocation.value = location.value;
-    newAvatar.value = avatar.value;
   });
 }
 
@@ -105,37 +103,42 @@ function updatePassword() {
   });
 }
 
-const handleAvatarSuccess: UploadProps['onSuccess'] = (
-    uploadFile
-) => {
-  newAvatar.value = URL.createObjectURL(uploadFile.raw!)
-  accountInfoUpdate({
-    avatar: newAvatar.value,
-  }).then((res) => {
-    if (res.data.code === "200") {
-      ElMessage({
-        customClass: "customMessage",
-        type: "success",
-        message: "上传成功！",
-      });
-      getUserInfo();
-    } else if (res.data.code === "400") {
-      ElMessage({
-        customClass: "customMessage",
-        type: "error",
-        message: res.data.msg,
-      });
-    }
-  });
-}
+const handleAvatarSuccess = (res: any) => {
+  if (res.code === "200") {
+    avatar.value = res.result;
+    accountInfoUpdate({
+      avatar: res.result,
+    }).then((res) => {
+      if (res.data.code === "200") {
+        ElMessage({
+          customClass: "customMessage",
+          type: "success",
+          message: "头像更新成功！",
+        });
+        setTimeout(() => {
+          ElMessage.closeAll();
+        }, 1500);
+        getUserInfo();
+      } else if (res.data.code === "400") {
+        ElMessage({
+          customClass: "customMessage",
+          type: "error",
+          message: res.data.msg,
+        });
+      }
+    });
+  } else {
+    ElMessage.error("上传失败");
+  }
+};
+
+
 const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
-  if (rawFile.type !== 'image/jpeg') {
-    ElMessage.error('图片必须是JPG/JPEG格式！')
-    return false
-  } else if (rawFile.size / 1024 / 1024 > 10) {
-    ElMessage.error('图片大小需要小于10MB!')
+  if (rawFile.size / 1024 / 1024 > 1) {
+    ElMessage.error('图片大小需要小于 1 MB!')
     return false
   }
+  avatar.value = URL.createObjectURL(rawFile);
   return true
 }
 
@@ -150,12 +153,9 @@ const goToManagement = () => {
     <!-- 左侧：完整用户信息展示卡片 -->
     <div class="user-summary">
       <div class="header-info">
-        <el-upload
-            class="avatar-uploader"
-            :show-file-list="false"
-            :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload">
-          <img v-if="avatar" class="user-avatar" :src="avatar" alt="">
+        <el-upload class="avatar-uploader" action="http://localhost:8080/api/files/images" :show-file-list="false"
+          :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+          <img v-if="avatar" class="user-avatar" :src="avatar" alt="avatar">
           <el-avatar v-else class="user-avatar" :icon="UserFilled" :size="80" />
         </el-upload>
         <div class="welcome-name">
@@ -195,27 +195,17 @@ const goToManagement = () => {
         </div>
 
         <div v-if="role === 'MANAGER'" class="management-btn">
-          <el-button class="button" type="primary" @click="goToManagement"
-            >管理商场</el-button
-          >
+          <el-button class="button" type="primary" @click="goToManagement">管理商场</el-button>
         </div>
       </div>
     </div>
     <!-- 右侧：编辑/修改表单区域 -->
     <div class="edit-section">
       <div class="tab-bar">
-        <div
-          class="tab-item"
-          :class="{ active: showInfoEdit }"
-          @click="showInfoEdit = true"
-        >
+        <div class="tab-item" :class="{ active: showInfoEdit }" @click="showInfoEdit = true">
           个人信息
         </div>
-        <div
-          class="tab-item"
-          :class="{ active: !showInfoEdit }"
-          @click="showInfoEdit = false"
-        >
+        <div class="tab-item" :class="{ active: !showInfoEdit }" @click="showInfoEdit = false">
           修改密码
         </div>
       </div>
@@ -243,26 +233,16 @@ const goToManagement = () => {
           <el-form-item label="新密码">
             <el-input type="password" v-model="password" placeholder="••••••••" />
           </el-form-item>
-          <el-form-item
-            :label="
-              hasConfirmPasswordInput && !isPasswordIdentical
-                ? '密码不一致'
-                : '确认新密码'
-            "
-          >
-            <el-input
-              type="password"
-              v-model="confirmPassword"
-              placeholder="••••••••"
-              :class="{
-                'error-warn-input': hasConfirmPasswordInput && !isPasswordIdentical,
-              }"
-            />
+          <el-form-item :label="hasConfirmPasswordInput && !isPasswordIdentical
+            ? '密码不一致'
+            : '确认新密码'
+            ">
+            <el-input type="password" v-model="confirmPassword" placeholder="••••••••" :class="{
+              'error-warn-input': hasConfirmPasswordInput && !isPasswordIdentical,
+            }" />
           </el-form-item>
           <el-form-item>
-            <el-button class="button" @click="updatePassword" :disabled="changeDisabled"
-              >修改密码</el-button
-            >
+            <el-button class="button" @click="updatePassword" :disabled="changeDisabled">修改密码</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -274,9 +254,11 @@ const goToManagement = () => {
 /* 修改后的 dashboard-container */
 .dashboard-container {
   margin-left: 10%;
-  padding: 100px; /* 增大整体内边距 */
+  padding: 100px;
+  /* 增大整体内边距 */
   display: flex;
-  gap: 20px; /* 增加左右两侧卡片之间的间距 */
+  gap: 20px;
+  /* 增加左右两侧卡片之间的间距 */
   font-family: "Segoe UI", Helvetica, "PingFang SC", sans-serif;
   color: #333;
 }
@@ -285,7 +267,8 @@ const goToManagement = () => {
 .user-summary {
   background-color: #f9f9f9;
   border-radius: 12px;
-  padding: 60px 50px 250px; /* 增大内边距 */
+  padding: 60px 50px 250px;
+  /* 增大内边距 */
   flex: 1 1 40%;
   text-align: left;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -317,7 +300,8 @@ const goToManagement = () => {
 .info-details {
   display: flex;
   flex-direction: column;
-  gap: 20px; /* 增大每项间距 */
+  gap: 20px;
+  /* 增大每项间距 */
   margin-left: 10px;
 }
 
@@ -329,7 +313,8 @@ const goToManagement = () => {
 .info-label {
   font-size: 12px;
   color: #999;
-  margin-bottom: 0; /* 稍微增加间距 */
+  margin-bottom: 0;
+  /* 稍微增加间距 */
 }
 
 .info-value {
@@ -341,7 +326,8 @@ const goToManagement = () => {
 .edit-section {
   background-color: #ffffff;
   border-radius: 12px;
-  padding: 60px; /* 保持足够的内边距 */
+  padding: 60px;
+  /* 保持足够的内边距 */
   flex: 1 1 100%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   margin-right: 12%;
@@ -352,7 +338,8 @@ const goToManagement = () => {
   display: flex;
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 40px;
-  gap: 30px; /* 为切换按钮增加间距 */
+  gap: 30px;
+  /* 为切换按钮增加间距 */
 }
 
 .tab-item {
@@ -370,12 +357,14 @@ const goToManagement = () => {
 
 /* 修改表单区域 */
 .form-container {
-  max-width: 600px; /* 限制表单宽度 */
+  max-width: 600px;
+  /* 限制表单宽度 */
 }
 
 /* 调整每个表单项间距 */
 .el-form-item {
-  margin-bottom: 28px; /* 稍大一些 */
+  margin-bottom: 28px;
+  /* 稍大一些 */
 }
 
 /* 错误输入样式保持不变 */
@@ -392,8 +381,10 @@ const goToManagement = () => {
 .user-avatar {
   width: 80px;
   height: 80px;
-  border-radius: 50%; /* 使图片显示为圆形 */
-  object-fit: cover; /* 确保图片填充整个区域 */
+  border-radius: 50%;
+  /* 使图片显示为圆形 */
+  object-fit: cover;
+  /* 确保图片填充整个区域 */
 }
 
 /* Responsive adjustments 保持一致 */
@@ -404,10 +395,12 @@ const goToManagement = () => {
     padding: 20px;
     gap: 20px;
   }
+
   .user-summary,
   .edit-section {
     flex: none;
   }
+
   .form-container {
     max-width: 100%;
   }
