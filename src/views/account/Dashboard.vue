@@ -4,7 +4,7 @@ import { accountInfo, accountInfoUpdate } from "../../api/account.ts";
 import { parseRole, parseTime } from "../../utils";
 import { router } from "../../router";
 import Header from "../../components/Header.vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import {ElMessage, ElMessageBox, UploadProps} from "element-plus";
 import { UserFilled } from "@element-plus/icons-vue";
 
 const role = sessionStorage.getItem("role") || "CUSTOMER";
@@ -14,10 +14,12 @@ const telephone = ref("");
 const location = ref("");
 const createTime = ref("");
 const email = ref("");
+const avatar = ref(''); // 用于存储头像的 URL
 
 const newName = ref("");
 const newEmail = ref("");
 const newLocation = ref("");
+const newAvatar = ref("");
 
 const showInfoEdit = ref(true); // true：编辑个人信息；false：修改密码
 
@@ -36,11 +38,13 @@ function getUserInfo() {
     name.value = result.name;
     telephone.value = result.telephone;
     location.value = result.location;
+    avatar.value = result.avatar;
     createTime.value = parseTime(result.createTime);
     email.value = result.email;
     newName.value = name.value;
     newEmail.value = email.value;
     newLocation.value = location.value;
+    newAvatar.value = avatar.value;
   });
 }
 
@@ -76,6 +80,7 @@ function updatePassword() {
     name: undefined,
     password: password.value,
     location: undefined,
+    avatar: undefined,
   }).then((res) => {
     if (res.data.code === "200") {
       password.value = "";
@@ -100,6 +105,40 @@ function updatePassword() {
   });
 }
 
+const handleAvatarSuccess: UploadProps['onSuccess'] = (
+    uploadFile
+) => {
+  newAvatar.value = URL.createObjectURL(uploadFile.raw!)
+  accountInfoUpdate({
+    avatar: newAvatar.value,
+  }).then((res) => {
+    if (res.data.code === "200") {
+      ElMessage({
+        customClass: "customMessage",
+        type: "success",
+        message: "上传成功！",
+      });
+      getUserInfo();
+    } else if (res.data.code === "400") {
+      ElMessage({
+        customClass: "customMessage",
+        type: "error",
+        message: res.data.msg,
+      });
+    }
+  });
+}
+const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
+  if (rawFile.type !== 'image/jpeg') {
+    ElMessage.error('图片必须是JPG/JPEG格式！')
+    return false
+  } else if (rawFile.size / 1024 / 1024 > 10) {
+    ElMessage.error('图片大小需要小于10MB!')
+    return false
+  }
+  return true
+}
+
 const goToManagement = () => {
   router.push({ path: "/management" });
 };
@@ -111,7 +150,14 @@ const goToManagement = () => {
     <!-- 左侧：完整用户信息展示卡片 -->
     <div class="user-summary">
       <div class="header-info">
-        <el-avatar class="user-avatar" :icon="UserFilled" :size="80" />
+        <el-upload
+            class="avatar-uploader"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload">
+          <img v-if="avatar" class="user-avatar" :src="avatar" alt="">
+          <el-avatar v-else class="user-avatar" :icon="UserFilled" :size="80" />
+        </el-upload>
         <div class="welcome-name">
           <span class="welcome-text">欢迎回来,</span>
           <span class="user-name">{{ name }}</span>
@@ -283,7 +329,7 @@ const goToManagement = () => {
 .info-label {
   font-size: 12px;
   color: #999;
-  margin-bottom: 0px; /* 稍微增加间距 */
+  margin-bottom: 0; /* 稍微增加间距 */
 }
 
 .info-value {
@@ -341,6 +387,13 @@ const goToManagement = () => {
 
 .button {
   margin-top: 10px;
+}
+
+.user-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%; /* 使图片显示为圆形 */
+  object-fit: cover; /* 确保图片填充整个区域 */
 }
 
 /* Responsive adjustments 保持一致 */
