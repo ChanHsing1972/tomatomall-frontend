@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { Delete } from "@element-plus/icons-vue";
+import {ref, onMounted} from "vue";
+import {ElMessage, ElMessageBox} from "element-plus";
+import {Delete} from "@element-plus/icons-vue";
 import {
   createProduct,
   getProductList,
@@ -97,15 +97,15 @@ const fetchProducts = async () => {
 
     // 遍历每个商品，获取库存数据
     await Promise.all(
-      productList.value.map(async (product) => {
-        try {
-          const stockResponse = await getStockpile(product.id);
-          product.stock = stockResponse.data.result.amount;
-        } catch (error) {
-          console.error(`获取商品 ${product.id} 库存失败`, error);
-          product.stock = 0;
-        }
-      })
+        productList.value.map(async (product) => {
+          try {
+            const stockResponse = await getStockpile(product.id);
+            product.stock = stockResponse.data.result.amount;
+          } catch (error) {
+            console.error(`获取商品 ${product.id} 库存失败`, error);
+            product.stock = 0;
+          }
+        })
     );
   } catch (error) {
     ElMessage.error("获取商品列表失败");
@@ -161,10 +161,10 @@ const removeEditSpec = (index: number) => {
 const handleCreateProduct = async () => {
   try {
     if (
-      !newProduct.value.title ||
-      !newProduct.value.description ||
-      !newProduct.value.price ||
-      !newProduct.value.cover
+        !newProduct.value.title ||
+        !newProduct.value.description ||
+        !newProduct.value.price ||
+        !newProduct.value.cover
     ) {
       ElMessage.warning("请填写完整商品信息");
       return;
@@ -172,13 +172,13 @@ const handleCreateProduct = async () => {
 
     // 转换表单规格为API需要的完整格式
     const apiSpecifications: Spec[] = newProduct.value.specifications
-      .filter((spec: FormSpec) => spec.item && spec.value)
-      .map((spec: FormSpec) => ({
-        id: "", // 后端会生成
-        item: spec.item,
-        value: spec.value,
-        productId: "", // 创建后关联
-      }));
+        .filter((spec: FormSpec) => spec.item && spec.value)
+        .map((spec: FormSpec) => ({
+          id: spec.id, // 后端会生成
+          item: spec.item,
+          value: spec.value,
+          productId: spec.productId, // 创建后关联
+        }));
 
     console.log("创建商品数据:", {
       ...newProduct.value,
@@ -214,10 +214,10 @@ const openEditDialog = (product: Product) => {
 const handleUpdateProduct = async () => {
   try {
     if (
-      !currentProduct.value.title ||
-      !currentProduct.value.description ||
-      !currentProduct.value.price ||
-      !currentProduct.value.cover
+        !currentProduct.value.title ||
+        !currentProduct.value.description ||
+        !currentProduct.value.price ||
+        !currentProduct.value.cover
     ) {
       ElMessage.warning("请填写完整商品信息");
       return;
@@ -225,13 +225,13 @@ const handleUpdateProduct = async () => {
 
     // 确保规格参数完整
     const specsToUpdate: Spec[] = currentProduct.value.specifications
-      .filter((spec: Spec) => spec.item && spec.value)
-      .map((spec: Spec) => ({
-        id: spec.id || "", // 保留已有ID或设为空
-        item: spec.item,
-        value: spec.value,
-        productId: currentProduct.value.id, // 关联当前商品ID
-      }));
+        .filter((spec: Spec) => spec.item && spec.value)
+        .map((spec: Spec) => ({
+          id: spec.id || "", // 保留已有ID或设为空
+          item: spec.item,
+          value: spec.value,
+          productId: currentProduct.value.id, // 关联当前商品ID
+        }));
 
     await updateProduct({
       ...currentProduct.value,
@@ -301,7 +301,7 @@ const handleUpdateStock = async () => {
 </script>
 
 <template>
-  <Header />
+  <Header/>
 
   <el-main class="main-container">
     <el-card class="aside-card">
@@ -310,15 +310,15 @@ const handleUpdateStock = async () => {
       </el-button>
 
       <el-table :data="productList" style="width: 100%" border>
-        <el-table-column prop="id" label="商品ID" width="100" />
-        <el-table-column prop="title" label="商品名称" width="180" />
+        <el-table-column prop="id" label="商品ID" width="100"/>
+        <el-table-column prop="title" label="商品名称" width="180"/>
         <el-table-column label="封面" width="120">
           <template #default="{ row }">
-            <img :src="row.cover" style="width: 100px; height: auto" />
+            <img :src="row.cover" style="width: 100px; height: auto"/>
           </template>
         </el-table-column>
-        <el-table-column prop="price" label="价格" width="100" />
-        <el-table-column prop="rate" label="评分" width="80" />
+        <el-table-column prop="price" label="价格" width="100"/>
+        <el-table-column prop="rate" label="评分" width="80"/>
         <el-table-column label="规格" width="150">
           <template #default="{ row }">
             <el-tag v-for="spec in row.specifications" :key="spec.id" style="margin: 2px">
@@ -341,39 +341,35 @@ const handleUpdateStock = async () => {
       </el-table>
     </el-card>
 
-    <!-- 将添加商品卡片改成对话框形式 -->
     <el-dialog v-model="displayCreateCard" title="添加商品" width="60%">
       <el-form :model="newProduct" label-width="80px">
-        <el-form-item label="商品ID" required>
-          <el-input v-model="newProduct.id" />
-        </el-form-item>
         <el-form-item label="名称" required>
-          <el-input v-model="newProduct.title" />
+          <el-input v-model="newProduct.title"/>
         </el-form-item>
         <el-form-item label="描述" required>
-          <el-input type="textarea" v-model="newProduct.description" />
+          <el-input type="textarea" v-model="newProduct.description"/>
         </el-form-item>
         <el-form-item label="价格" required>
-          <el-input v-model="newProduct.price" type="number" min="0" step="0.01" />
+          <el-input v-model="newProduct.price" type="number" min="0" step="0.01"/>
         </el-form-item>
         <el-form-item label="评分">
-          <el-input v-model="newProduct.rate" type="number" min="0" max="5" step="0.1" />
+          <el-input v-model="newProduct.rate" type="number" min="0" max="5" step="0.1"/>
         </el-form-item>
         <el-form-item label="封面 URL" required>
-          <el-input v-model="newProduct.cover" />
+          <el-input v-model="newProduct.cover"/>
         </el-form-item>
         <el-form-item label="详情">
-          <el-input type="textarea" v-model="newProduct.detail" />
+          <el-input type="textarea" v-model="newProduct.detail"/>
         </el-form-item>
         <el-form-item label="规格参数">
           <div v-for="(spec, index) in newProduct.specifications" :key="index" class="spec-item">
-            <el-input v-model="spec.id" placeholder="id" style="width: 150px; margin-right: 10px" />
-            <el-input v-model="spec.item" placeholder="参数名" style="width: 150px; margin-right: 10px" />
-            <el-input v-model="spec.value" placeholder="参数值" style="width: 150px; margin-right: 10px" />
-            <el-input v-model="spec.productId" placeholder="商品ID" style="width: 150px; margin-right: 10px" />
+            <el-input v-model="spec.id" placeholder="id" style="width: 150px; margin-right: 10px"/>
+            <el-input v-model="spec.item" placeholder="参数名" style="width: 150px; margin-right: 10px"/>
+            <el-input v-model="spec.value" placeholder="参数值" style="width: 150px; margin-right: 10px"/>
+            <el-input v-model="spec.productId" placeholder="商品ID" style="width: 150px; margin-right: 10px"/>
             <el-button type="danger" size="small" @click="removeSpec(index)" circle>
               <el-icon>
-                <Delete />
+                <Delete/>
               </el-icon>
             </el-button>
           </div>
@@ -390,31 +386,31 @@ const handleUpdateStock = async () => {
     <el-dialog v-model="editDialogVisible" title="编辑商品信息" width="60%">
       <el-form :model="currentProduct" label-width="80px">
         <el-form-item label="标题" required>
-          <el-input v-model="currentProduct.title" />
+          <el-input v-model="currentProduct.title"/>
         </el-form-item>
         <el-form-item label="描述" required>
-          <el-input type="textarea" v-model="currentProduct.description" />
+          <el-input type="textarea" v-model="currentProduct.description"/>
         </el-form-item>
         <el-form-item label="价格" required>
-          <el-input v-model="currentProduct.price" type="number" min="0" step="0.01" />
+          <el-input v-model="currentProduct.price" type="number" min="0" step="0.01"/>
         </el-form-item>
         <el-form-item label="评分">
-          <el-input v-model="currentProduct.rate" type="number" min="0" max="5" step="0.1" />
+          <el-input v-model="currentProduct.rate" type="number" min="0" max="5" step="0.1"/>
         </el-form-item>
         <el-form-item label="封面URL" required>
-          <el-input v-model="currentProduct.cover" />
+          <el-input v-model="currentProduct.cover"/>
         </el-form-item>
         <el-form-item label="详情">
-          <el-input type="textarea" v-model="currentProduct.detail" />
+          <el-input type="textarea" v-model="currentProduct.detail"/>
         </el-form-item>
 
         <el-form-item label="规格参数">
           <div v-for="(spec, index) in currentProduct.specifications" :key="spec.id || index" class="spec-item">
-            <el-input v-model="spec.item" placeholder="参数名" style="width: 150px; margin-right: 10px" />
-            <el-input v-model="spec.value" placeholder="参数值" style="width: 150px; margin-right: 10px" />
+            <el-input v-model="spec.item" placeholder="参数名" style="width: 150px; margin-right: 10px"/>
+            <el-input v-model="spec.value" placeholder="参数值" style="width: 150px; margin-right: 10px"/>
             <el-button type="danger" size="small" @click="removeEditSpec(index)" circle>
               <el-icon>
-                <Delete />
+                <Delete/>
               </el-icon>
             </el-button>
           </div>
@@ -434,7 +430,7 @@ const handleUpdateStock = async () => {
           <span>{{ stockForm.currentStock }}</span>
         </el-form-item>
         <el-form-item label="调整数量" required>
-          <el-input-number v-model="stockForm.amount" :min="-10000" :max="10000" />
+          <el-input-number v-model="stockForm.amount" :min="-10000" :max="10000"/>
         </el-form-item>
       </el-form>
       <template #footer>
