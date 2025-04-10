@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import Header from "../../components/Header.vue";
 import { getProductList, getProductDetail } from "../../api/product.ts";
+import {addToCart} from "../../api/cart.ts";
 
 interface Product {
   id: string;
@@ -61,7 +62,8 @@ const openDetailDialog = async (product: Product) => {
   }
 };
 
-const addToCart = () => {
+const addToCartHandle = (productId:string) => {
+  addToCart(productId);
   ElMessage.success("已添加到购物车");
   setTimeout(() => {
     ElMessage.closeAll();
@@ -128,7 +130,7 @@ const addToCart = () => {
       </div>
       <template #footer>
         <el-button @click="detailDialogVisible = false">关闭</el-button>
-        <el-button type="primary" @click="addToCart">加入购物车</el-button>
+        <el-button type="primary" @click="addToCartHandle(currentProduct.id)">加入购物车</el-button>
       </template>
     </el-dialog>
   </el-main>

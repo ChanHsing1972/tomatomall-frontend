@@ -23,7 +23,7 @@ const router = createRouter({
         meta: {title: '个人信息'}
     }, {
         path: '/cart',
-        component: () => import('../views/account/Cart.vue'),
+        component: () => import('../views/mall/Cart.vue'),
         meta: {title: '购物车'}
     }, {
         path: '/orders',
