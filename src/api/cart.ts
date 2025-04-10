@@ -1,5 +1,5 @@
-import { axios } from "../utils/request";
-import { CART_MODULE } from "./_prefix";
+import {axios} from "../utils/request";
+import {CART_MODULE} from "./_prefix";
 
 
 type ShippingAddress = {
@@ -15,14 +15,19 @@ export type OrderInfo = {
     paymentMethod: string;
 };
 
+type AddToCartInfo = {
+    productId: string;
+    quantity: number;
+}
+
 // 添加商品到购物车
-export const addToCart = (productId: string, quantity: number = 1) => {
+export const addToCart = (addToCartInfo: AddToCartInfo) => {
     return axios
         .post(
             `${CART_MODULE}`,
-            { productId, quantity },
+            addToCartInfo,
             {
-                headers: { "Content-Type": "application/json" },
+                headers: {"Content-Type": "application/json"},
             }
         )
         .then((res) => {
@@ -42,9 +47,9 @@ export const updateCartItem = (cartItemId: string, quantity: number) => {
     return axios
         .patch(
             `${CART_MODULE}/${cartItemId}`,
-            { quantity },
+            {quantity},
             {
-                headers: { "Content-Type": "application/json" },
+                headers: {"Content-Type": "application/json"},
             }
         )
         .then((res) => {
@@ -55,6 +60,7 @@ export const updateCartItem = (cartItemId: string, quantity: number) => {
 // 获取购物车列表
 export const getCartList = () => {
     return axios.get(`${CART_MODULE}`).then((res) => {
+        console.log(res.data);
         return res;
     });
 };
@@ -63,7 +69,7 @@ export const getCartList = () => {
 export const checkoutCart = (orderInfo: OrderInfo) => {
     return axios
         .post(`${CART_MODULE}/checkout`, orderInfo, {
-            headers: { "Content-Type": "application/json" },
+            headers: {"Content-Type": "application/json"},
         })
         .then((res) => {
             return res;

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { ElMessage } from "element-plus";
+import {ref, onMounted} from "vue";
+import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
-import { getProductList, getProductDetail } from "../../api/product.ts";
+import {getProductList, getProductDetail} from "../../api/product.ts";
 import {addToCart} from "../../api/cart.ts";
 
 interface Product {
@@ -62,8 +62,9 @@ const openDetailDialog = async (product: Product) => {
   }
 };
 
-const addToCartHandle = (productId:string) => {
-  addToCart(productId);
+const addToCartHandle = (productId: string) => {
+  console.log(productId);
+  addToCart({productId: productId.toString(), quantity: 1});
   ElMessage.success("已添加到购物车");
   setTimeout(() => {
     ElMessage.closeAll();
@@ -73,67 +74,67 @@ const addToCartHandle = (productId:string) => {
 </script>
 
 <template>
-  <Header />
+  <Header/>
   <div class="booklist-container">
-  <el-main class="main-container">
-    <div class="product-grid">
-      <el-card class="product-card" shadow="hover" v-for="product in productList" :key="product.id"
-        @click="openDetailDialog(product)">
-        <div class="card-image-wrapper">
-          <img :src="product.cover" alt="封面" class="product-image" />
-        </div>
-        <div class="card-info">
-          <h2 class="product-title" :title="product.title">{{ product.title }}</h2>
-          <p class="product-description">{{ product.description }}</p>
-          <div class="price-rate">
-            <span class="product-price">RMB {{ product.price }}</span>
-            <el-rate class="product-rate" v-model="product.rate" disabled show-score
-              :score-template="`${product.rate} 分`" />
+    <el-main class="main-container">
+      <div class="product-grid">
+        <el-card class="product-card" shadow="hover" v-for="product in productList" :key="product.id"
+                 @click="openDetailDialog(product)">
+          <div class="card-image-wrapper">
+            <img :src="product.cover" alt="封面" class="product-image"/>
           </div>
-        </div>
-      </el-card>
-    </div>
-
-    <!-- 修改后的详情对话框 -->
-    <el-dialog v-model="detailDialogVisible" width="60%" top="10vh" class="detail-dialog">
-      <div class="dialog-content">
-        <!-- 左侧大图区域 -->
-        <div class="dialog-image">
-          <el-image :src="currentProduct.cover" fit="cover" class="detail-cover" />
-        </div>
-        <!-- 右侧信息区域：所有信息分两行排列 -->
-        <div class="dialog-info">
-          <div class="info-section">
-            <div class="info-row">
-              <div class="info-label">名称</div>
-              <div class="info-value">{{ currentProduct.title }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">价格</div>
-              <div class="info-value">RMB {{ currentProduct.price }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">评分</div>
-              <div class="info-value">{{ currentProduct.rate }} 分</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">描述</div>
-              <div class="info-value">{{ currentProduct.description }}</div>
-            </div>
-            <div class="info-row" v-for="spec in currentProduct.specifications" :key="spec.id">
-              <div class="info-label">{{ spec.item }}</div>
-              <div class="info-value">{{ spec.value }}</div>
+          <div class="card-info">
+            <h2 class="product-title" :title="product.title">{{ product.title }}</h2>
+            <p class="product-description">{{ product.description }}</p>
+            <div class="price-rate">
+              <span class="product-price">RMB {{ product.price }}</span>
+              <el-rate class="product-rate" v-model="product.rate" disabled show-score
+                       :score-template="`${product.rate} 分`"/>
             </div>
           </div>
-          <div class="product-detail" v-html="currentProduct.detail"></div>
-        </div>
+        </el-card>
       </div>
-      <template #footer>
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
-        <el-button type="primary" @click="addToCartHandle(currentProduct.id)">加入购物车</el-button>
-      </template>
-    </el-dialog>
-  </el-main>
+
+      <!-- 修改后的详情对话框 -->
+      <el-dialog v-model="detailDialogVisible" width="60%" top="10vh" class="detail-dialog">
+        <div class="dialog-content">
+          <!-- 左侧大图区域 -->
+          <div class="dialog-image">
+            <el-image :src="currentProduct.cover" fit="cover" class="detail-cover"/>
+          </div>
+          <!-- 右侧信息区域：所有信息分两行排列 -->
+          <div class="dialog-info">
+            <div class="info-section">
+              <div class="info-row">
+                <div class="info-label">名称</div>
+                <div class="info-value">{{ currentProduct.title }}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">价格</div>
+                <div class="info-value">RMB {{ currentProduct.price }}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">评分</div>
+                <div class="info-value">{{ currentProduct.rate }} 分</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">描述</div>
+                <div class="info-value">{{ currentProduct.description }}</div>
+              </div>
+              <div class="info-row" v-for="spec in currentProduct.specifications" :key="spec.id">
+                <div class="info-label">{{ spec.item }}</div>
+                <div class="info-value">{{ spec.value }}</div>
+              </div>
+            </div>
+            <div class="product-detail" v-html="currentProduct.detail"></div>
+          </div>
+        </div>
+        <template #footer>
+          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button type="primary" @click="addToCartHandle(currentProduct.id)">加入购物车</el-button>
+        </template>
+      </el-dialog>
+    </el-main>
   </div>
 </template>
 
