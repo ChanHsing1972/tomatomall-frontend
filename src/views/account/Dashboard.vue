@@ -111,23 +111,18 @@ const handleAvatarSuccess = (res: any) => {
     }).then((res) => {
       if (res.data.code === "200") {
         ElMessage({
-          customClass: "customMessage",
           type: "success",
           message: "头像更新成功！",
+          duration: 1000
         });
-        setTimeout(() => {
-          ElMessage.closeAll();
-        }, 1500);
         getUserInfo();
       } else if (res.data.code === "400") {
         ElMessage({
           customClass: "customMessage",
           type: "error",
           message: res.data.msg,
+          duration: 1000
         });
-        setTimeout(() => {
-          ElMessage.closeAll();
-        }, 1500);
       }
     });
   } else {

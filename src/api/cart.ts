@@ -21,7 +21,7 @@ type AddToCartInfo = {
 }
 
 // 添加商品到购物车
-export const addToCart = (addToCartInfo: AddToCartInfo) => {
+export const addToCart = async (addToCartInfo: AddToCartInfo) => {
     return axios
         .post(
             `${CART_MODULE}`,
@@ -36,14 +36,16 @@ export const addToCart = (addToCartInfo: AddToCartInfo) => {
 };
 
 // 从购物车删除商品
-export const removeFromCart = (cartItemId: string) => {
+export const removeFromCart = async (cartItemId: string) => {
+    console.log(cartItemId);
     return axios.delete(`${CART_MODULE}/${cartItemId}`).then((res) => {
         return res;
     });
 };
 
 // 更新购物车商品数量
-export const updateCartItem = (cartItemId: string, quantity: number) => {
+export const updateCartItem = async (cartItemId: string, quantity: number) => {
+    console.log(cartItemId, quantity);
     return axios
         .patch(
             `${CART_MODULE}/${cartItemId}`,
@@ -58,7 +60,7 @@ export const updateCartItem = (cartItemId: string, quantity: number) => {
 };
 
 // 获取购物车列表
-export const getCartList = () => {
+export const getCartList = async () => {
     return axios.get(`${CART_MODULE}`).then((res) => {
         console.log(res.data);
         return res;
@@ -66,7 +68,7 @@ export const getCartList = () => {
 };
 
 // 结算购物车
-export const checkoutCart = (orderInfo: OrderInfo) => {
+export const checkoutCart = async (orderInfo: OrderInfo) => {
     return axios
         .post(`${CART_MODULE}/checkout`, orderInfo, {
             headers: {"Content-Type": "application/json"},

@@ -2,7 +2,7 @@
 import {ref, onMounted} from "vue";
 import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
-import {getProductList, getProductDetail} from "../../api/product.ts";
+import {getProductList, getProductDetail, updateStockpile, getStockpile} from "../../api/product.ts";
 import {addToCart} from "../../api/cart.ts";
 
 interface Product {
@@ -62,14 +62,27 @@ const openDetailDialog = async (product: Product) => {
   }
 };
 
-const addToCartHandle = (productId: string) => {
-  console.log(productId);
-  addToCart({productId: productId.toString(), quantity: 1});
-  ElMessage.success("已添加到购物车");
-  setTimeout(() => {
-    ElMessage.closeAll();
-  }, 1500);
-  // 此处可添加将商品加入购物车的逻辑
+const addToCartHandle = async (productId: string) => {
+  const response = await addToCart({productId: productId.toString(), quantity: 1});
+  console.log(response);
+  if (response.data.code == "200") {
+    ElMessage({
+      message: '已加入购物袋',
+      type: 'success',
+      duration: 1000,
+      grouping: true,
+    })
+    // 更新库存
+    const productId = response.data.result.productId;
+    const stockpile = (await getStockpile(productId)).data.result.amount;
+    await updateStockpile(productId, Number(stockpile) - 1);
+  } else {
+    ElMessage({
+      message: "加入购物袋失败：" + response.data.msg,
+      type: 'error',
+      duration: 1000
+    })
+  }
 };
 </script>
 
@@ -143,7 +156,7 @@ const addToCartHandle = (productId: string) => {
   /* 全局基础样式 */
 
   * {
-    font-family: "", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     box-sizing: border-box;
   }
 
@@ -224,8 +237,6 @@ const addToCartHandle = (productId: string) => {
     flex-grow: 0;
     /* 不让第一项继续扩展 */
     white-space: nowrap;
-    /* 防止内容换行 */
-    overflow: hidden;
     /* 隐藏超出部分 */
     text-overflow: ellipsis;
     /* 显示省略号 */
@@ -233,17 +244,19 @@ const addToCartHandle = (productId: string) => {
 
   .price-rate {
     display: flex;
+    font-size: 14px;
     align-items: center;
-    justify-content: space-between;
   }
 
   .product-price {
-    font-size: 14px;
-    color: #000;
+    width: 100px;
+    white-space: nowrap;
   }
 
   .product-rate {
-    font-size: 12px;
+    width: auto;
+    font-size: 10px;
+    white-space: nowrap;
   }
 
   /* 详情对话框整体样式 */
@@ -277,7 +290,6 @@ const addToCartHandle = (productId: string) => {
     flex: 0 0 35%;
     display: flex;
     justify-content: center;
-    align-items: left;
   }
 
   .detail-cover {
