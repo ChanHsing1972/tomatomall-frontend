@@ -32,6 +32,8 @@ function handleLogin() {
       accountInfo(username.value.trim()).then(res => {
         sessionStorage.setItem('name', res.data.result.name);
         sessionStorage.setItem('role', res.data.result.role);
+        sessionStorage.setItem('telephone', res.data.result.telephone);
+        sessionStorage.setItem('location', res.data.result.location);
         router.push({path: "/home"});
       });
     } else if (res.data.code === '400') {

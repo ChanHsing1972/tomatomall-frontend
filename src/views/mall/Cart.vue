@@ -10,33 +10,13 @@ import {
 } from '../../api/cart.ts'
 import {getProductDetail} from '../../api/product.ts'
 import {ElMessage, ElImage} from 'element-plus'
-import {ArrowDown, ArrowDownBold} from "@element-plus/icons-vue";
+import {ArrowDownBold} from "@element-plus/icons-vue";
+import {router} from "../../router";
 
 const cartItems = ref<any[]>([])
 const loading = ref(false)
 const currentProduct = ref<any>({})
 const detailDialogVisible = ref(false)
-
-const checkoutForm = ref({
-  name: '',
-  telephone: '',
-  postalCode: '',
-  address: '',
-  paymentMethod: 'wechat'
-})
-const rules = {
-  name: [{required: true, message: '请输入收货人姓名', trigger: 'blur'}],
-  telephone: [
-    {required: true, message: '请输入联系电话', trigger: 'blur'},
-    {pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur'}
-  ],
-  postalCode: [
-    {required: true, message: '请输入邮政编码', trigger: 'blur'},
-    {pattern: /^\d{6}$/, message: '邮政编码为6位数字', trigger: 'blur'}
-  ],
-  address: [{required: true, message: '请输入详细地址', trigger: 'blur'}],
-  paymentMethod: [{required: true, message: '请选择支付方式', trigger: 'change'}]
-}
 
 const fetchCartList = async () => {
   try {
@@ -105,31 +85,26 @@ const checkout = () => {
     ElMessage.warning('购物车为空，无法结算')
     return
   }
+  submitCheckout()
 }
 
 const submitCheckout = async () => {
   try {
     const orderInfo: OrderInfo = {
-      cartItemIds: cartItems.value.map(item => item.id),
+      cartItemIds: cartItems.value.map(item => item.cartItemId),
       shippingAddress: {
-        name: checkoutForm.value.name,
-        telephone: checkoutForm.value.telephone,
-        postalCode: checkoutForm.value.postalCode,
-        address: checkoutForm.value.address
+        name: sessionStorage.getItem("name") ?? "",
+        telephone: sessionStorage.getItem("telephone") ?? "",
+        postalCode: "100000",
+        address: sessionStorage.getItem("location") ?? "",
       },
-      paymentMethod: checkoutForm.value.paymentMethod
+      paymentMethod: "ALIPAY"
     }
+    console.log(orderInfo)
     await checkoutCart(orderInfo)
-    detailDialogVisible.value = false
     ElMessage.success('结算成功！')
-    checkoutForm.value = {
-      name: '',
-      telephone: '',
-      postalCode: '',
-      address: '',
-      paymentMethod: 'wechat'
-    }
     await fetchCartList()
+    await router.push({path: '/orders'})
   } catch (error) {
     console.error('结算失败:', error)
     ElMessage.error('结算失败，请重试')
@@ -193,7 +168,7 @@ onMounted(() => {
             </span>
             <el-input
                 v-model="item.quantity"
-                @change="updateQuantity(item.cartItemId, $event)"
+                @change="updateQuantity(item.cartItemId, parseInt($event))"
                 class="quantity-select"
                 placeholder="请选择数量"
                 size="default"

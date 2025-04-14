@@ -174,7 +174,9 @@ const addToCartHandle = async (productId: string) => {
     display: grid;
     grid-template-columns: repeat(4, minmax(200px, 1fr));
     gap: 10px;
-    padding: 0 250px;
+    margin: 0 auto;
+    max-width: 1100px;
+    width: 100%;
   }
 
   /* 产品卡片 */

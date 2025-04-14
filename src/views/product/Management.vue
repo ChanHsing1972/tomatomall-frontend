@@ -177,7 +177,7 @@ const handleCreateProduct = async () => {
           id: spec.id, // 后端会生成
           item: spec.item,
           value: spec.value,
-          productId: spec.productId, // 创建后关联
+          productId: spec.productId ?? "", // 创建后关联
         }));
 
     console.log("创建商品数据:", {
