@@ -16,6 +16,10 @@ function logout() {
     router.push({ path: "/login" });
   });
 }
+function handleSearch() {
+  router.push({ path: "/booklist" });
+}
+
 </script>
 
 <template>
@@ -40,13 +44,19 @@ function logout() {
 
       <!-- 右侧：搜索框及用户操作 -->
       <el-col :span="6" class="right-section">
-        <el-input
-          v-model="searchQuery"
-          placeholder="搜索"
-          :prefix-icon="Search"
-          clearable
-          class="nav-search"
-        />
+        <div>
+          <el-input
+              v-model="searchQuery"
+              placeholder="搜索"
+              clearable
+              class="nav-search">
+            <template #prefix>
+              <el-icon class="search-icon" @click="handleSearch">
+                <Search />
+              </el-icon>
+            </template>
+          </el-input>
+        </div>
         <router-link to="/dashboard" class="user-link">
           <el-icon class="user-icon" :size="24"><User /></el-icon>
         </router-link>
