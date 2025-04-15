@@ -227,7 +227,13 @@ const handleUpdateProduct = async () => {
       ElMessage.warning("请填写完整商品信息");
       return;
     }
-
+    if (
+        currentProduct.value.rate>5||
+        currentProduct.value.rate<0
+    ) {
+      ElMessage.warning("评分需要在0~5");
+      return;
+    }
     // 确保规格参数完整
     const specsToUpdate: Spec[] = currentProduct.value.specifications
         .filter((spec: Spec) => spec.item && spec.value)
