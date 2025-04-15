@@ -100,9 +100,8 @@ const addToCartHandle = async (productId: string) => {
             <h2 class="product-title" :title="product.title">{{ product.title }}</h2>
             <p class="product-description">{{ product.description }}</p>
             <div class="price-rate">
-              <span class="product-price">RMB {{ product.price }}</span>
-              <el-rate class="product-rate" v-model="product.rate" disabled show-score
-                       :score-template="`${product.rate} 分`"/>
+              <span>RMB {{ product.price }}</span>
+              <span>{{ product.rate }} 分</span>
             </div>
           </div>
         </el-card>
@@ -246,20 +245,11 @@ const addToCartHandle = async (productId: string) => {
 
   .price-rate {
     display: flex;
-    font-size: 14px;
+    justify-content: space-between;
     align-items: center;
+    font-size: 14px;
   }
 
-  .product-price {
-    width: 100px;
-    white-space: nowrap;
-  }
-
-  .product-rate {
-    width: auto;
-    font-size: 10px;
-    white-space: nowrap;
-  }
 
   /* 详情对话框整体样式 */
 
