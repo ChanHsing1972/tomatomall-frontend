@@ -100,8 +100,9 @@ const addToCartHandle = async (productId: string) => {
             <h2 class="product-title" :title="product.title">{{ product.title }}</h2>
             <p class="product-description">{{ product.description }}</p>
             <div class="price-rate">
-              <span>RMB {{ product.price }}</span>
-              <span>{{ product.rate }} 分</span>
+              <span class="product-price">RMB {{ product.price }}</span>
+              <el-rate class="product-rate" v-model="product.rate" disabled show-score
+                       :score-template="`${product.rate} 分`"/>
             </div>
           </div>
         </el-card>
@@ -224,7 +225,7 @@ const addToCartHandle = async (productId: string) => {
     font-weight: 600;
     color: #000;
     overflow: hidden;
-    margin-bottom: 0px;
+    margin-bottom: 0;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -245,11 +246,25 @@ const addToCartHandle = async (productId: string) => {
 
   .price-rate {
     display: flex;
+    font-size: 14px;
     justify-content: space-between;
     align-items: center;
-    font-size: 14px;
   }
 
+  .product-price {
+    width: 100px;
+    flex-grow: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .product-rate {
+    width: 150px;
+    font-size: 10px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 
   /* 详情对话框整体样式 */
 
@@ -316,16 +331,22 @@ const addToCartHandle = async (productId: string) => {
   .info-label {
     font-size: 12px;
     color: #999;
-    width: 80px;
+    width: 70px;
     /* 固定宽度 */
     text-align: left;
   }
 
   .info-value {
+    flex-grow: 0;
     font-size: 15px;
     color: #333;
     font-weight: 400;
-    flex: 1;
+    width:350px;
+    height: 22px;
+    overflow-y: auto;
+    overflow-wrap: break-word;
+    white-space: normal;
+    word-break: break-word;
     text-align: left;
   }
 
@@ -339,6 +360,9 @@ const addToCartHandle = async (productId: string) => {
     border: 1px solid #eaeaea;
     border-radius: 8px;
     background-color: #fff;
+    overflow-wrap: break-word;
+    white-space: normal;
+    word-break: break-word;
   }
 
   /* 底部按钮 */
