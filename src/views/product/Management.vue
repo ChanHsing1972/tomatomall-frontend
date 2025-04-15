@@ -93,14 +93,14 @@ onMounted(() => {
 const fetchProducts = async () => {
   try {
     const response = await getProductList();
-    productList.value = response.data.result;
+    productList.value = response.data.data;
 
     // 遍历每个商品，获取库存数据
     await Promise.all(
         productList.value.map(async (product) => {
           try {
             const stockResponse = await getStockpile(product.id);
-            product.stock = stockResponse.data.result.amount;
+            product.stock = stockResponse.data.data.amount;
           } catch (error) {
             console.error(`获取商品 ${product.id} 库存失败`, error);
             product.stock = 0;
@@ -443,7 +443,7 @@ const handleUpdateStock = async () => {
           <span>{{ stockForm.currentStock }}</span>
         </el-form-item>
         <el-form-item label="调整数量" required>
-          <el-input-number v-model="stockForm.amount" :min="-10000" :max="10000"/>
+          <el-input-number v-model="stockForm.amount" :min="0" :max="1000000"/>
         </el-form-item>
       </el-form>
       <template #footer>
