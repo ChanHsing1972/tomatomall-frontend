@@ -290,7 +290,10 @@ onMounted(() => {
 
   .cart-header {
     text-align: center;
-    margin-bottom: 80px;
+    margin: 0 auto 80px;
+    width: 80%;
+    overflow-wrap: break-word; /* 长单词或 URL 换行 */
+    word-break: break-word;
   }
 
   .cart-header h1 {
@@ -368,6 +371,11 @@ onMounted(() => {
     margin-bottom: -5px;
     cursor: pointer;
     transition: color 0.3s ease;
+    width: 400px;
+    flex-grow: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .product-title:hover {
@@ -376,6 +384,11 @@ onMounted(() => {
     margin-bottom: -5px;
     cursor: pointer;
     transition: color 0.3s ease;
+    width: 400px;
+    flex-grow: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   /* 新增下拉框样式 */
@@ -388,6 +401,14 @@ onMounted(() => {
   .product-price {
     font-size: 14px;
     color: #666;
+    flex-grow: 0;
+    overflow: hidden;
+    width: 200px;
+    /* 不让第一项继续扩展 */
+    white-space: nowrap;
+    /* 隐藏超出部分 */
+    text-overflow: ellipsis;
+    /* 显示省略号 */
   }
 
   .action-right {
@@ -397,9 +418,17 @@ onMounted(() => {
   }
 
   .product-subtotal {
+    margin-left: 100px;
     font-size: 20px;
     font-weight: bold;
     margin-bottom: 0;
+    overflow: hidden;
+    width: 200px;
+    /* 不让第一项继续扩展 */
+    white-space: nowrap;
+    /* 隐藏超出部分 */
+    text-overflow: ellipsis;
+    /* 显示省略号 */
   }
 
   .cart-footer .summary {
@@ -431,6 +460,8 @@ onMounted(() => {
   .total-amount {
     font-weight: bold;
     font-size: 20px;
+    overflow-wrap: break-word; /* 长单词或 URL 换行 */
+    word-break: break-word;
   }
 
   .detail-dialog {
@@ -488,15 +519,21 @@ onMounted(() => {
   .info-label {
     font-size: 12px;
     color: #999;
-    width: 80px;
+    width: 70px;
     text-align: left;
   }
 
   .info-value {
+    flex-grow: 0;
     font-size: 15px;
     color: #333;
     font-weight: 400;
-    flex: 1;
+    width:350px;
+    height: 21px;
+    overflow-y: auto;
+    overflow-wrap: break-word;
+    white-space: normal;
+    word-break: break-word;
     text-align: left;
   }
 
@@ -508,6 +545,9 @@ onMounted(() => {
     border: 1px solid #eaeaea;
     border-radius: 8px;
     background-color: #fff;
+    overflow-wrap: break-word;
+    white-space: normal;
+    word-break: break-word;
   }
 
   @media (max-width: 768px) {

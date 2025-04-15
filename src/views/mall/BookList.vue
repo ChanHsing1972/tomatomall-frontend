@@ -342,7 +342,7 @@ const addToCartHandle = async (productId: string) => {
     color: #333;
     font-weight: 400;
     width:350px;
-    height: 22px;
+    height: 21px;
     overflow-y: auto;
     overflow-wrap: break-word;
     white-space: normal;
