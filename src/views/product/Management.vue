@@ -177,7 +177,7 @@ const handleCreateProduct = async () => {
           id: spec.id, // 后端会生成
           item: spec.item,
           value: spec.value,
-          productId: spec.productId, // 创建后关联
+          productId: spec.productId ?? "", // 创建后关联
         }));
 
     console.log("创建商品数据:", {
@@ -190,17 +190,22 @@ const handleCreateProduct = async () => {
       specifications: apiSpecifications,
     } as unknown) as Parameters<typeof createProduct>[0]);
 
-    ElMessage.success("商品添加成功");
+    ElMessage({
+      type: 'success',
+      message: '添加商品成功',
+      duration: 1000
+    })
+
     fetchProducts();
     displayCreateCard.value = false;
     resetNewProduct();
   } catch (error) {
-    ElMessage.error("添加商品失败");
-    console.error(error);
+    ElMessage({
+      type: 'error',
+      message: '添加商品失败',
+      duration: 1000
+    })
   }
-  setTimeout(() => {
-    ElMessage.closeAll();
-  }, 1500);
 };
 
 const openEditDialog = (product: Product) => {
@@ -238,16 +243,20 @@ const handleUpdateProduct = async () => {
       specifications: specsToUpdate,
     });
 
-    ElMessage.success("商品更新成功");
+    ElMessage({
+      type: 'success',
+      message: '更新商品成功',
+      duration: 1000
+    })
     editDialogVisible.value = false;
     fetchProducts();
   } catch (error) {
-    ElMessage.error("更新商品失败");
-    console.error(error);
+    ElMessage({
+      type: 'error',
+      message: '更新商品失败',
+      duration: 1000
+    })
   }
-  setTimeout(() => {
-    ElMessage.closeAll();
-  }, 1500);
 };
 
 const handleDeleteProduct = async (productId: string) => {
@@ -258,17 +267,21 @@ const handleDeleteProduct = async (productId: string) => {
       type: "warning",
     });
     await deleteProduct(productId);
-    ElMessage.success("商品删除成功");
+    ElMessage({
+      type: 'success',
+      message: '删除商品成功',
+      duration: 1000
+    })
     fetchProducts();
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error("删除商品失败");
-      console.error(error);
+      ElMessage({
+        type: 'error',
+        message: '删除商品失败',
+        duration: 1000
+      })
     }
   }
-  setTimeout(() => {
-    ElMessage.closeAll();
-  }, 1500);
 };
 
 const openStockDialog = (product: Product) => {
@@ -282,21 +295,21 @@ const openStockDialog = (product: Product) => {
 const handleUpdateStock = async () => {
   try {
     let amount = stockForm.value.amount;
-    console.log("更新库存数据:", {
-      productId: stockForm.value.productId,
-      amount,
-    });
     await updateStockpile(stockForm.value.productId, amount);
-    ElMessage.success("库存更新成功");
+    ElMessage({
+      type: 'success',
+      message: '库存更新成功',
+      duration: 1000
+    })
     stockDialogVisible.value = false;
     fetchProducts();
   } catch (error) {
-    ElMessage.error("更新库存失败");
-    console.error(error);
+    ElMessage({
+      type: 'error',
+      message: '库存更新失败',
+      duration: 1000
+    })
   }
-  setTimeout(() => {
-    ElMessage.closeAll();
-  }, 1500);
 };
 </script>
 

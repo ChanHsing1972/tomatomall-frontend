@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { ElInput, ElButton, ElMessage } from "element-plus";
-import { accountRegister } from "../../api/account.ts";
-import { useRouter } from 'vue-router';
+import {ref, computed} from 'vue';
+import {ElInput, ElButton, ElMessage} from "element-plus";
+import {accountRegister} from "../../api/account.ts";
+import {useRouter} from 'vue-router';
 
 const router = useRouter();
 
@@ -35,13 +35,13 @@ const emailLegal = computed(() => {
 
 const registerDisabled = computed(() => {
   return !(
-    hasUsernameInput.value &&
-    hasNameInput.value &&
-    hasPasswordInput.value &&
-    hasConfirmPasswordInput.value &&
-    isPasswordIdentical.value &&
-    telLegal.value &&
-    emailLegal.value
+      hasUsernameInput.value &&
+      hasNameInput.value &&
+      hasPasswordInput.value &&
+      hasConfirmPasswordInput.value &&
+      isPasswordIdentical.value &&
+      telLegal.value &&
+      emailLegal.value
   );
 });
 
@@ -63,7 +63,7 @@ function handleRegister() {
         type: 'success',
         center: true,
       });
-      router.push({ path: "/login" });
+      router.push({path: "/login"});
     } else if (res.data.code === '400') {
       ElMessage({
         message: res.data.msg,
@@ -79,61 +79,61 @@ function handleRegister() {
   <div class="register-container">
     <div class="apple-login-wrapper">
       <div class="login-box">
-        <h1 class="title">创建新账户</h1>
-        <p class="subtitle">番茄书城欢迎您</p>
-        <div class="form-box" @keyup.enter="handleRegister">
+        <h1 class="login-title">创建新账户</h1>
+        <p class="login-subtitle">番茄书城欢迎您</p>
+        <div class="login-form-box" @keyup.enter="handleRegister">
           <!-- 用户名 -->
-          <div class="input-group">
-            <label for="username" class="input-label">
+          <div class="login-input-group">
+            <label for="username" class="login-input-label">
               用户名<span class="required">*</span>
             </label>
-            <el-input id="username" v-model="username" placeholder="请输入用户名" class="input-field" />
+            <el-input id="username" v-model="username" placeholder="请输入用户名" class="input-field"/>
           </div>
           <!-- 昵称 -->
-          <div class="input-group">
-            <label for="name" class="input-label">
+          <div class="login-input-group">
+            <label for="name" class="login-input-label">
               昵称<span class="required">*</span>
             </label>
-            <el-input id="name" v-model="name" placeholder="请输入昵称" class="input-field" />
+            <el-input id="name" v-model="name" placeholder="请输入昵称" class="input-field"/>
           </div>
           <!-- 密码 -->
-          <div class="input-group">
-            <label for="password" class="input-label">
+          <div class="login-input-group">
+            <label for="password" class="login-input-label">
               密码<span class="required">*</span>
             </label>
-            <el-input id="password" type="password" v-model="password" placeholder="请输入密码" class="input-field" />
+            <el-input id="password" type="password" v-model="password" placeholder="请输入密码" class="input-field"/>
           </div>
           <!-- 确认密码 -->
-          <div class="input-group">
-            <label for="confirmPassword" class="input-label">
+          <div class="login-input-group">
+            <label for="confirmPassword" class="login-input-label">
               确认密码<span class="required">*</span>
             </label>
             <el-input id="confirmPassword" type="password" v-model="confirmPassword" placeholder="请再次输入密码"
-              class="input-field" />
+                      class="input-field"/>
           </div>
           <!-- 手机号 -->
-          <div class="input-group">
-            <label for="telephone" class="input-label">手机号</label>
-            <el-input id="telephone" v-model="telephone" placeholder="请输入手机号" class="input-field" />
+          <div class="login-input-group">
+            <label for="telephone" class="login-input-label">手机号</label>
+            <el-input id="telephone" v-model="telephone" placeholder="请输入手机号" class="input-field"/>
           </div>
           <div v-if="telephone && !telLegal" class="error-message">
             手机号格式不正确
           </div>
           <!-- 邮箱 -->
-          <div class="input-group">
-            <label for="email" class="input-label">邮箱</label>
-            <el-input id="email" v-model="email" placeholder="请输入邮箱" class="input-field" />
+          <div class="login-input-group">
+            <label for="email" class="login-input-label">邮箱</label>
+            <el-input id="email" v-model="email" placeholder="请输入邮箱" class="input-field"/>
           </div>
           <div v-if="email && !emailLegal" class="error-message">
             邮箱格式不正确
           </div>
           <!-- 地址 -->
-          <div class="input-group">
-            <label for="location" class="input-label">地址</label>
-            <el-input id="location" v-model="location" placeholder="请输入地址" class="input-field" />
+          <div class="login-input-group">
+            <label for="location" class="login-input-label">地址</label>
+            <el-input id="location" v-model="location" placeholder="请输入地址" class="input-field"/>
           </div>
           <!-- 按钮区域 -->
-          <div class="button-group">
+          <div class="login-button-group">
             <el-button type="primary" @click.prevent="handleRegister" :disabled="registerDisabled" class="login-button">
               创建账户
             </el-button>
@@ -170,7 +170,7 @@ function handleRegister() {
     text-align: left;
   }
 
-  .title {
+  .login-title {
     margin-top: 0;
     font-size: 28px;
     font-weight: 600;
@@ -179,7 +179,7 @@ function handleRegister() {
     text-align: center;
   }
 
-  .subtitle {
+  .login-subtitle {
     margin-top: 10px;
     font-size: 14px;
     color: #888;
@@ -187,20 +187,21 @@ function handleRegister() {
     text-align: center;
   }
 
-  .form-box {
+  .login-form-box {
     display: flex;
     flex-direction: column;
     gap: 15px;
   }
 
   /* 信息项左右排列 */
-  .input-group {
+
+  .login-input-group {
     display: flex;
     align-items: center;
     gap: 15px;
   }
 
-  .input-label {
+  .login-input-label {
     margin-left: 10px;
     width: 90px;
     font-size: 14px;
@@ -213,19 +214,19 @@ function handleRegister() {
   margin-left: 2px;
 }
 
-.input-field {
+.login-input-field {
   flex: 1;
 }
 
 /* 自定义输入框样式 */
-.input-field>>>.el-input__inner {
+.login-input-field >>> .el-input__inner {
   border-radius: 6px;
   padding: 12px;
   font-size: 14px;
   transition: border-color 0.3s;
 }
 
-.input-field>>>.el-input__inner:focus {
+.login-input-field >>> .el-input__inner:focus {
   border-color: #0071e3;
 }
 
@@ -242,7 +243,7 @@ function handleRegister() {
   display: inline-block;
 }
 
-.button-group {
+.login-button-group {
   display: flex;
   flex-direction: column;
   /* 保持垂直排列 */

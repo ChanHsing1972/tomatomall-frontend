@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { ElInput, ElButton, ElMessage } from "element-plus";
-import { accountInfo, accountLogin } from "../../api/account.ts";
-import { router } from "../../router";
+import {ref, computed} from 'vue';
+import {ElInput, ElButton, ElMessage} from "element-plus";
+import {accountInfo, accountLogin} from "../../api/account.ts";
+import {router} from "../../router";
 
 // 输入框值
 const username = ref('');
@@ -24,17 +24,17 @@ function handleLogin() {
         message: "登录成功！",
         type: 'success',
         center: true,
+        duration: 1000
       });
-      setTimeout(() => {
-        ElMessage.closeAll();
-      }, 1500);
       const token = res.data.result;
       sessionStorage.setItem('token', token);
       sessionStorage.setItem('username', username.value);
       accountInfo(username.value.trim()).then(res => {
         sessionStorage.setItem('name', res.data.result.name);
         sessionStorage.setItem('role', res.data.result.role);
-        router.push({ path: "/home" });
+        sessionStorage.setItem('telephone', res.data.result.telephone);
+        sessionStorage.setItem('location', res.data.result.location);
+        router.push({path: "/home"});
       });
     } else if (res.data.code === '400') {
       ElMessage({
@@ -51,18 +51,18 @@ function handleLogin() {
 <template>
   <div class="apple-login-wrapper">
     <div class="login-box">
-      <h1 class="title">欢迎登录</h1>
-      <p class="subtitle">番茄书城欢迎您</p>
-      <div class="form-box" @keyup.enter="handleLogin">
-        <div class="input-group">
-          <label for="username" class="input-label">用户名</label>
-          <el-input id="username" v-model="username" placeholder="请输入用户名" class="input-field" />
+      <h1 class="login-title">欢迎登录</h1>
+      <p class="login-subtitle">番茄书城欢迎您</p>
+      <div class="login-form-box" @keyup.enter="handleLogin">
+        <div class="login-input-group">
+          <label for="username" class="login-input-label">用户名</label>
+          <el-input id="username" v-model="username" placeholder="请输入用户名" class="input-field"/>
         </div>
-        <div class="input-group">
-          <label for="password" class="input-label">密码</label>
-          <el-input id="password" type="password" v-model="password" placeholder="••••••••" class="input-field" />
+        <div class="login-input-group">
+          <label for="password" class="login-input-label">密码</label>
+          <el-input id="password" type="password" v-model="password" placeholder="••••••••" class="input-field"/>
         </div>
-        <div class="button-group">
+        <div class="login-button-group">
           <el-button type="primary" @click.prevent="handleLogin" :disabled="loginDisabled" class="login-button">
             登入
           </el-button>
@@ -95,7 +95,7 @@ function handleLogin() {
   width: 100%;
 }
 
-.title {
+.login-title {
   margin-top: 0px;
   font-size: 28px;
   font-weight: 600;
@@ -103,43 +103,31 @@ function handleLogin() {
   color: #333;
 }
 
-.subtitle {
+.login-subtitle {
   margin-top: 10px;
   font-size: 14px;
   color: #888;
   margin-bottom: 40px;
 }
 
-.form-box {
+.login-form-box {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.input-group {
+.login-input-group {
   text-align: left;
 }
 
-.input-label {
+.login-input-label {
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
   color: #444;
 }
 
-/* 自定义输入框样式 */
-.input-field>>>.el-input__inner {
-  border-radius: 6px;
-  padding: 12px;
-  font-size: 14px;
-  transition: border-color 0.3s;
-}
-
-.input-field>>>.el-input__inner:focus {
-  border-color: #0071e3;
-}
-
-.button-group {
+.login-button-group {
   display: flex;
   flex-direction: column;
   /* 保持垂直排列 */
@@ -147,11 +135,6 @@ function handleLogin() {
   margin-top: 30px;
   align-items: center;
   /* 让各个按钮在垂直方向对齐 */
-}
-
-.router-link {
-  display: inline-block;
-  /* 避免 router-link 产生额外的行内空隙 */
 }
 
 .login-button,

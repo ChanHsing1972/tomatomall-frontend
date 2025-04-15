@@ -111,23 +111,18 @@ const handleAvatarSuccess = (res: any) => {
     }).then((res) => {
       if (res.data.code === "200") {
         ElMessage({
-          customClass: "customMessage",
           type: "success",
           message: "头像更新成功！",
+          duration: 1000
         });
-        setTimeout(() => {
-          ElMessage.closeAll();
-        }, 1500);
         getUserInfo();
       } else if (res.data.code === "400") {
         ElMessage({
           customClass: "customMessage",
           type: "error",
           message: res.data.msg,
+          duration: 1000
         });
-        setTimeout(() => {
-          ElMessage.closeAll();
-        }, 1500);
       }
     });
   } else {
@@ -156,7 +151,8 @@ const goToManagement = () => {
     <!-- 左侧：完整用户信息展示卡片 -->
     <div class="user-summary">
       <div class="header-info">
-        <el-upload class="avatar-uploader" action="http://localhost:8080/api/files/images" :show-file-list="false"
+        <el-upload class="avatar-uploader" action="http://zk5fk7.natappfree.cc/api/files/images"
+                   :show-file-list="false"
                    :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
           <img v-if="avatar" class="user-avatar" :src="avatar" alt="avatar">
           <el-avatar v-else class="user-avatar" :icon="UserFilled" :size="80"/>
