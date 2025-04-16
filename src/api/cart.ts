@@ -61,9 +61,8 @@ export const updateCartItem = async (cartItemId: string, quantity: number) => {
 
 // 获取购物车列表
 export const getCartList = async () => {
-    return axios.get(`${CART_MODULE}`).then((res) => {
-        return res;
-    });
+    return axios.get(`${CART_MODULE}`).then(res=> res.data) ;
+
 };
 
 // 结算购物车
