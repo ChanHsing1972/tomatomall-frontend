@@ -9,19 +9,16 @@ import {
   OrderInfo,
 } from '../../api/cart.ts'
 import {getProductDetail} from '../../api/product.ts'
-import {ElMessage, ElImage, ElLoading} from 'element-plus'
+import {ElMessage, ElImage} from 'element-plus'
 import {ArrowDownBold} from "@element-plus/icons-vue";
-//import {router} from "../../router";
-import { payOrder, PaymentResponse, ResultVO } from '../../api/order'
+import {router} from "../../router";
 
 const cartItems = ref<any[]>([])
 const loading = ref(false)
 const currentProduct = ref<any>({})
 const detailDialogVisible = ref(false)
 
-// 获取购物车列表
 const fetchCartList = async () => {
-  loading.value = true
   try {
     const res = await getCartList()
     cartItems.value = res.data.result.items
@@ -33,7 +30,6 @@ const fetchCartList = async () => {
   }
 }
 
-// 删除商品
 const removeItem = async (cartItemId: string) => {
   try {
     await removeFromCart(cartItemId)
@@ -45,7 +41,6 @@ const removeItem = async (cartItemId: string) => {
   }
 }
 
-// 更新数量
 const updateQuantity = async (cartItemId: string, quantity: number) => {
   try {
     if (quantity < 1) {
@@ -66,7 +61,6 @@ const updateQuantity = async (cartItemId: string, quantity: number) => {
   }
 }
 
-// 查看商品详情
 const openDetailDialog = async (item: any) => {
   try {
     const res = await getProductDetail(item.productId)
@@ -78,31 +72,24 @@ const openDetailDialog = async (item: any) => {
   }
 }
 
-// 计算总价
 const totalPrice = computed(() =>
     cartItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
 )
 
-// 计算商品总数
 const totalItems = computed(() =>
     cartItems.value.reduce((sum, item) => sum + item.quantity, 0)
 )
 
-// 结算并支付
-const checkout = async () => {
+const checkout = () => {
   if (cartItems.value.length === 0) {
     ElMessage.warning('购物车为空，无法结算')
     return
   }
+  submitCheckout()
+}
 
-  const loadingInstance = ElLoading.service({
-    lock: true,
-    text: '正在创建订单...',
-    background: 'rgba(0, 0, 0, 0.7)'
-  })
-
+const submitCheckout = async () => {
   try {
-    // 1. 创建订单
     const orderInfo: OrderInfo = {
       cartItemIds: cartItems.value.map(item => item.cartItemId),
       shippingAddress: {
@@ -113,57 +100,14 @@ const checkout = async () => {
       },
       paymentMethod: "ALIPAY"
     }
-
-    const checkoutRes = await checkoutCart(orderInfo)
-    const orderId = checkoutRes.data?.orderId
-
-    if (!orderId) {
-      throw new Error('创建订单失败: 未获取到订单ID')
-    }
-
-    loadingInstance.setText('正在获取支付链接...')
-
-    // 2. 获取支付信息
-    const paymentRes: ResultVO<PaymentResponse> = await payOrder(orderId)
-
-    if (paymentRes.code !== 200) {
-      throw new Error(paymentRes.message || '获取支付信息失败')
-    }
-
-    // 3. 处理支付
-    if (paymentRes.data.paymentUrl) {
-      // 直接跳转支付页面
-      window.location.href = paymentRes.data.paymentUrl
-    } else if (paymentRes.data.paymentForm) {
-      // 如果有支付表单，渲染表单并自动提交
-      renderPaymentForm(paymentRes.data.paymentForm)
-    } else {
-      throw new Error('未获取到有效的支付信息')
-    }
-  } catch (error: unknown) {
-    console.error('支付失败:', error)
-    let errorMessage = '支付失败，请重试'
-    if (error instanceof Error) {
-      errorMessage = error.message
-    } else if (typeof error === 'string') {
-      errorMessage = error
-    }
-    ElMessage.error(errorMessage)
-  } finally {
-    loadingInstance.close()
-  }
-}
-
-// 渲染支付表单（用于处理HTML表单的情况）
-const renderPaymentForm = (formHtml: string) => {
-  const div = document.createElement('div')
-  div.innerHTML = formHtml
-  document.body.appendChild(div)
-  const form = div.querySelector('form')
-  if (form) {
-    form.submit()
-  } else {
-    ElMessage.error('支付表单解析失败')
+    console.log(orderInfo)
+    await checkoutCart(orderInfo)
+    ElMessage.success('结算成功！')
+    await fetchCartList()
+    await router.push({path: '/orders'})
+  } catch (error) {
+    console.error('结算失败:', error)
+    ElMessage.error('结算失败，请重试')
   }
 }
 
@@ -335,7 +279,7 @@ onMounted(() => {
   </el-main>
 </template>
 
-<!-- 样式部分保持不变 -->
+
 <style>
 .cart-container {
   font-family: "sf pro display medium", sans-serif;
