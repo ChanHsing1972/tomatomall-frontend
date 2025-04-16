@@ -27,7 +27,7 @@ const router = createRouter({
         meta: {title: '购物车'}
     }, {
         path: '/orders',
-        component: () => import('../views/account/Orders.vue'),
+        component: () => import('../views/mall/Orders.vue'),
         meta: {title: '订单'}
     }, {
         path: '/management',
