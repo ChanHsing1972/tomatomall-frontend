@@ -1,96 +1,227 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import Header from "../../components/Header.vue";
+import { getOrders, type OrderVO, type OrderStatus, type OrderItem, payOrder } from "../../api/order";
+import { ElMessage, ElNotification } from "element-plus";
 
-const orders = ref([
-  {
-    id: 1,
-    orderNumber: "202503310001",
-    date: "2025-03-31",
-    items: [
-      {
-        title: "番茄的世界",
-        cover:
-          "https://tse4-mm.cn.bing.net/th/id/OIP-C.McBhzHbp8QPvU4tcNJOjXQHaHa?rs=1&pid=ImgDetMain",
-        price: 50,
-        quantity: 2,
-      },
-      {
-        title: "Vue 3快速上手",
-        cover:
-          "https://pic1.zhimg.com/v2-fba95424ef89a32125bba5daa2937795_720w.jpg?source=172ae18b",
-        price: 80,
-        quantity: 1,
-      },
-    ],
-    totalPrice: 180,
-    status: "已完成",
-  },
-  {
-    id: 2,
-    orderNumber: "202503310002",
-    date: "2025-03-30",
-    items: [
-      {
-        title: "全球摄影集锦",
-        cover:
-          "https://ts1.tc.mm.bing.net/th/id/R-C.a43573113890e0977723190d1d0bd7e2?rik=fQTkY7Bh25bb1w&riu=http%3a%2f%2fcpnodata.oss-cn-shenzhen.aliyuncs.com%2fportal%2f202001%2f07%2f095044xnmm2mm31vhxa161.jpg&ehk=2FeSdbV%2bKyclRsSJ1a9Aj797nkhkEmi3awQcZdbBa1s%3d&risl=&pid=ImgRaw&r=0",
-        price: 120,
-        quantity: 1,
-      },
-    ],
-    totalPrice: 120,
-    status: "待发货",
-  },
-]);
+interface EnhancedOrderVO extends OrderVO {
+  formattedDate: string;
+  statusText: string;
+  items: OrderItem[]; // 增强后的商品项
+}
 
-function viewOrder(orderId: number) {
-  const order = orders.value.find((o) => o.id === orderId);
+const orders = ref<EnhancedOrderVO[]>([]);
+const loading = ref(false);
+const payingOrderIds = ref<Set<string>>(new Set());
+
+// 状态映射
+const statusMap: Record<OrderStatus, { text: string; type: string }> = {
+  PENDING: { text: "待支付", type: "warning" },
+  TRADE_SUCCESS: { text: "已完成", type: "success" },
+  CANCELLED: { text: "已取消", type: "danger" }
+};
+
+// 格式化日期
+const formatDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).replace(/\//g, '-');
+  } catch (e) {
+    console.error('日期格式错误:', e);
+    return '未知日期';
+  }
+};
+
+// 获取订单数据
+const fetchOrders = async () => {
+  loading.value = true;
+  try {
+    const res = await getOrders();
+    if (res.code === "200" && res.data) {
+      // 处理每个订单的商品项
+      const enhancedOrders = await Promise.all(
+          res.data.map(async (order: OrderVO) => {
+            // 获取所有商品详情
+            const items = order.orderItems;
+            return {
+              ...order,
+              formattedDate: formatDate(order.createTime),
+              statusText: statusMap[order.status].text,
+              items
+            };
+          })
+      );
+
+      orders.value = enhancedOrders;
+    } else {
+      ElMessage.error(res.message || "获取订单失败");
+    }
+  } catch (error: unknown) {
+    console.error("获取订单失败:", error);
+    let errorMessage = "获取订单失败";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    ElMessage.error(errorMessage);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 查看订单详情
+function viewOrder(orderId: string) {
+  const order = orders.value.find((o) => o.orderId === orderId);
   if (order) {
-    alert(`查看订单详情：订单编号 ${order.orderNumber}`);
+    alert(`查看订单详情：
+订单编号: ${order.orderId}
+下单时间: ${order.formattedDate}
+支付方式: ${order.paymentMethod || '未选择'}
+订单状态: ${order.statusText}
+总金额: ￥${order.totalAmount}
+
+收货信息:
+姓名: ${order.shippingAddress.name}
+电话: ${order.shippingAddress.telephone}
+地址: ${order.shippingAddress.address}`);
   }
 }
-</script>
 
+// 处理支付订单
+const handlePayOrder = async (orderId: string) => {
+  try {
+    payingOrderIds.value.add(orderId);
+    const { code, data, message } = await payOrder(Number(orderId));
+
+    if (code === "200") {
+      // 处理支付返回结果
+      if (data.paymentForm) {
+        // 直接跳转到支付URL
+        const paymentUrl = data.paymentForm.trim(); // 移除可能的空白字符
+        window.location.href = paymentUrl;
+        return;
+      }
+
+      ElNotification.success({
+        title: "支付发起成功",
+        message: `订单 ${orderId} 支付处理中`,
+        duration: 3000
+      });
+
+      // 3秒后刷新订单状态
+      setTimeout(fetchOrders, 3000);
+    } else {
+      ElMessage.error(message || "支付请求失败");
+    }
+  } catch (error) {
+    console.error("支付失败:", error);
+    ElMessage.error("支付过程中发生错误");
+  } finally {
+    payingOrderIds.value.delete(orderId);
+  }
+};
+
+// 组件挂载时获取订单数据
+onMounted(() => {
+  fetchOrders();
+});
+</script>
 <template>
   <Header />
   <el-main class="orders-container">
-    <el-card shadow="hover" class="order-card" v-for="order in orders" :key="order.id">
-      <div class="order-header">
-        <div class="order-info">
-          <span class="order-number">订单编号：{{ order.orderNumber }}</span>
-          <span class="order-date">下单日期：{{ order.date }}</span>
-        </div>
-        <el-tag :type="order.status === '已完成' ? 'success' : 'warning'" effect="dark">
-          {{ order.status }}
-        </el-tag>
-      </div>
-      <el-divider></el-divider>
-      <div class="order-items">
-        <div v-for="item in order.items" :key="item.title" class="order-item">
-          <img :src="item.cover" alt="book cover" class="item-cover" />
-          <div class="item-detail">
-            <p class="item-title">{{ item.title }}</p>
-            <p class="item-price">￥{{ item.price }} × {{ item.quantity }}</p>
+    <el-skeleton :loading="loading" animated>
+      <template #default>
+        <el-card
+            shadow="hover"
+            class="order-card"
+            v-for="order in orders"
+            :key="order.orderId"
+        >
+          <div class="order-header">
+            <div class="order-info">
+              <span class="order-number">订单编号：{{ order.orderId }}</span>
+              <span class="order-date">下单时间：{{ order.formattedDate }}</span>
+              <span class="payment-method" v-if="order.paymentMethod">支付方式：{{ order.paymentMethod }}</span>
+            </div>
+            <el-tag
+                :type="statusMap[order.status].type"
+                effect="dark"
+            >
+              {{ order.statusText }}
+            </el-tag>
           </div>
-        </div>
-      </div>
-      <el-divider></el-divider>
-      <div class="order-footer">
-        <span class="total-price">总价：￥{{ order.totalPrice }}</span>
-        <el-button type="primary" @click="viewOrder(order.id)">查看详情</el-button>
-      </div>
-    </el-card>
+          <el-divider></el-divider>
+          <div class="shipping-address">
+            <p><strong>收货信息</strong></p>
+            <p>姓名：{{ order.shippingAddress.name }}</p>
+            <p>电话：{{ order.shippingAddress.telephone }}</p>
+            <p v-if="order.shippingAddress.postalCode">邮编：{{ order.shippingAddress.postalCode }}</p>
+            <p>地址：{{ order.shippingAddress.address }}</p>
+          </div>
+          <el-divider></el-divider>
+          <div class="order-items">
+            <div class="items-title"><strong>商品清单</strong></div>
+            <div
+                v-for="item in order.items"
+                :key="item.productId"
+                class="order-item"
+            >
+              <img
+                  v-if="item.cover"
+                  :src="item.cover"
+                  alt="商品图片"
+                  class="item-cover"
+              />
+              <div v-else class="item-cover-placeholder">
+                <el-icon :size="30"><Picture /></el-icon>
+              </div>
+              <div class="item-info">
+                <p class="item-title">《{{ item.title }}》</p>
+                <p class="item-meta">
+                  <span>单价: ￥{{ item.price }}</span>
+                  <span>数量: {{ item.quantity }}</span>
+                  <span>小计: ￥{{ (parseFloat(item.price) * item.quantity).toFixed(2) }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <el-divider></el-divider>
+          <div class="order-footer">
+            <span class="total-price">总价：<strong>￥{{ order.totalAmount }}</strong></span>
+            <el-button type="primary" size="small" @click="viewOrder(order.orderId)">
+              查看详情
+            </el-button>
+            <el-button
+                v-if="order.status === 'PENDING'"
+                type="success"
+                size="small"
+                :loading="payingOrderIds.has(order.orderId)"
+                @click="handlePayOrder(order.orderId)"
+            >
+              立即支付
+            </el-button>
+          </div>
+        </el-card>
+
+        <el-empty
+            v-if="!loading && orders.length === 0"
+            description="暂无订单"
+        >
+          <el-button type="primary" @click="$router.push('/')">
+            去逛逛
+          </el-button>
+        </el-empty>
+      </template>
+    </el-skeleton>
   </el-main>
 </template>
 
 <style scoped>
-/* 采用系统字体，模仿 Apple 设计风格 */
-* {
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  box-sizing: border-box;
-}
-
 .orders-container {
   width: 80%;
   margin: 60px auto;
@@ -99,7 +230,6 @@ function viewOrder(orderId: number) {
   border-radius: 12px;
 }
 
-/* 卡片采用极简风格，不用多余的边框，只在底部添加一条细线分隔 */
 .order-card {
   border-radius: 20px;
   margin-bottom: 15px;
@@ -122,44 +252,45 @@ function viewOrder(orderId: number) {
 }
 
 .order-number,
-.order-date {
+.order-date,
+.payment-method {
   font-size: 14px;
   color: #777;
 }
 
-.el-tag {
-  font-size: 12px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  color: #fff;
-  letter-spacing: 1px;
-}
-.el-tag[style*="已完成"] {
-  background-color: #34c759; /* 成功绿色 */
-}
-.el-tag[style*="待发货"] {
-  background-color: #ff9500; /* 暖色调 */
+.shipping-address {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
 }
 
-/* 隐藏 Element Plus 默认的 divider 样式，采用细线 */
-.el-divider {
-  margin: 15px 0;
-  border: none;
-  border-top: 1px solid #eee;
+.shipping-address p {
+  margin: 5px 0;
 }
+
+.items-title {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #555;
+}
+
 
 .order-items {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .order-item {
   display: flex;
   align-items: center;
   gap: 15px;
-  padding: 10px 0;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
 }
 
 .item-cover {
@@ -170,9 +301,38 @@ function viewOrder(orderId: number) {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.item-detail {
-  font-size: 14px;
-  color: #555;
+.item-cover-placeholder {
+  width: 60px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  color: #999;
+}
+
+
+.item-info {
+  flex: 1;
+
+  .item-title {
+    font-weight: 500;
+    margin-bottom: 8px;
+    @include text-ellipsis(2);
+  }
+
+  .item-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 13px;
+    color: var(--el-text-color-secondary);
+
+    span:last-child {
+      color: var(--el-color-primary);
+      font-weight: 500;
+    }
+  }
 }
 
 .item-title {
@@ -180,9 +340,6 @@ function viewOrder(orderId: number) {
   margin-bottom: 4px;
 }
 
-.item-price {
-  color: #999;
-}
 
 .order-footer {
   display: flex;
@@ -195,20 +352,7 @@ function viewOrder(orderId: number) {
 .total-price {
   font-size: 16px;
   color: #333;
-  font-weight: 500;
 }
 
-/* 优化按钮样式，保持简洁 */
-.el-button {
-  background-color: #0070c9;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 14px;
-  color: #fff;
-  transition: background-color 0.3s ease;
-}
-.el-button:hover {
-  background-color: #005da0;
-}
+
 </style>

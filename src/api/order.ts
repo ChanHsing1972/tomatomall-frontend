@@ -13,10 +13,13 @@ export type ShippingAddress = {
 
 export type OrderItem = {
     productId: string;
-    productName: string;
-    quantity: number;
+    title: string;
     price: string;
-    imageUrl?: string;
+    description: string;
+    cover?: string;
+    detail: string;
+    quantity: number;
+    cartItemId: string;
 };
 
 // 对应 OrderVO
@@ -53,7 +56,7 @@ export type PaymentResponse = {
  * 对应后端：@GetMapping()
  * @returns 包装在ResultVO中的订单列表
  */
-export const getOrders = (): Promise<ResultVO<OrderVO[]>> => {
+export const getOrders = async () => {
     return axios.get(`${ORDER_MODULE}`)
         .then(res => res.data);
 };
@@ -80,12 +83,3 @@ export const handleAlipayNotify = (params: Record<string, string>): Promise<void
     });
 };
 
-/**
- * 创建订单
- * 注意：根据您的Controller可能需要添加
- * @param orderData 订单数据
- */
-export const createOrder = (orderData: Partial<OrderVO>): Promise<ResultVO<OrderVO>> => {
-    return axios.post(`${ORDER_MODULE}`, orderData)
-        .then(res => res.data);
-};
