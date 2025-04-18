@@ -19,16 +19,36 @@ const currentProduct = ref<any>({})
 const detailDialogVisible = ref(false)
 
 const fetchCartList = async () => {
+  loading.value = true;
   try {
-    const res = await getCartList()
-    cartItems.value = res.data.result.items
-  } catch (error) {
-    console.error('获取购物车列表失败:', error)
-    ElMessage.error('获取购物车列表失败')
+    const res = await getCartList();
+
+    // 检查数据结构
+    if (!res?.data?.items) {
+      throw new Error('购物车数据格式不正确');
+    }
+
+    // 确保 items 是数组
+    cartItems.value = Array.isArray(res.data.items) ? res.data.items : [];
+
+    // 如果需要，可以在这里处理总金额等信息
+    console.log('购物车总数:', res.data.total);
+    console.log('总金额:', res.data.totalAmount);
+
+  } catch (error: unknown) {
+    console.error('获取购物车列表失败:', error);
+
+    let errorMessage = '获取购物车列表失败';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    ElMessage.error(errorMessage);
+    cartItems.value = []; // 重置为空数组
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const removeItem = async (cartItemId: string) => {
   try {
@@ -79,8 +99,11 @@ const openDetailDialog = async (item: any) => {
 }
 
 const totalPrice = computed(() =>
-    cartItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
-)
+    cartItems.value.reduce((sum, item) => {
+      const price = parseFloat(item.price) || 0;
+      return sum + price * item.quantity;
+    }, 0)
+);
 
 const totalItems = computed(() =>
     cartItems.value.reduce((sum, item) => sum + item.quantity, 0)
@@ -224,7 +247,7 @@ onMounted(() => {
           }}
         </span>
         <el-button
-            type="primary"
+
             class="bottom-check-btn"
             @click="checkout"
         >
@@ -296,10 +319,7 @@ onMounted(() => {
 
   .cart-header {
     text-align: center;
-    margin: 0 auto 80px;
-    width: 80%;
-    overflow-wrap: break-word; /* 长单词或 URL 换行 */
-    word-break: break-word;
+    margin-bottom: 80px;
   }
 
   .cart-header h1 {
@@ -322,12 +342,12 @@ onMounted(() => {
     padding: 18px 0;
     border: none;
     color: #fff;
-    background: rgb(0, 113, 227);
+    background: rgb(115, 68, 68);
     transition: background 0.3s;
   }
 
   .full-width-btn:hover {
-    background: rgb(64, 158, 255);
+    background: rgb(94, 44, 44);
   }
 
   .product-list {
@@ -377,11 +397,6 @@ onMounted(() => {
     margin-bottom: -5px;
     cursor: pointer;
     transition: color 0.3s ease;
-    width: 400px;
-    flex-grow: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
   }
 
   .product-title:hover {
@@ -390,11 +405,6 @@ onMounted(() => {
     margin-bottom: -5px;
     cursor: pointer;
     transition: color 0.3s ease;
-    width: 400px;
-    flex-grow: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
   }
 
   /* 新增下拉框样式 */
@@ -407,14 +417,6 @@ onMounted(() => {
   .product-price {
     font-size: 14px;
     color: #666;
-    flex-grow: 0;
-    overflow: hidden;
-    width: 200px;
-    /* 不让第一项继续扩展 */
-    white-space: nowrap;
-    /* 隐藏超出部分 */
-    text-overflow: ellipsis;
-    /* 显示省略号 */
   }
 
   .action-right {
@@ -424,17 +426,9 @@ onMounted(() => {
   }
 
   .product-subtotal {
-    margin-left: 100px;
     font-size: 20px;
     font-weight: bold;
     margin-bottom: 0;
-    overflow: hidden;
-    width: 200px;
-    /* 不让第一项继续扩展 */
-    white-space: nowrap;
-    /* 隐藏超出部分 */
-    text-overflow: ellipsis;
-    /* 显示省略号 */
   }
 
   .cart-footer .summary {
@@ -452,22 +446,21 @@ onMounted(() => {
     margin-top: 15px;
     border-radius: 12px;
     font-size: 16px;
-    padding: 28px 0;
+    padding: 25px 0;
     border: none;
     color: #fff;
-    background: rgb(0, 113, 227);
+    background: rgb(115, 68, 68);
     transition: background 0.3s;
   }
 
   .bottom-check-btn:hover {
-    background: rgb(64, 158, 255);
+    color:white;
+    background: rgb(94, 44, 44);
   }
 
   .total-amount {
     font-weight: bold;
     font-size: 20px;
-    overflow-wrap: break-word; /* 长单词或 URL 换行 */
-    word-break: break-word;
   }
 
   .detail-dialog {
@@ -525,21 +518,15 @@ onMounted(() => {
   .info-label {
     font-size: 12px;
     color: #999;
-    width: 70px;
+    width: 80px;
     text-align: left;
   }
 
   .info-value {
-    flex-grow: 0;
     font-size: 15px;
     color: #333;
     font-weight: 400;
-    width:350px;
-    height: 21px;
-    overflow-y: auto;
-    overflow-wrap: break-word;
-    white-space: normal;
-    word-break: break-word;
+    flex: 1;
     text-align: left;
   }
 
@@ -551,9 +538,6 @@ onMounted(() => {
     border: 1px solid #eaeaea;
     border-radius: 8px;
     background-color: #fff;
-    overflow-wrap: break-word;
-    white-space: normal;
-    word-break: break-word;
   }
 
   @media (max-width: 768px) {

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {ref, onMounted} from "vue";
-import {ElMessage} from "element-plus";
+import { ref, onMounted } from "vue";
+import { ElMessage } from "element-plus";
 import Header from "../../components/Header.vue";
-import {getProductList, getProductDetail, updateStockpile, getStockpile} from "../../api/product.ts";
-import {addToCart} from "../../api/cart.ts";
+import { getProductList, getProductDetail, updateStockpile, getStockpile } from "../../api/product.ts";
+import { addToCart } from "../../api/cart.ts";
 
 interface Product {
   id: string;
@@ -43,7 +43,7 @@ onMounted(() => {
 const fetchProducts = async () => {
   try {
     const response = await getProductList();
-    productList.value = response.data.result;
+    productList.value = response.data.data;
     console.log("商品列表:", productList.value);
   } catch (error) {
     ElMessage.error("获取商品列表失败");
@@ -54,7 +54,7 @@ const fetchProducts = async () => {
 const openDetailDialog = async (product: Product) => {
   try {
     const detailResponse = await getProductDetail(product.id);
-    currentProduct.value = detailResponse.data.result;
+    currentProduct.value = detailResponse.data.data;
     detailDialogVisible.value = true;
   } catch (error) {
     ElMessage.error("获取商品详情失败");
@@ -63,7 +63,7 @@ const openDetailDialog = async (product: Product) => {
 };
 
 const addToCartHandle = async (productId: string) => {
-  const response = await addToCart({productId: productId.toString(), quantity: 1});
+  const response = await addToCart({ productId: productId.toString(), quantity: 1 });
   console.log(response);
   if (response.data.code == "200") {
     ElMessage({
@@ -73,8 +73,8 @@ const addToCartHandle = async (productId: string) => {
       grouping: true,
     })
     // 更新库存
-    const productId = response.data.result.productId;
-    const stockpile = (await getStockpile(productId)).data.result.amount;
+    const productId = response.data.data.productId;
+    const stockpile = (await getStockpile(productId)).data.data.amount;
     await updateStockpile(productId, Number(stockpile) - 1);
   } else {
     ElMessage({
@@ -87,14 +87,14 @@ const addToCartHandle = async (productId: string) => {
 </script>
 
 <template>
-  <Header/>
+  <Header />
   <div class="booklist-container">
     <el-main class="main-container">
       <div class="product-grid">
         <el-card class="product-card" shadow="hover" v-for="product in productList" :key="product.id"
-                 @click="openDetailDialog(product)">
+          @click="openDetailDialog(product)">
           <div class="card-image-wrapper">
-            <img :src="product.cover" alt="封面" class="product-image"/>
+            <img :src="product.cover" alt="封面" class="product-image" />
           </div>
           <div class="card-info">
             <h2 class="product-title" :title="product.title">{{ product.title }}</h2>
@@ -113,7 +113,7 @@ const addToCartHandle = async (productId: string) => {
         <div class="dialog-content">
           <!-- 左侧大图区域 -->
           <div class="dialog-image">
-            <el-image :src="currentProduct.cover" fit="cover" class="detail-cover"/>
+            <el-image :src="currentProduct.cover" fit="cover" class="detail-cover" />
           </div>
           <!-- 右侧信息区域：所有信息分两行排列 -->
           <div class="dialog-info">
