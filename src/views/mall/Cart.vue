@@ -47,13 +47,19 @@ const updateQuantity = async (cartItemId: string, quantity: number) => {
       await removeItem(cartItemId)
       return
     }
-    await updateCartItem(cartItemId, quantity)
-    ElMessage({
-      message: '数量更新成功',
-      type: 'success',
-      duration: 1000,
-      grouping: true
-    })
+    const res=await updateCartItem(cartItemId, quantity)
+    if (res.data.code === "200") {
+      ElMessage({
+        message: '数量更新成功',
+        type: 'success',
+        duration: 1000,
+        grouping: true
+      })
+    }
+    else{
+      ElMessage.error('更新数量失败:'+res.data.msg)
+      await fetchCartList()
+    }
   } catch (error) {
     console.error('更新数量失败:', error)
     ElMessage.error('更新数量失败')
@@ -394,7 +400,7 @@ onMounted(() => {
   /* 新增下拉框样式 */
 
   .quantity-select {
-    width: 80px;
+    width: 120px;
     margin-top: 10px;
   }
 
