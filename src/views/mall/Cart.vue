@@ -84,7 +84,7 @@ const updateQuantity = async (cartItemId: string, quantity: number) => {
 const openDetailDialog = async (item: any) => {
   try {
     const res = await getProductDetail(item.productId)
-    currentProduct.value = res.data.result
+    currentProduct.value = res.data.data
     detailDialogVisible.value = true
   } catch (error) {
     console.error('获取详情失败:', error)
@@ -125,9 +125,14 @@ const submitCheckout = async () => {
     }
     console.log(orderInfo)
     await checkoutCart(orderInfo)
-    ElMessage.success('结算成功！')
+    ElMessage({
+      message: '结算成功',
+      type: 'success',
+      duration: 1000,
+      grouping: true
+    })
     await fetchCartList()
-    await router.push({path: '/orders'})
+    router.push({path: '/orders'})
   } catch (error) {
     console.error('结算失败:', error)
     ElMessage.error('结算失败，请重试')
@@ -233,7 +238,7 @@ onMounted(() => {
       <div class="summary">
         <span>共 {{ totalItems.toLocaleString('en-US') }} 件商品</span>
         <span class="total-amount">
-          总计 &nbsp;&nbsp;RMB {{
+          总计&nbsp;&nbsp;&nbsp;RMB {{
             totalPrice.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2
@@ -241,7 +246,6 @@ onMounted(() => {
           }}
         </span>
         <el-button
-
             class="bottom-check-btn"
             @click="checkout"
         >
@@ -336,12 +340,12 @@ onMounted(() => {
     padding: 18px 0;
     border: none;
     color: #fff;
-    background: rgb(115, 68, 68);
+    background: rgb(0, 113, 227);
     transition: background 0.3s;
   }
 
   .full-width-btn:hover {
-    background: rgb(94, 44, 44);
+    background: rgb(64, 158, 255);
   }
 
   .product-list {
@@ -440,16 +444,16 @@ onMounted(() => {
     margin-top: 15px;
     border-radius: 12px;
     font-size: 16px;
-    padding: 25px 0;
+    padding: 28px 0;
     border: none;
     color: #fff;
-    background: rgb(115, 68, 68);
+    background: rgb(0, 113, 227);
     transition: background 0.3s;
   }
 
   .bottom-check-btn:hover {
-    color:white;
-    background: rgb(94, 44, 44);
+    color: white;
+    background: rgb(64, 158, 255);
   }
 
   .total-amount {

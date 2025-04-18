@@ -1,8 +1,8 @@
-import { axios } from "../utils/request";
-import { ORDER_MODULE } from "./_prefix";
+import {axios} from "../utils/request";
+import {ORDER_MODULE} from "./_prefix";
 
 // 类型定义
-export type OrderStatus = "PENDING" | "TRADE_SUCCESS" | "CANCELLED";
+export type OrderStatus = "PENDING" | "TRADE_SUCCESS" | "CANCELLED" | "EXPIRED";
 
 export type ShippingAddress = {
     name: string;
@@ -79,7 +79,12 @@ export const payOrder = (orderId: number): Promise<ResultVO<PaymentResponse>> =>
  */
 export const handleAlipayNotify = (params: Record<string, string>): Promise<void> => {
     return axios.post(`${ORDER_MODULE}/notify`, params, {
-        headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        headers: {"Content-Type": "application/x-www-form-urlencoded"}
     });
 };
+
+export const deleteOrder = async (orderId: string) => {
+    return axios.delete(`${ORDER_MODULE}/${orderId}`)
+        .then(res => res.data);
+}
 

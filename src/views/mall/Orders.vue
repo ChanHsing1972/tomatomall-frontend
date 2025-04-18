@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import {onMounted, ref} from "vue";
 import Header from "../../components/Header.vue";
-import { getOrders, type OrderVO, type OrderStatus, type OrderItem, payOrder } from "../../api/order";
-import { ElMessage, ElNotification } from "element-plus";
+import {deleteOrder, getOrders, type OrderItem, type OrderStatus, type OrderVO, payOrder} from "../../api/order";
+import {ElMessage, ElNotification} from "element-plus";
 
 interface EnhancedOrderVO extends OrderVO {
+  unformattedDate: string; // 原始时间戳
   formattedDate: string;
   statusText: string;
   items: OrderItem[]; // 增强后的商品项
+  countdown: number; // 倒计时
+  expireTime: string; // 过期时间
 }
 
 const orders = ref<EnhancedOrderVO[]>([]);
@@ -16,9 +19,10 @@ const payingOrderIds = ref<Set<string>>(new Set());
 
 // 状态映射
 const statusMap: Record<OrderStatus, { text: string; type: string }> = {
-  PENDING: { text: "待支付", type: "warning" },
-  TRADE_SUCCESS: { text: "已完成", type: "success" },
-  CANCELLED: { text: "已取消", type: "danger" }
+  PENDING: {text: "待支付", type: "warning"},
+  TRADE_SUCCESS: {text: "已完成", type: "success"},
+  CANCELLED: {text: "已取消", type: "info"},
+  EXPIRED: {text: "已过期", type: "info"}
 };
 
 // 格式化日期
@@ -33,9 +37,26 @@ const formatDate = (dateString: string): string => {
       minute: '2-digit'
     }).replace(/\//g, '-');
   } catch (e) {
-    console.error('日期格式错误:', e);
     return '未知日期';
   }
+};
+
+function convertTimestamp(dateString: string): string {
+  const dt = new Date(dateString);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}${pad(dt.getHours())}${pad(dt.getMinutes())}${pad(dt.getSeconds())}`;
+}
+
+const formatCountdown = (seconds: number): string => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+};
+
+// 计算剩余倒计时，无论是否刷新，都基于 expireTime 与当前时间相减得到
+const calcCountdown = (expireTime: string): number => {
+  const diff = Math.floor((new Date(expireTime).getTime() - Date.now()) / 1000);
+  return diff > 0 ? diff : 0;
 };
 
 // 获取订单数据
@@ -44,21 +65,20 @@ const fetchOrders = async () => {
   try {
     const res = await getOrders();
     if (res.code === "200" && res.data) {
-      // 处理每个订单的商品项
-      const enhancedOrders = await Promise.all(
+      orders.value = await Promise.all(
           res.data.map(async (order: OrderVO) => {
             // 获取所有商品详情
             const items = order.orderItems;
             return {
               ...order,
+              expireTime: (order as any).expireTime,
+              unformattedDate: convertTimestamp(order.createTime),
               formattedDate: formatDate(order.createTime),
               statusText: statusMap[order.status].text,
               items
             };
           })
       );
-
-      orders.value = enhancedOrders;
     } else {
       ElMessage.error(res.message || "获取订单失败");
     }
@@ -74,36 +94,17 @@ const fetchOrders = async () => {
   }
 };
 
-// 查看订单详情
-function viewOrder(orderId: string) {
-  const order = orders.value.find((o) => o.orderId === orderId);
-  if (order) {
-    alert(`查看订单详情：
-订单编号: ${order.orderId}
-下单时间: ${order.formattedDate}
-支付方式: ${order.paymentMethod || '未选择'}
-订单状态: ${order.statusText}
-总金额: ￥${order.totalAmount}
-
-收货信息:
-姓名: ${order.shippingAddress.name}
-电话: ${order.shippingAddress.telephone}
-地址: ${order.shippingAddress.address}`);
-  }
-}
-
 // 处理支付订单
 const handlePayOrder = async (orderId: string) => {
   try {
     payingOrderIds.value.add(orderId);
-    const { code, data, message } = await payOrder(Number(orderId));
+    const {code, data, message} = await payOrder(Number(orderId));
 
-    if (code === "200") {
+    if (code.toString() === "200") {
       // 处理支付返回结果
       if (data.paymentForm) {
         // 直接跳转到支付URL
-        const paymentUrl = data.paymentForm.trim(); // 移除可能的空白字符
-        window.location.href = paymentUrl;
+        window.location.href = data.paymentForm.trim();
         return;
       }
 
@@ -126,13 +127,39 @@ const handlePayOrder = async (orderId: string) => {
   }
 };
 
+const handleDeleteOrder = async (orderId: string) => {
+  try {
+    const {code, message} = await deleteOrder(orderId);
+    if (code.toString() === "200") {
+      ElMessage({
+        message: "订单已删除",
+        type: "success",
+        duration: 1000,
+        grouping: true,
+      })
+      await fetchOrders();
+    } else {
+      ElMessage.error(message || "删除订单失败");
+    }
+  } catch (error) {
+    console.error("删除订单失败:", error);
+    ElMessage.error("取消订单过程中发生错误");
+  }
+}
+
 // 组件挂载时获取订单数据
 onMounted(() => {
   fetchOrders();
+  window.setInterval(() => {
+    orders.value.forEach(order => {
+      order.countdown = calcCountdown(order.expireTime);
+    });
+  }, 1000);
 });
 </script>
+
 <template>
-  <Header />
+  <Header/>
   <el-main class="orders-container">
     <el-skeleton :loading="loading" animated>
       <template #default>
@@ -144,28 +171,35 @@ onMounted(() => {
         >
           <div class="order-header">
             <div class="order-info">
-              <span class="order-number">订单编号：{{ order.orderId }}</span>
-              <span class="order-date">下单时间：{{ order.formattedDate }}</span>
-              <span class="payment-method" v-if="order.paymentMethod">支付方式：{{ order.paymentMethod }}</span>
+
+              <span v-if="order.status === 'PENDING'" class="countdown-time">过期时间&nbsp;&nbsp;{{
+                  formatCountdown(order.countdown)
+                }}</span>
+              <el-collapse class="shipping-address">
+                <el-collapse-item title="收货信息" name="1">
+                  <p>订单编号：{{ order.unformattedDate }}</p>
+                  <p>下单时间：{{ order.formattedDate }}</p>
+                  <p v-if="order.paymentMethod">支付方式：支付宝</p>
+                  <p>姓名：{{ order.shippingAddress.name }}</p>
+                  <p>电话：{{ order.shippingAddress.telephone }}</p>
+                  <p v-if="order.shippingAddress.postalCode">邮编：{{ order.shippingAddress.postalCode }}</p>
+                  <p>地址：{{ order.shippingAddress.address }}</p>
+                </el-collapse-item>
+              </el-collapse>
             </div>
             <el-tag
                 :type="statusMap[order.status].type"
                 effect="dark"
+                size="default"
             >
               {{ order.statusText }}
             </el-tag>
           </div>
+
+
           <el-divider></el-divider>
-          <div class="shipping-address">
-            <p><strong>收货信息</strong></p>
-            <p>姓名：{{ order.shippingAddress.name }}</p>
-            <p>电话：{{ order.shippingAddress.telephone }}</p>
-            <p v-if="order.shippingAddress.postalCode">邮编：{{ order.shippingAddress.postalCode }}</p>
-            <p>地址：{{ order.shippingAddress.address }}</p>
-          </div>
-          <el-divider></el-divider>
+
           <div class="order-items">
-            <div class="items-title"><strong>商品清单</strong></div>
             <div
                 v-for="item in order.items"
                 :key="item.productId"
@@ -178,10 +212,12 @@ onMounted(() => {
                   class="item-cover"
               />
               <div v-else class="item-cover-placeholder">
-                <el-icon :size="30"><Picture /></el-icon>
+                <el-icon :size="30">
+                  <Picture/>
+                </el-icon>
               </div>
               <div class="item-info">
-                <p class="item-title">《{{ item.title }}》</p>
+                <p class="item-title">{{ item.title }}</p>
                 <p class="item-meta">
                   <span>单价: ￥{{ item.price }}</span>
                   <span>数量: {{ item.quantity }}</span>
@@ -192,19 +228,34 @@ onMounted(() => {
           </div>
           <el-divider></el-divider>
           <div class="order-footer">
-            <span class="total-price">总价：<strong>￥{{ order.totalAmount }}</strong></span>
-            <el-button type="primary" size="small" @click="viewOrder(order.orderId)">
-              查看详情
-            </el-button>
-            <el-button
-                v-if="order.status === 'PENDING'"
-                type="success"
-                size="small"
-                :loading="payingOrderIds.has(order.orderId)"
-                @click="handlePayOrder(order.orderId)"
-            >
-              立即支付
-            </el-button>
+            <div class="detail-footer">
+              <span>共 {{ order.orderItems.length }} 件商品</span>
+              <span class="total-price">总计&nbsp;&nbsp;<strong>RMB {{
+                  Number(order.totalAmount).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })
+                }}</strong></span>
+            </div>
+            <div class="button-footer">
+              <el-button
+                  v-if="order.status === 'PENDING'"
+                  type="primary"
+                  size="default"
+                  :loading="payingOrderIds.has(order.orderId)"
+                  @click="handlePayOrder(order.orderId)"
+              >
+                立即支付
+              </el-button>
+              <el-button
+                  plain
+                  size="default"
+                  style="color: rgb(0, 113, 227)"
+                  @click="handleDeleteOrder(order.orderId)"
+              >
+                移除
+              </el-button>
+            </div>
           </div>
         </el-card>
 
@@ -212,7 +263,7 @@ onMounted(() => {
             v-if="!loading && orders.length === 0"
             description="暂无订单"
         >
-          <el-button type="primary" @click="$router.push('/')">
+          <el-button type="primary" @click="$router.push('/booklist')">
             去逛逛
           </el-button>
         </el-empty>
@@ -221,28 +272,35 @@ onMounted(() => {
   </el-main>
 </template>
 
-<style scoped>
+<style>
 .orders-container {
-  width: 80%;
-  margin: 60px auto;
+  font-family: "sf pro display", sans-serif;
+  width: 65%;
+  margin: 40px auto;
   padding: 40px;
-  background-color: #fff;
-  border-radius: 12px;
+  border-radius: 20px; /* 加大圆角 */
 }
 
 .order-card {
-  border-radius: 20px;
-  margin-bottom: 15px;
-  margin-left: 100px;
-  margin-right: 100px;
-  padding-bottom: 20px;
+  border-radius: 25px;
+  margin: 20px auto; /* 调整间距，使卡片居中 */
+  padding: 20px 30px;
+  background-color: #fafafa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .order-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 15px;
+  margin-bottom: -25px;
+  padding-bottom: 10px;
 }
 
 .order-info {
@@ -251,32 +309,46 @@ onMounted(() => {
   gap: 5px;
 }
 
-.order-number,
-.order-date,
-.payment-method {
+.countdown-time {
   font-size: 14px;
-  color: #777;
+  color: #555;
 }
 
 .shipping-address {
   font-size: 14px;
   color: #555;
-  margin-bottom: 15px;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+  border: none;
+  background: none;
+  box-shadow: none;
+  padding: 0;
 }
 
-.shipping-address p {
-  margin: 5px 0;
+/* 移除默认上下间距 */
+.shipping-address .el-collapse-item__header {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin-top: -13px !important;
+  font-size: 14px;
+  color: #555;
+  width: 85px;
 }
 
-.items-title {
-  margin-bottom: 10px;
+/* 调整内容区的上下内边距 */
+.shipping-address .el-collapse-item__wrap {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin-left: 15px !important;
   font-size: 14px;
   color: #555;
 }
 
+.shipping-address p {
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+}
 
 .order-items {
   display: flex;
@@ -288,13 +360,16 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 15px;
-  padding: 10px;
-  border-radius: 8px;
-  background-color: #f9f9f9;
+  border-radius: 10px;
+  transition: background-color 0.3s;
+}
+
+.order-item:hover {
+  background-color: #f5faff;
 }
 
 .item-cover {
-  width: 60px;
+  width: 80px;
   height: 80px;
   object-fit: cover;
   border-radius: 6px;
@@ -302,7 +377,7 @@ onMounted(() => {
 }
 
 .item-cover-placeholder {
-  width: 60px;
+  width: 80px;
   height: 80px;
   display: flex;
   align-items: center;
@@ -312,32 +387,33 @@ onMounted(() => {
   color: #999;
 }
 
-
 .item-info {
   flex: 1;
-
-  .item-title {
-    font-weight: 500;
-    margin-bottom: 8px;
-    @include text-ellipsis(2);
-  }
-
-  .item-meta {
-    display: flex;
-    gap: 15px;
-    font-size: 13px;
-    color: var(--el-text-color-secondary);
-
-    span:last-child {
-      color: var(--el-color-primary);
-      font-weight: 500;
-    }
-  }
+  margin-left: 5px;
 }
 
-.item-title {
-  font-weight: 500;
-  margin-bottom: 4px;
+.item-info .item-title {
+  font-weight: 600;
+  margin-bottom: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+.item-info .item-meta {
+  display: flex;
+  gap: 15px;
+  font-size: 13px;
+  color: #777;
+}
+
+.detail-footer {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  gap: 2px;
+  margin-top: -5px;
 }
 
 
@@ -345,14 +421,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
-  padding-top: 10px;
+  margin-top: 0;
 }
 
 .total-price {
-  font-size: 16px;
+  font-size: 18px;
   color: #333;
+  font-weight: 600;
 }
-
 
 </style>
