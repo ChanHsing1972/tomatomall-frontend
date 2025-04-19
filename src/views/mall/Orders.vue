@@ -191,6 +191,8 @@ onMounted(() => {
                 :type="statusMap[order.status].type"
                 effect="dark"
                 size="default"
+                style="border-radius: 10px"
+
             >
               {{ order.statusText }}
             </el-tag>
@@ -242,6 +244,7 @@ onMounted(() => {
                   v-if="order.status === 'PENDING'"
                   type="primary"
                   size="default"
+                  class="pay-btn"
                   :loading="payingOrderIds.has(order.orderId)"
                   @click="handlePayOrder(order.orderId)"
               >
@@ -250,6 +253,7 @@ onMounted(() => {
               <el-button
                   plain
                   size="default"
+                  class="delete-btn"
                   style="color: rgb(0, 113, 227)"
                   @click="handleDeleteOrder(order.orderId)"
               >
