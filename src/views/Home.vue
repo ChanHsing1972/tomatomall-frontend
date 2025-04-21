@@ -1,42 +1,123 @@
 <script setup lang="ts">
 import Header from "../components/Header.vue";
-import { ref, onMounted } from "vue";
+import Footer from "../components/Footer.vue";
+import { ref, onMounted, computed } from "vue";
+import { useIntersectionObserver } from '@vueuse/core';
 
 // 模拟推荐书籍数据
 const recommendedBooks = ref<
-  { id: number; title: string; cover: string; desc: string }[]
+  { id: number; title: string; cover: string; desc: string; price: number }[]
 >([]);
 
-onMounted(() => {
-  recommendedBooks.value = [
-    {
-      id: 1,
-      title: "番茄的世界",
-      cover:
-        "https://tse4-mm.cn.bing.net/th/id/OIP-C.McBhzHbp8QPvU4tcNJOjXQHaHa?rs=1&pid=ImgDetMain",
-      desc: "探索番茄生长的奇妙世界",
-    },
-    {
-      id: 2,
-      title: "Vue 3快速上手",
-      cover:
-        "https://pic1.zhimg.com/v2-fba95424ef89a32125bba5daa2937795_720w.jpg?source=172ae18b",
-      desc: "极简前端开发的秘密武器",
-    },
-    {
-      id: 3,
-      title: "全球摄影集锦",
-      cover: "https://n.sinaimg.cn/sinacn/w960h1440/20171223/d7cd-fypvuqf4642780.png",
-      desc: "捕捉世界之美，每一瞬间都动人",
-    },
-    {
-      id: 4,
-      title: "快速掌握 TypeScript",
-      cover: "https://www.idcspy.com/wp-content/uploads/2022/01/1-164.jpg",
-      desc: "现代开发必备的强大技能",
-    },
-  ];
+// 新书上架
+const newArrivals = ref<
+  { id: number; title: string; cover: string; author: string; price: number }[]
+>([]);
+
+// 热门分类
+const categories = ref<
+  { id: number; name: string; icon: string; count: number }[]
+>([]);
+
+// 特色书籍
+const featuredBook = ref({
+  id: 101,
+  title: "设计的艺术",
+  author: "唐纳德·诺曼",
+  cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGJvb2t8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60",
+  desc: "这本经典著作探讨了日常物品的设计原则，以及它们如何影响我们的生活体验。作者深入浅出地解析了好的设计与糟糕设计之间的区别，提出了以人为本的设计理念，对当代产品设计、用户体验和界面设计产生了深远影响。",
+  price: 99.00
 });
+
+// 动画控制
+const heroVisible = ref(false);
+
+onMounted(() => {
+  // 模拟数据加载
+  setTimeout(() => {
+    heroVisible.value = true;
+
+    recommendedBooks.value = [
+      {
+        id: 1,
+        title: "番茄的世界",
+        cover: "https://tse4-mm.cn.bing.net/th/id/OIP-C.McBhzHbp8QPvU4tcNJOjXQHaHa?rs=1&pid=ImgDetMain",
+        desc: "探索番茄生长的奇妙世界",
+        price: 68.00
+      },
+      {
+        id: 2,
+        title: "Vue 3 快速上手",
+        cover: "https://pic1.zhimg.com/v2-fba95424ef89a32125bba5daa2937795_720w.jpg?source=172ae18b",
+        desc: "极简前端开发的秘密武器",
+        price: 89.00
+      },
+      {
+        id: 3,
+        title: "全球摄影集锦",
+        cover: "https://n.sinaimg.cn/sinacn/w960h1440/20171223/d7cd-fypvuqf4642780.png",
+        desc: "捕捉世界之美，每一瞬间都动人",
+        price: 128.00
+      },
+      {
+        id: 4,
+        title: "快速掌握 TypeScript",
+        cover: "https://www.idcspy.com/wp-content/uploads/2022/01/1-164.jpg",
+        desc: "现代开发必备的强大技能",
+        price: 78.00
+      },
+    ];
+
+    categories.value = [
+      { id: 1, name: "文学小说", icon: "📚", count: 1280 },
+      { id: 2, name: "科技前沿", icon: "🔬", count: 853 },
+      { id: 3, name: "艺术设计", icon: "🎨", count: 672 },
+      { id: 4, name: "生活方式", icon: "☕️", count: 945 },
+      { id: 5, name: "经济管理", icon: "📊", count: 1056 },
+      { id: 6, name: "历史文化", icon: "🏛️", count: 789 },
+      { id: 7, name: "运动健身", icon: "🏋️", count: 900 },
+      { id: 8, name: "美食烹饪", icon: "🍳", count: 1120 },
+      { id: 9, name: "旅游攻略", icon: "✈️", count: 730 },
+      { id: 10, name: "音乐艺术", icon: "🎵", count: 640 }
+    ];
+
+    newArrivals.value = [
+      {
+        id: 11,
+        title: "未来之路",
+        author: "刘慈欣",
+        cover: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60",
+        price: 59.00
+      },
+      {
+        id: 12,
+        title: "设计心理学",
+        author: "唐纳德·诺曼",
+        cover: "https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60",
+        price: 88.00
+      },
+      {
+        id: 13,
+        title: "思考，快与慢",
+        author: "丹尼尔·卡尼曼",
+        cover: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60",
+        price: 108.00
+      },
+      {
+        id: 14,
+        title: "设计心理学",
+        author: "唐纳德·诺曼",
+        cover: "https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60",
+        price: 88.00
+      }
+    ];
+  }, 500);
+});
+
+// 格式化价格
+const formatPrice = (price: number) => {
+  return `RMB ${price.toFixed(2)}`;
+};
 </script>
 
 <template>
@@ -45,50 +126,285 @@ onMounted(() => {
     <Header />
 
     <!-- Banner / Hero 区域 -->
-    <section class="hero">
-      <div class="hero-text">
-        <h1>纯粹阅读 非凡生活</h1>
-        <p>在番茄书城，发现每一本书的灵魂。</p>
+    <section class="hero" :class="{ 'visible': heroVisible }">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1>纯粹阅读<br>非凡生活</h1>
+          <p>在番茄书城，发现每一本书的灵魂。</p>
+          <div class="hero-actions">
+            <button class="primary-btn">立即探索</button>
+            <button class="secondary-btn">了解更多</button>
+          </div>
+        </div>
+        <div class="hero-image">
+          <img
+            src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80"
+            alt="Hero Image">
+        </div>
       </div>
-      <!-- 背景图或渐变效果 -->
       <div class="hero-bg"></div>
     </section>
 
+    <!-- 热门分类 -->
+    <section class="categories-section" :class="{ 'visible': heroVisible }">
+      <div class="section-title">
+        <div class="title-wrapper">
+          <span class="subtitle">为您精选</span>
+          <h2>探索分类</h2>
+        </div>
+        <a href="#" class="view-all">查看全部</a>
+      </div>
+      <div class="categories">
+        <div class="category-card" v-for="category in categories" :key="category.id">
+          <div class="category-icon">{{ category.icon }}</div>
+          <h3>{{ category.name }}</h3>
+          <p>{{ category.count }}+ 本书籍</p>
+        </div>
+      </div>
+    </section>
+
     <!-- 推荐书籍区域 -->
-    <section class="content">
-      <div class="books">
-        <div class="book-card" v-for="book in recommendedBooks" :key="book.id">
-          <div class="book-cover-wrapper">
+    <section class="recommended-section" :class="{ 'visible': heroVisible }">
+      <div class="section-title">
+        <div class="title-wrapper">
+          <span class="subtitle">专属推荐</span>
+          <h2>今日热门</h2>
+        </div>
+        <a href="#" class="view-all">查看全部</a>
+      </div>
+      <div class="display-books">
+        <div class="recommended-book" v-for="book in recommendedBooks" :key="book.id">
+          <div class="display-book-cover">
             <img :src="book.cover" alt="书籍封面" />
           </div>
-          <div class="book-info">
+          <div class="display-book-info">
             <h3>{{ book.title }}</h3>
-            <p>{{ book.desc }}</p>
-            <button class="buy-btn">立即购买</button>
+            <p class="book-desc">{{ book.desc }}</p>
+            <div class="price">{{ formatPrice(book.price) }}</div>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- 新书上架-->
+    <section class="new-arrivals-section" :class="{ 'visible': heroVisible }">
+      <div class="section-title">
+        <div class="title-wrapper">
+          <span class="subtitle">书库已更新</span>
+          <h2>新书上架</h2>
+        </div>
+        <a href="#" class="view-all">查看全部</a>
+      </div>
+      <div class="display-books">
+        <div class="new-book" v-for="book in newArrivals" :key="book.id">
+          <div class="display-book-cover">
+            <img :src="book.cover" alt="书籍封面" />
+            <div class="new-tag">NEW</div>
+          </div>
+          <div class="display-book-info">
+            <h3>{{ book.title }}</h3>
+            <p class="book-desc">{{ book.author }}</p>
+            <div class="price">{{ formatPrice(book.price) }}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 特色书籍 -->
+    <section class="featured-section" :class="{ 'visible': heroVisible }">
+      <div class="featured-book">
+        <div class="featured-content">
+          <div class="featured-info">
+            <div class="featured-badge">编辑精选</div>
+            <h2>{{ featuredBook.title }}</h2>
+            <p class="featured-author">{{ featuredBook.author }}</p>
+            <p class="featured-desc">{{ featuredBook.desc }}</p>
+            <div class="featured-price">{{ formatPrice(featuredBook.price) }}</div>
+            <div class="featured-actions">
+              <button class="primary-btn">立即购买</button>
+              <button class="secondary-btn">了解详情</button>
+            </div>
+          </div>
+          <div class="featured-image">
+            <img :src="featuredBook.cover" alt="特色书籍封面" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!--  用户社区展示-->
+    <section class="community-section">
+      <h2 class="community-title">加入番茄书城社区</h2>
+      <p class="community-subtitle">与全国书友分享阅读体验，参与读书活动，获取专属推荐</p>
+      <div class="community-stats">
+        <div class="stat-item">
+          <span class="stat-number">28.5 万</span>
+          <span class="stat-label">活跃书友</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">43.2 万</span>
+          <span class="stat-label">书评笔记</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">1274</span>
+          <span class="stat-label">读书小组</span>
+        </div>
+      </div>
+      <button class="community-btn">立即加入</button>
+    </section>
+
+    <!-- 订阅区域 -->
+    <section class="subscribe-section" :class="{ 'visible': heroVisible }">
+      <div class="subscribe-content">
+        <h2>订阅获取更新</h2>
+        <p>第一时间获取新书资讯和独家优惠</p>
+        <div class="subscribe-form">
+          <input type="email" placeholder="输入您的邮箱地址" />
+          <button>订阅</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 页脚 -->
+    <Footer />
   </div>
 </template>
 
 <style scoped>
 /* 整体风格 */
 .home {
-  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #fff;
-  color: #333;
+  font-family: "sf pro display medium", Arial, sans-serif;
+  background-color: #ffffff;
+  color: #1d1d1f;
+  overflow-x: hidden;
+  margin-top: 60px;
+}
+
+/* 通用样式 */
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding: 0 20px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.title-wrapper {
+  position: relative;
+}
+
+.subtitle {
+  display: block;
+  font-size: 16px;
+  font-weight: 400;
+  color: #666;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+  margin-left: 30px;
+}
+
+.section-title h2 {
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  margin: 0 0 0 30px;
+  color: #1d1d1f;
+  position: relative;
+  padding-bottom: 12px;
+}
+
+
+.view-all {
+  color: #06c;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  margin-right: 2%;
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+.view-all:hover {
+  color: #0077ed;
+}
+
+.view-all::after {
+  content: "→";
+  margin-left: 6px;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.view-all:hover::after {
+  transform: translateX(3px);
+}
+
+/* 按钮样式 */
+.primary-btn {
+  background-color: #0071e3;
+  color: white;
+  border: none;
+  border-radius: 980px;
+  padding: 12px 22px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+  background-color: #0077ed;
+  transform: scale(1.02);
+}
+
+.secondary-btn {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
+  border: none;
+  border-radius: 980px;
+  padding: 12px 22px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 12px;
+}
+
+.secondary-btn:hover {
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 /* Hero 区域 */
 .hero {
-  margin-top: 50px;
   position: relative;
+  min-height: 700px;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 400px;
   overflow: hidden;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1s ease, transform 1s ease;
+  background: linear-gradient(135deg, #f5f5f5, #eaeaea);
+}
+
+.hero.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  position: relative;
+  z-index: 2;
 }
 
 .hero-bg {
@@ -97,146 +413,629 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #a8edea, #fed6e3);
-  /* 如果有背景图片，可使用背景图： */
-  /* background: url('背景图片地址') center/cover no-repeat, linear-gradient(135deg, #fafafa, #f0f0f0); */
+
   opacity: 0.3;
   z-index: 1;
 }
 
 .hero-text {
-  position: relative;
-  text-align: center;
-  z-index: 2;
-  padding: 0 20px;
+  flex: 0 0 50%;
+  padding-right: 40px;
 }
 
 .hero-text h1 {
-  font-size: 40px;
-  margin-bottom: 0;
-  font-family: "Source Han Serif SC";
+  font-size: 54px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  margin: 0 0 20px;
+  color: #1d1d1f;
+  animation: fadeIn 0.8s ease-out 0.3s both;
 }
 
 .hero-text p {
-  font-size: 1.2em;
-  color: #666;
-  margin-left: 20px;
-  margin-top: 15px;
+  font-size: 21px;
+  line-height: 1.5;
+  color: #1d1d1f;
+  margin: 0 0 40px;
+  animation: fadeIn 0.8s ease-out 0.5s both;
 }
 
-/* 内容区域 */
-.content {
-  width: 90%;
-  max-width: 1200px;
-  margin: 40px auto;
+.hero-actions {
+  animation: fadeIn 0.8s ease-out 0.7s both;
 }
 
-.content h2 {
-  text-align: center;
-  font-size: 1.5em;
-  margin-bottom: 20px;
-  font-weight: normal;
-  border-bottom: 2px solid #e0e0e0;
-  padding-bottom: 10px;
-  width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
+.hero-image {
+  flex: 0 0 50%;
+  height: 500px;
+  animation: fadeIn 0.8s ease-out 0.5s both, floatAnimation 6s ease-in-out infinite;
 }
 
-/* 推荐书籍 */
-.books {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-}
-
-.book-card {
-  margin-top: 20px;
-  background-color: #fafafa;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  overflow: hidden;
-  width: calc(25% - 20px);
-  min-width: 250px;
-  transition: box-shadow 0.3s ease;
-  margin-bottom: 660px;
-}
-
-.book-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.book-cover-wrapper {
-  width: 100%;
-  height: 300px;
-  overflow: hidden;
-}
-
-.book-cover-wrapper img {
+.hero-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
 }
 
-.book-info {
-  padding: 15px;
+@keyframes floatAnimation {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 分类区域 */
+.categories-section {
+  padding: 80px 0;
+  background-color: #f5f5f7;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1s ease, transform 1s ease;
+  transition-delay: 0.2s;
+}
+
+.categories-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  padding: 0 20px;
+  max-width: 1200px;
+  margin: 20px auto 0;
+}
+
+.category-card {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  min-width: 150px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
   text-align: center;
+  transition: all 0.3s ease;
 }
 
-.book-info h3 {
-  font-size: 1.3em;
-  margin-bottom: -12px;
-  color: #333;
-  flex-grow: 0; /* 不让第一项继续扩展 */
-  white-space: nowrap; /* 防止内容换行 */
-  overflow: hidden; /* 隐藏超出部分 */
-  text-overflow: ellipsis; /* 显示省略号 */
-}
-
-.book-info p {
-  font-size: 1em;
-  color: #666;
-  margin-bottom: 15px;
-  flex-grow: 0; /* 不让第一项继续扩展 */
-  white-space: nowrap; /* 防止内容换行 */
-  overflow: hidden; /* 隐藏超出部分 */
-  text-overflow: ellipsis; /* 显示省略号 */
-}
-
-.buy-btn {
-  margin-top: 10px;
-  background-color: #333;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  font-size: 1em;
-  border-radius: 15px;
+.category-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
   cursor: pointer;
-  transition: background-color 0.3s ease;
+}
+
+.category-icon {
+  font-size: 36px;
+  margin-bottom: 15px;
+}
+
+.category-card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: #1d1d1f;
+}
+
+.category-card p {
+  font-size: 14px;
+  color: #86868b;
+  margin: 0;
+}
+
+/* 推荐书籍区域 */
+.recommended-section {
+  padding: 80px 0;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1s ease, transform 1s ease;
+  transition-delay: 0.4s;
+}
+
+.recommended-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.display-books {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  max-width: 1155px;
+  margin: 0 auto;
+  scrollbar-width: none;
+  padding: 0 20px 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.display-books::-webkit-scrollbar {
+  display: none;
+}
+
+.recommended-book {
+  flex: 0 0 auto;
+  width: 24%;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+
+}
+
+.recommended-book:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+.display-book-cover {
+  position: relative;
+  height: 380px;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+}
+
+.display-book-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: 0.5s ease;
+  border-radius: inherit;
+  cursor: pointer;
+}
+
+.display-book-cover:hover img {
+  transform: scale(1.07);
+}
+
+.display-book-info {
+  padding: 15px 20px 25px 20px;
+}
+
+.display-book-info h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.book-desc {
+  font-size: 14px;
+  color: #86868b;
+  margin: 0 0 15px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+}
+
+/* 新书上架区域 */
+.new-arrivals-section {
+  padding: 80px 0;
+  background-color: #f5f5f7;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1s ease, transform 1s ease;
+  transition-delay: 0.6s;
+}
+
+.new-arrivals-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.new-book {
+  flex: 0 0 auto;
+  width: 24%;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.new-book:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+.new-book-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.new-book:hover .new-book-cover img {
+  transform: scale(1.05);
+}
+
+.new-tag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #fa2c5a;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.new-book-info h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.price {
+  font-size: 16px;
+  font-weight: 400;
+  color: #1d1d1f;
+}
+
+/* 特色书籍区域 */
+.featured-section {
+  padding: 80px 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1s ease, transform 1s ease;
+  transition-delay: 0.8s;
+}
+
+.featured-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.featured-book {
+  background: linear-gradient(135deg, #f2f2f2, #ffffff);
+  border-radius: 24px;
+  overflow: hidden;
+  padding: 20px;
+  margin: 0 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+}
+
+.featured-content {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.featured-info {
+  flex: 1;
+  padding: 30px;
+}
+
+.featured-badge {
+  display: inline-block;
+  background: linear-gradient(90deg, #ff6b6b, #fa2c5a);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.featured-info h2 {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 12px;
+  color: #1d1d1f;
+}
+
+.featured-author {
+  font-size: 18px;
+  color: #515154;
+  margin: 0 0 20px;
+}
+
+.featured-desc {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #6e6e73;
   margin-bottom: 30px;
 }
 
-.buy-btn:hover {
-  background-color: #555;
+.featured-price {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 30px;
 }
 
-/* Responsive adjustments */
+.featured-actions {
+  display: flex;
+}
+
+.featured-image {
+  flex: 1;
+  height: 500px;
+}
+
+.featured-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+}
+
+/* 社区展示 */
+.community-section {
+  margin: 0 auto;
+  padding: 80px 0;
+  text-align: center;
+  background-color: #f5f5f7;
+}
+
+.community-title {
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  text-align: center;
+  margin: 0 0 16px 0;
+}
+
+.community-subtitle {
+  font-size: 18px;
+  color: #86868b;
+  margin: 0 auto 48px;
+  max-width: 700px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.community-stats {
+  display: flex;
+  justify-content: center;
+  gap: 100px;
+  margin-bottom: 48px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-number {
+  font-size: 44px;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  color: #86868b;
+  font-size: 16px;
+}
+
+.community-btn {
+  background-color: #0071e3;
+  border: none;
+  color: white;
+  padding: 12px 28px;
+  border-radius: 980px;
+  font-size: 17px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.community-btn:hover {
+  background-color: #0077ed;
+  transform: scale(1.02);
+}
+
+/* 订阅区域 */
+.subscribe-section {
+  padding: 80px 0;
+  background-color: #000000;
+  color: white;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1s ease, transform 1s ease;
+  transition-delay: 1s;
+}
+
+.subscribe-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.subscribe-content {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.subscribe-content h2 {
+  font-size: 36px;
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+.subscribe-content p {
+  font-size: 17px;
+  color: #a1a1a6;
+  margin-bottom: 30px;
+}
+
+.subscribe-form {
+  display: flex;
+  gap: 12px;
+}
+
+.subscribe-form input {
+  flex: 1;
+  padding: 16px 24px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.subscribe-form input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.subscribe-form button {
+  background: white;
+  color: black;
+  border: none;
+  padding: 0 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subscribe-form button:hover {
+  background: #f5f5f7;
+}
+
+/* 响应式调整 */
+@media (max-width: 1024px) {
+  .category-card {
+    width: calc(33.33% - 24px);
+  }
+
+  .recommended-book {
+    width: calc(33.33% - 30px);
+  }
+
+  .new-book {
+    width: calc(33.33% - 30px);
+  }
+
+  .featured-content {
+    flex-direction: column;
+  }
+
+  .featured-info,
+  .featured-image {
+    width: 100%;
+  }
+
+  .featured-image {
+    height: 400px;
+  }
+}
+
 @media (max-width: 768px) {
+  .hero {
+    min-height: auto;
+    padding: 60px 0;
+    overflow: visible;
+  }
+
+  .hero-content {
+    flex-direction: column;
+  }
+
+  .hero-text {
+    padding-right: 0;
+    order: 2;
+    text-align: center;
+  }
+
+  .hero-image {
+    order: 1;
+    margin-bottom: 40px;
+  }
+
   .hero-text h1 {
-    font-size: 2em;
+    font-size: 42px;
   }
+
   .hero-text p {
-    font-size: 1em;
+    font-size: 17px;
   }
+
+  .section-title h2 {
+    font-size: 28px;
+  }
+
+  .category-card {
+    width: calc(50% - 24px);
+  }
+
   .book-card {
-    width: calc(50% - 20px);
+    width: calc(50% - 30px);
+  }
+
+  .footer-logo {
+    flex: 0 0 100%;
   }
 }
 
 @media (max-width: 480px) {
+  .hero-text h1 {
+    font-size: 36px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .secondary-btn {
+    margin-left: 0;
+  }
+
+  .category-card {
+    width: 100%;
+  }
+
   .book-card {
     width: 100%;
+  }
+
+  .subscribe-form {
+    flex-direction: column;
+  }
+
+  .footer-column {
+    flex: 0 0 100%;
   }
 }
 </style>

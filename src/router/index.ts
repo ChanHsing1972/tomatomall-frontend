@@ -8,15 +8,15 @@ const router = createRouter({
     }, {
         path: '/login',
         component: () => import('../views/account/Login.vue'),
-        meta: {title: '用户登录'}
+        meta: {title: '登录'}
     }, {
         path: '/register',
         component: () => import('../views/account/Register.vue'),
-        meta: {title: '用户注册'}
+        meta: {title: '注册'}
     }, {
         path: '/home',
         component: () => import('../views/Home.vue'),
-        meta: {title: '商城主页'}
+        meta: {title: '番茄书城'}
     }, {
         path: '/dashboard',
         component: () => import('../views/account/Dashboard.vue'),
@@ -24,7 +24,7 @@ const router = createRouter({
     }, {
         path: '/cart',
         component: () => import('../views/mall/Cart.vue'),
-        meta: {title: '购物车'}
+        meta: {title: '购物袋'}
     }, {
         path: '/orders',
         component: () => import('../views/mall/Orders.vue'),
@@ -32,12 +32,12 @@ const router = createRouter({
     }, {
         path: '/management',
         component: () => import('../views/product/Management.vue'),
-        meta: {title: '管理页面'}
+        meta: {title: '管理'}
     }, {
         path: '/booklist',
         component: () => import('../views/mall/BookList.vue'),
-        meta: {title: '商品页面'}
-    },{
+        meta: {title: '书库'}
+    }, {
         path: '/404',
         name: '404',
         component: () => import('../views/NotFound.vue'),
