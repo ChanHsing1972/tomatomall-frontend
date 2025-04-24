@@ -1,9 +1,63 @@
 <script setup lang="ts">
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
-import { ref, onMounted, computed } from "vue";
-import { useIntersectionObserver } from '@vueuse/core';
+import { ref, onMounted} from "vue";
+import{getAllAds} from "../api/advertisement.ts";
+import {getProductDetail} from "../api/product.ts";
+import {ElMessage} from "element-plus";
+import {Product} from"/mall/BookList.vue"
+type ad={
+  id:string,
+  title: string,
+  content: string,
+  imgUrl: string,
+  productId: string,
+};
+const adsDialogVisible = ref(false);
 
+const adList = ref<ad[]>([]);
+const displayedAds = ref<ad[]>([]);
+
+const handleClose = () => {
+  console.log('广告弹窗已关闭');
+  // 可以在这里添加关闭弹窗后的操作，如记录日志等
+};
+const fetchAds = async () => {
+  try {
+    const response = await getAllAds();
+    adList.value = response.data.data;
+    console.log("广告列表:", adList.value);
+  } catch (error) {
+    ElMessage.error("获取广告列表失败");
+    console.error(error);
+  }
+};
+
+const currentProduct = ref<Product>({
+  id: "",
+  title: "",
+  description: "",
+  price: "",
+  rate: 0,
+  cover: "",
+  detail: "",
+  specifications: [],
+});
+const detailDialogVisible = ref(false);
+
+const openDetailDialog = async (productId:string) => {
+  try {
+    const detailResponse = await getProductDetail(productId);
+    currentProduct.value = detailResponse.data.data;
+    detailDialogVisible.value = true;
+  } catch (error) {
+    ElMessage.error("获取商品详情失败");
+    console.error(error);
+  }
+};
+
+onMounted(async () => {
+});
 // 模拟推荐书籍数据
 const recommendedBooks = ref<
   { id: number; title: string; cover: string; desc: string; price: number }[]
@@ -32,9 +86,26 @@ const featuredBook = ref({
 // 动画控制
 const heroVisible = ref(false);
 
-onMounted(() => {
-  // 模拟数据加载
+onMounted(async () => {
+  await fetchAds();
+
+  const maxAdsToShow = 3;
+  const availableAds = adList.value.slice(); // 使用 slice() 来复制数组
+  const selectedAds = [];
+
+  while (selectedAds.length < maxAdsToShow && availableAds.length > 0) {
+    const randomIndex = Math.floor(Math.random() * availableAds.length);
+    const randomAd = availableAds.splice(randomIndex, 1)[0];
+    selectedAds.push(randomAd);
+  }
+
+  displayedAds.value = selectedAds;
   setTimeout(() => {
+    if (adList.value.length > 0) {
+      adsDialogVisible.value = true;
+    } else {
+      ElMessage.error('没有广告可显示');
+    }
     heroVisible.value = true;
 
     recommendedBooks.value = [
@@ -118,13 +189,66 @@ onMounted(() => {
 const formatPrice = (price: number) => {
   return `RMB ${price.toFixed(2)}`;
 };
+
+// const judge=(id:string)=>{
+//   if(id==="")
+// }
 </script>
 
 <template>
   <div class="home">
     <!-- 顶部导航 -->
     <Header />
+    <el-dialog
+        title="推荐"
+        v-model="adsDialogVisible"
+        width="35%"
+        class="ad-dialog"
+        @close="handleClose"
+    >
+      <div class="ad-container">
+        <div
+            v-for="ad in displayedAds"
+            :key="ad.id"
+            class="ad-item"
+            @click="openDetailDialog(ad.productId)"
+        >
+          <img :src="ad.imgUrl" alt="广告图片" class="ad-image" />
+          <h3>{{ ad.title }}</h3>
+          <p>{{ ad.content }}</p>
+        </div>
+      </div>
+    </el-dialog>
 
+    <el-dialog
+        v-model="detailDialogVisible"
+        title="商品详情"
+        width="50%"
+    >
+      <div class="product-detail">
+        <div class="detail-header">
+          <img :src="currentProduct.cover" class="product-cover" />
+          <div class="product-info">
+            <h2>{{ currentProduct.title }}</h2>
+            <div class="product-price">价格: {{ currentProduct.price }}</div>
+            <div class="product-rate">评分: {{ currentProduct.rate }}/10</div>
+          </div>
+        </div>
+        <div class="product-description">
+          <h3>商品描述</h3>
+          <p>{{ currentProduct.description }}</p>
+        </div>
+        <div class="product-specs" v-if="currentProduct.specifications.length">
+          <h3>详情</h3>
+          <ul>
+            <li v-for="spec in currentProduct.specifications" :key="spec.id" >
+              {{ spec.item }}: {{ spec.value }}
+            </li>
+          </ul>
+        </div>
+        <div class="product-detail-content" v-html="currentProduct.detail"></div>
+      </div>
+    </el-dialog>
     <!-- Banner / Hero 区域 -->
     <section class="hero" :class="{ 'visible': heroVisible }">
       <div class="hero-content">
@@ -273,6 +397,7 @@ const formatPrice = (price: number) => {
 
 <style scoped>
 /* 整体风格 */
+
 .home {
   font-family: "sf pro display medium", Arial, sans-serif;
   background-color: #ffffff;
@@ -282,6 +407,92 @@ const formatPrice = (price: number) => {
 }
 
 /* 通用样式 */
+.product-detail {
+  padding: 20px;
+}
+
+.detail-header {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.product-cover {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.product-info {
+  flex: 1;
+}
+
+.product-price {
+  font-size: 24px;
+  color: #f56c6c;
+  margin: 10px 0;
+}
+
+.product-rate {
+  color: #e6a23c;
+}
+
+.product-description,
+.product-specs {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.product-specs ul {
+  padding-left: 20px;
+}
+
+.product-specs li {
+  margin: 8px 0;
+}
+
+/* 广告项添加悬停效果 */
+.ad-item {
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.ad-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+.ad-dialog {
+  z-index: 9999;
+  border-radius: 12px;
+}
+
+.ad-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 10px;
+}
+
+.ad-item {
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.ad-image {
+  width: 100%;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.product-id {
+  font-size: 12px;
+  color: #888;
+  margin-top: 8px;
+}
 .section-title {
   display: flex;
   justify-content: space-between;
