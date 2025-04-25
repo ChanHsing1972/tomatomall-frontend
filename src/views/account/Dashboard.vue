@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import { accountInfo, accountInfoUpdate } from "../../api/account.ts";
-import { parseRole, parseTime } from "../../utils";
-import { router } from "../../router";
+import {computed, onMounted, ref} from "vue";
+import {accountInfo, accountInfoUpdate} from "../../api/account.ts";
+import {parseRole, parseTime} from "../../utils";
+import {router} from "../../router";
 import Header from "../../components/Header.vue";
-import { ElMessage, ElMessageBox, UploadProps } from "element-plus";
-import { UserFilled } from "@element-plus/icons-vue";
+import {ElMessage, ElMessageBox, UploadProps} from "element-plus";
+import {UserFilled} from "@element-plus/icons-vue";
 
 const role = sessionStorage.getItem("role") || "user";
 const name = ref("");
@@ -28,7 +28,7 @@ const confirmPassword = ref("");
 const hasConfirmPasswordInput = computed(() => confirmPassword.value !== "");
 const isPasswordIdentical = computed(() => password.value === confirmPassword.value);
 const changeDisabled = computed(
-  () => !(hasConfirmPasswordInput.value && isPasswordIdentical.value)
+    () => !(hasConfirmPasswordInput.value && isPasswordIdentical.value)
 );
 
 function getUserInfo() {
@@ -90,7 +90,7 @@ function updatePassword() {
         showClose: false,
         roundButton: true,
         center: true,
-      }).then(() => router.push({ path: "/login" }));
+      }).then(() => router.push({path: "/login"}));
     } else if (res.data.code === "401") {
       ElMessage({
         customClass: "customMessage",
@@ -141,20 +141,24 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
 }
 
 const goToManagement = () => {
-  router.push({ path: "/management" });
+  router.push({path: "/management"});
+};
+
+const goToAd = () => {
+  router.push({path: "/ad"});
 };
 </script>
 
 <template>
-  <Header />
+  <Header/>
   <div class="dashboard-container">
     <!-- 左侧：完整用户信息展示卡片 -->
     <div class="user-summary">
       <div class="header-info">
         <el-upload class="avatar-uploader" action="http://localhost:8080/api/files/images" :show-file-list="false"
-          :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+                   :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
           <img v-if="avatar" class="user-avatar" :src="avatar" alt="avatar">
-          <el-avatar v-else class="user-avatar" :icon="UserFilled" :size="80" />
+          <el-avatar v-else class="user-avatar" :icon="UserFilled" :size="80"/>
         </el-upload>
         <div class="welcome-name">
           <span class="welcome-text">欢迎回来,</span>
@@ -194,6 +198,7 @@ const goToManagement = () => {
 
         <div v-if="role === 'admin'" class="management-btn">
           <el-button class="button" type="primary" @click="goToManagement">管理商场</el-button>
+          <el-button class="button" type="primary" @click="goToAd">管理广告</el-button>
         </div>
       </div>
     </div>
@@ -210,16 +215,16 @@ const goToManagement = () => {
       <div v-if="showInfoEdit" class="form-container">
         <el-form label-position="top">
           <el-form-item label="昵称">
-            <el-input v-model="newName" placeholder="请输入昵称" />
+            <el-input v-model="newName" placeholder="请输入昵称"/>
           </el-form-item>
           <el-form-item label="联系电话">
-            <el-input v-model="telephone" disabled />
+            <el-input v-model="telephone" disabled/>
           </el-form-item>
           <el-form-item label="邮箱">
-            <el-input v-model="newEmail" placeholder="请输入邮箱" />
+            <el-input v-model="newEmail" placeholder="请输入邮箱"/>
           </el-form-item>
           <el-form-item v-if="role === 'user'" label="收货地址">
-            <el-input type="textarea" v-model="newLocation" placeholder="请输入地址" />
+            <el-input type="textarea" v-model="newLocation" placeholder="请输入地址"/>
           </el-form-item>
           <el-form-item>
             <el-button class="button" @click="updateInfo">更新资料</el-button>
@@ -229,7 +234,7 @@ const goToManagement = () => {
       <div v-else class="form-container">
         <el-form label-position="top">
           <el-form-item label="新密码">
-            <el-input type="password" v-model="password" placeholder="••••••••" />
+            <el-input type="password" v-model="password" placeholder="••••••••"/>
           </el-form-item>
           <el-form-item :label="hasConfirmPasswordInput && !isPasswordIdentical
             ? '密码不一致'
@@ -237,7 +242,7 @@ const goToManagement = () => {
             ">
             <el-input type="password" v-model="confirmPassword" placeholder="••••••••" :class="{
               'error-warn-input': hasConfirmPasswordInput && !isPasswordIdentical,
-            }" />
+            }"/>
           </el-form-item>
           <el-form-item>
             <el-button class="button" @click="updatePassword" :disabled="changeDisabled">修改密码</el-button>

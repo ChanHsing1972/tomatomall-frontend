@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
-import { ref, onMounted} from "vue";
-import{getAllAds} from "../api/advertisement.ts";
+import {ref, onMounted} from "vue";
+import {getAllAds} from "../api/ad.ts";
 import {getProductDetail} from "../api/product.ts";
 import {ElMessage} from "element-plus";
-import {Product} from"/mall/BookList.vue"
-type ad={
-  id:string,
+
+type ad = {
+  id: string,
   title: string,
   content: string,
   imgUrl: string,
@@ -33,6 +33,9 @@ const fetchAds = async () => {
   }
 };
 
+interface Product {
+}
+
 const currentProduct = ref<Product>({
   id: "",
   title: "",
@@ -45,7 +48,7 @@ const currentProduct = ref<Product>({
 });
 const detailDialogVisible = ref(false);
 
-const openDetailDialog = async (productId:string) => {
+const openDetailDialog = async (productId: string) => {
   try {
     const detailResponse = await getProductDetail(productId);
     currentProduct.value = detailResponse.data.data;
@@ -60,17 +63,17 @@ onMounted(async () => {
 });
 // 模拟推荐书籍数据
 const recommendedBooks = ref<
-  { id: number; title: string; cover: string; desc: string; price: number }[]
+    { id: number; title: string; cover: string; desc: string; price: number }[]
 >([]);
 
 // 新书上架
 const newArrivals = ref<
-  { id: number; title: string; cover: string; author: string; price: number }[]
+    { id: number; title: string; cover: string; author: string; price: number }[]
 >([]);
 
 // 热门分类
 const categories = ref<
-  { id: number; name: string; icon: string; count: number }[]
+    { id: number; name: string; icon: string; count: number }[]
 >([]);
 
 // 特色书籍
@@ -140,16 +143,16 @@ onMounted(async () => {
     ];
 
     categories.value = [
-      { id: 1, name: "文学小说", icon: "📚", count: 1280 },
-      { id: 2, name: "科技前沿", icon: "🔬", count: 853 },
-      { id: 3, name: "艺术设计", icon: "🎨", count: 672 },
-      { id: 4, name: "生活方式", icon: "☕️", count: 945 },
-      { id: 5, name: "经济管理", icon: "📊", count: 1056 },
-      { id: 6, name: "历史文化", icon: "🏛️", count: 789 },
-      { id: 7, name: "运动健身", icon: "🏋️", count: 900 },
-      { id: 8, name: "美食烹饪", icon: "🍳", count: 1120 },
-      { id: 9, name: "旅游攻略", icon: "✈️", count: 730 },
-      { id: 10, name: "音乐艺术", icon: "🎵", count: 640 }
+      {id: 1, name: "文学小说", icon: "📚", count: 1280},
+      {id: 2, name: "科技前沿", icon: "🔬", count: 853},
+      {id: 3, name: "艺术设计", icon: "🎨", count: 672},
+      {id: 4, name: "生活方式", icon: "☕️", count: 945},
+      {id: 5, name: "经济管理", icon: "📊", count: 1056},
+      {id: 6, name: "历史文化", icon: "🏛️", count: 789},
+      {id: 7, name: "运动健身", icon: "🏋️", count: 900},
+      {id: 8, name: "美食烹饪", icon: "🍳", count: 1120},
+      {id: 9, name: "旅游攻略", icon: "✈️", count: 730},
+      {id: 10, name: "音乐艺术", icon: "🎵", count: 640}
     ];
 
     newArrivals.value = [
@@ -182,6 +185,7 @@ onMounted(async () => {
         price: 88.00
       }
     ];
+
   }, 500);
 });
 
@@ -189,16 +193,12 @@ onMounted(async () => {
 const formatPrice = (price: number) => {
   return `RMB ${price.toFixed(2)}`;
 };
-
-// const judge=(id:string)=>{
-//   if(id==="")
-// }
 </script>
 
 <template>
   <div class="home">
     <!-- 顶部导航 -->
-    <Header />
+    <Header/>
     <el-dialog
         title="推荐"
         v-model="adsDialogVisible"
@@ -213,7 +213,7 @@ const formatPrice = (price: number) => {
             class="ad-item"
             @click="openDetailDialog(ad.productId)"
         >
-          <img :src="ad.imgUrl" alt="广告图片" class="ad-image" />
+          <img :src="ad.imgUrl" alt="广告图片" class="ad-image"/>
           <h3>{{ ad.title }}</h3>
           <p>{{ ad.content }}</p>
         </div>
@@ -227,7 +227,7 @@ const formatPrice = (price: number) => {
     >
       <div class="product-detail">
         <div class="detail-header">
-          <img :src="currentProduct.cover" class="product-cover" />
+          <img :src="currentProduct.cover" class="product-cover"/>
           <div class="product-info">
             <h2>{{ currentProduct.title }}</h2>
             <div class="product-price">价格: {{ currentProduct.price }}</div>
@@ -241,7 +241,7 @@ const formatPrice = (price: number) => {
         <div class="product-specs" v-if="currentProduct.specifications.length">
           <h3>详情</h3>
           <ul>
-            <li v-for="spec in currentProduct.specifications" :key="spec.id" >
+            <li v-for="spec in currentProduct.specifications" :key="spec.id">
               {{ spec.item }}: {{ spec.value }}
             </li>
           </ul>
@@ -262,8 +262,8 @@ const formatPrice = (price: number) => {
         </div>
         <div class="hero-image">
           <img
-            src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80"
-            alt="Hero Image">
+              src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80"
+              alt="Hero Image">
         </div>
       </div>
       <div class="hero-bg"></div>
@@ -299,7 +299,7 @@ const formatPrice = (price: number) => {
       <div class="display-books">
         <div class="recommended-book" v-for="book in recommendedBooks" :key="book.id">
           <div class="display-book-cover">
-            <img :src="book.cover" alt="书籍封面" />
+            <img :src="book.cover" alt="书籍封面"/>
           </div>
           <div class="display-book-info">
             <h3>{{ book.title }}</h3>
@@ -322,7 +322,7 @@ const formatPrice = (price: number) => {
       <div class="display-books">
         <div class="new-book" v-for="book in newArrivals" :key="book.id">
           <div class="display-book-cover">
-            <img :src="book.cover" alt="书籍封面" />
+            <img :src="book.cover" alt="书籍封面"/>
             <div class="new-tag">NEW</div>
           </div>
           <div class="display-book-info">
@@ -350,7 +350,7 @@ const formatPrice = (price: number) => {
             </div>
           </div>
           <div class="featured-image">
-            <img :src="featuredBook.cover" alt="特色书籍封面" />
+            <img :src="featuredBook.cover" alt="特色书籍封面"/>
           </div>
         </div>
       </div>
@@ -384,14 +384,14 @@ const formatPrice = (price: number) => {
         <h2>订阅获取更新</h2>
         <p>第一时间获取新书资讯和独家优惠</p>
         <div class="subscribe-form">
-          <input type="email" placeholder="输入您的邮箱地址" />
+          <input type="email" placeholder="输入您的邮箱地址"/>
           <button>订阅</button>
         </div>
       </div>
     </section>
 
     <!-- 页脚 -->
-    <Footer />
+    <Footer/>
   </div>
 </template>
 
@@ -464,6 +464,7 @@ const formatPrice = (price: number) => {
   transform: translateY(-3px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
+
 .ad-dialog {
   z-index: 9999;
   border-radius: 12px;
@@ -493,6 +494,7 @@ const formatPrice = (price: number) => {
   color: #888;
   margin-top: 8px;
 }
+
 .section-title {
   display: flex;
   justify-content: space-between;

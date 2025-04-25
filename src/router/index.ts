@@ -32,7 +32,11 @@ const router = createRouter({
     }, {
         path: '/management',
         component: () => import('../views/product/Management.vue'),
-        meta: {title: '管理'}
+        meta: {title: '商品管理'}
+    }, {
+        path: '/ad',
+        component: () => import('../views/product/Ad.vue'),
+        meta: {title: '广告管理'}
     }, {
         path: '/booklist',
         component: () => import('../views/mall/BookList.vue'),

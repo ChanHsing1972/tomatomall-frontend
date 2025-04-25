@@ -1,5 +1,3 @@
-
-
 //总api
 export const API_MODULE = '/api'
 
@@ -10,10 +8,10 @@ export const ACCOUNT_MODULE = `${API_MODULE}/accounts`
 export const PRODUCT_MODULE = `${API_MODULE}/products`
 
 //购物车模块
-export const CART_MODULE= `${API_MODULE}/cart`
+export const CART_MODULE = `${API_MODULE}/cart`
 
 //订单模块
 export const ORDER_MODULE = `${API_MODULE}/orders`
 
 //广告模块
-export const ADVERTISEMENT_MODULE = `${API_MODULE}/advertisements`
+export const AD_MODULE = `${API_MODULE}/advertisements`
