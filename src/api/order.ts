@@ -2,7 +2,7 @@ import {axios} from "../utils/request";
 import {ORDER_MODULE} from "./_prefix";
 
 // 类型定义
-export type OrderStatus = "PENDING" | "TRADE_SUCCESS" | "CANCELLED" | "EXPIRED";
+export type OrderStatus = "PENDING" | "TRADE_SUCCESS" | "EXPIRED";
 
 export type ShippingAddress = {
     name: string;

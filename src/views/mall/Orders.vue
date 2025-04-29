@@ -25,7 +25,6 @@ const searchQuery = ref('');
 const statusMap: Record<OrderStatus, { text: string; type: string }> = {
   PENDING: {text: "待支付", type: "warning"},
   TRADE_SUCCESS: {text: "已完成", type: "success"},
-  CANCELLED: {text: "已取消", type: "info"},
   EXPIRED: {text: "已过期", type: "info"}
 };
 
@@ -59,12 +58,6 @@ const generateTimeline = (order: OrderVO) => {
     timeline.push({
       icon: "Check",
       title: "支付完成",
-      time: formatDate(order.createTime)
-    });
-  } else if (order.status === 'CANCELLED') {
-    timeline.push({
-      icon: "Close",
-      title: "订单取消",
       time: formatDate(order.createTime)
     });
   } else if (order.status === 'EXPIRED') {
@@ -158,9 +151,7 @@ const orderStats = computed(() => {
   const total = orders.value.length;
   const pending = orders.value.filter(o => o.status === 'PENDING').length;
   const completed = orders.value.filter(o => o.status === 'TRADE_SUCCESS').length;
-  const cancelled = orders.value.filter(o =>
-      o.status === 'CANCELLED' || o.status === 'EXPIRED'
-  ).length;
+  const cancelled = orders.value.filter(o => o.status === 'EXPIRED').length;
 
   let totalSpent = 0;
   orders.value.forEach(order => {
@@ -295,7 +286,7 @@ onMounted(() => {
         <el-tab-pane label="全部订单" name="all"></el-tab-pane>
         <el-tab-pane label="待支付" name="PENDING"></el-tab-pane>
         <el-tab-pane label="已完成" name="TRADE_SUCCESS"></el-tab-pane>
-        <el-tab-pane label="已取消/过期" name="CANCELLED"></el-tab-pane>
+        <el-tab-pane label="已过期" name="EXPIRED"></el-tab-pane>
       </el-tabs>
     </div>
 
