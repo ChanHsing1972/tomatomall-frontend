@@ -1,9 +1,25 @@
 <script setup lang="ts">
-import {ref, onMounted} from "vue";
+import {ref, onMounted, watch} from "vue";
+import {useRoute} from "vue-router";
 import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
-import {getProductList, getProductDetail} from "../../api/product.ts";
+import {getProductList, getProductDetail, searchProductsByKeyword} from "../../api/product.ts";
 import {addToCart} from "../../api/cart.ts";
+
+const route = useRoute();
+const searchKeyword = ref("");
+const isSearching = ref(false);
+
+// 搜索产品
+const searchProducts = async (keyword: string) => {
+  try {
+    const response = await searchProductsByKeyword(keyword);
+    productList.value = response.data.data;
+  } catch (error) {
+    ElMessage.error("搜索书籍失败");
+    console.error(error);
+  }
+};
 
 interface Product {
   id: string;
@@ -80,6 +96,23 @@ const addToCartHandle = async (productId: string) => {
     })
   }
 };
+
+// 监听路由参数变化
+watch(
+    () => route.query.keyword,
+    (newKeyword) => {
+      if (newKeyword) {
+        searchKeyword.value = newKeyword as string;
+        isSearching.value = true;
+        searchProducts(searchKeyword.value);
+      } else {
+        searchKeyword.value = "";
+        isSearching.value = false;
+        fetchProducts(); // 恢复显示所有产品
+      }
+    },
+    {immediate: true}
+);
 </script>
 
 <template>

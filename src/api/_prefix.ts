@@ -1,17 +1,20 @@
 //总api
-export const API_MODULE = '/api'
+export const API_MODULE = "/api";
 
 //用户模块
-export const ACCOUNT_MODULE = `${API_MODULE}/accounts`
+export const ACCOUNT_MODULE = `${API_MODULE}/accounts`;
 
 //商品模块
-export const PRODUCT_MODULE = `${API_MODULE}/products`
+export const PRODUCT_MODULE = `${API_MODULE}/products`;
 
 //购物车模块
-export const CART_MODULE = `${API_MODULE}/cart`
+export const CART_MODULE = `${API_MODULE}/cart`;
 
 //订单模块
-export const ORDER_MODULE = `${API_MODULE}/orders`
+export const ORDER_MODULE = `${API_MODULE}/orders`;
 
 //广告模块
-export const AD_MODULE = `${API_MODULE}/advertisements`
+export const AD_MODULE = `${API_MODULE}/advertisements`;
+
+// 图书模块
+export const BOOK_MODULE = `${API_MODULE}/books`;

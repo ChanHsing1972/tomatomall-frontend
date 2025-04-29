@@ -17,7 +17,14 @@ function logout() {
   });
 }
 function handleSearch() {
-  router.push({ path: "/booklist" });
+  if (searchQuery.value.trim()) {
+    router.push({
+      path: "/booklist",
+      query: { keyword: searchQuery.value.trim() }
+    });
+  } else {
+    router.push({ path: "/booklist" });
+  }
 }
 
 </script>
@@ -45,11 +52,7 @@ function handleSearch() {
       <!-- 右侧：搜索框及用户操作 -->
       <el-col :span="6" class="right-section">
         <div>
-          <el-input
-              v-model="searchQuery"
-              placeholder="搜索"
-              clearable
-              class="nav-search">
+          <el-input v-model="searchQuery" placeholder="搜索" clearable @keyup.enter="handleSearch" class="nav-search">
             <template #prefix>
               <el-icon class="search-icon" @click="handleSearch">
                 <Search />
@@ -58,10 +61,14 @@ function handleSearch() {
           </el-input>
         </div>
         <router-link to="/dashboard" class="user-link">
-          <el-icon class="user-icon" :size="24"><User /></el-icon>
+          <el-icon class="user-icon" :size="24">
+            <User />
+          </el-icon>
         </router-link>
         <a @click="logout" class="logout-link">
-          <el-icon class="logout-icon" :size="24"><SwitchButton /></el-icon>
+          <el-icon class="logout-icon" :size="24">
+            <SwitchButton />
+          </el-icon>
         </a>
       </el-col>
     </el-row>
@@ -70,11 +77,15 @@ function handleSearch() {
 
 <style>
 .header {
-  position: fixed; /* 固定在页面顶部 */
-  top: 0; /* 距离页面顶部0 */
+  position: fixed;
+  /* 固定在页面顶部 */
+  top: 0;
+  /* 距离页面顶部0 */
   left: 0;
-  width: 100%; /* 占满整个页面宽度 */
-  z-index: 100; /* 保证位于最上层 */
+  width: 100%;
+  /* 占满整个页面宽度 */
+  z-index: 100;
+  /* 保证位于最上层 */
 
   /* 半透明背景及毛玻璃效果 */
   background: rgba(245, 245, 245, 0.8);
@@ -111,7 +122,8 @@ function handleSearch() {
   align-items: center;
   justify-content: center;
   gap: 30px;
-  height: 100%; /* 占满整个 nav-row 高度 */
+  height: 100%;
+  /* 占满整个 nav-row 高度 */
 }
 
 .nav-item {
@@ -120,7 +132,8 @@ function handleSearch() {
   color: #666;
   text-decoration: none;
   transition: color 0.3s ease;
-  line-height: 60px; /* 与 nav-row 高度一致 */
+  line-height: 60px;
+  /* 与 nav-row 高度一致 */
 }
 
 .nav-item:hover {

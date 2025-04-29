@@ -26,6 +26,7 @@ declare module 'vue' {
     ElInputNumber: typeof import('element-plus/es')['ElInputNumber']
     ElMain: typeof import('element-plus/es')['ElMain']
     ElRate: typeof import('element-plus/es')['ElRate']
+    ElResult: typeof import('element-plus/es')['ElResult']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
     ElTable: typeof import('element-plus/es')['ElTable']
@@ -38,5 +39,6 @@ declare module 'vue' {
     Header: typeof import('./src/components/Header.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SettingsPanel: typeof import('./src/components/reader/SettingsPanel.vue')['default']
   }
 }
