@@ -11,8 +11,9 @@ import {
 import {getProductDetail} from '../../api/product.ts'
 import {ElMessage, ElImage} from 'element-plus'
 import {ArrowDownBold} from "@element-plus/icons-vue";
-import {router} from "../../router";
+import {useRouter} from 'vue-router'
 
+const router = useRouter()
 const cartItems = ref<any[]>([])
 const loading = ref(false)
 const currentProduct = ref<any>({})
@@ -67,7 +68,7 @@ const updateQuantity = async (cartItemId: string, quantity: number) => {
       await removeItem(cartItemId)
       return
     }
-    const res=await updateCartItem(cartItemId, quantity)
+    const res = await updateCartItem(cartItemId, quantity)
     if (res.data.code === "200") {
       ElMessage({
         message: '数量更新成功',
@@ -75,9 +76,8 @@ const updateQuantity = async (cartItemId: string, quantity: number) => {
         duration: 1000,
         grouping: true
       })
-    }
-    else{
-      ElMessage.error('更新数量失败:'+res.data.msg)
+    } else {
+      ElMessage.error('更新数量失败:' + res.data.msg)
       await fetchCartList()
     }
   } catch (error) {

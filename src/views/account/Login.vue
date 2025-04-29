@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { ElInput, ElButton, ElMessage } from "element-plus";
-import { accountInfo, accountLogin } from "../../api/account.ts";
-import { router } from "../../router";
+import {ref, computed} from 'vue';
+import {ElInput, ElButton, ElMessage} from "element-plus";
+import {accountInfo, accountLogin} from "../../api/account.ts";
+import {useRouter} from 'vue-router'
 
+const router = useRouter()
 // 输入框值
 const username = ref('');
 const password = ref('');
@@ -35,7 +36,7 @@ function handleLogin() {
         sessionStorage.setItem('role', res.data.data.role);
         sessionStorage.setItem('telephone', res.data.data.telephone);
         sessionStorage.setItem('location', res.data.data.location);
-        router.push({ path: "/home" });
+        router.push({path: "/home"});
       });
     } else if (res.data.code === '401') {
       ElMessage({
@@ -57,11 +58,11 @@ function handleLogin() {
       <div class="login-form-box" @keyup.enter="handleLogin">
         <div class="login-input-group">
           <label for="username" class="login-input-label">用户名</label>
-          <el-input id="username" v-model="username" placeholder="请输入用户名" class="input-field" />
+          <el-input id="username" v-model="username" placeholder="请输入用户名" class="input-field"/>
         </div>
         <div class="login-input-group">
           <label for="password" class="login-input-label">密码</label>
-          <el-input id="password" type="password" v-model="password" placeholder="••••••••" class="input-field" />
+          <el-input id="password" type="password" v-model="password" placeholder="••••••••" class="input-field"/>
         </div>
         <div class="login-button-group">
           <el-button type="primary" @click.prevent="handleLogin" :disabled="loginDisabled" class="login-button">

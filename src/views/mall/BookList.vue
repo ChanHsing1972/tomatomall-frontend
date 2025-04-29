@@ -119,7 +119,7 @@ watch(
   <Header/>
   <div class="booklist-container">
     <el-main class="main-container">
-      <div class="product-grid">
+      <div v-if="productList.length" class="product-grid">
         <el-card class="product-card" shadow="hover" v-for="product in productList" :key="product.id"
                  @click="openDetailDialog(product)">
           <div class="card-image-wrapper">
@@ -135,6 +135,9 @@ watch(
             </div>
           </div>
         </el-card>
+      </div>
+      <div v-else>
+        <el-empty description="暂无数据"></el-empty>
       </div>
 
       <!-- 修改后的详情对话框 -->

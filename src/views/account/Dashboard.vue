@@ -2,11 +2,12 @@
 import {computed, onMounted, ref} from "vue";
 import {accountInfo, accountInfoUpdate} from "../../api/account.ts";
 import {parseRole, parseTime} from "../../utils";
-import {router} from "../../router";
+import {useRouter} from "vue-router";
 import Header from "../../components/Header.vue";
 import {ElMessage, ElMessageBox, UploadProps} from "element-plus";
 import {UserFilled} from "@element-plus/icons-vue";
 
+const router = useRouter();
 const role = sessionStorage.getItem("role") || "user";
 const name = ref("");
 const username = sessionStorage.getItem("username") || "默认用户名";

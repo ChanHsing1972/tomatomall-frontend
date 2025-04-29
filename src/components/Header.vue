@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { router } from "../router";
-import { ElMessageBox } from "element-plus";
-import { ref } from "vue";
-import { User, SwitchButton, Search } from "@element-plus/icons-vue";
+import {useRouter} from 'vue-router'
+import {ElMessageBox} from "element-plus";
+import {ref} from "vue";
+import {User, SwitchButton, Search} from "@element-plus/icons-vue";
 
+const router = useRouter();
 const searchQuery = ref("");
 
 function logout() {
@@ -13,17 +14,19 @@ function logout() {
     type: "warning",
   }).then(() => {
     sessionStorage.setItem("token", "");
-    router.push({ path: "/login" });
+    router.push({path: "/login"});
   });
 }
+
 function handleSearch() {
+
   if (searchQuery.value.trim()) {
     router.push({
       path: "/booklist",
-      query: { keyword: searchQuery.value.trim() }
+      query: {keyword: searchQuery.value.trim()}
     });
   } else {
-    router.push({ path: "/booklist" });
+    router.push({path: "/booklist"});
   }
 }
 
@@ -55,19 +58,19 @@ function handleSearch() {
           <el-input v-model="searchQuery" placeholder="搜索" clearable @keyup.enter="handleSearch" class="nav-search">
             <template #prefix>
               <el-icon class="search-icon" @click="handleSearch">
-                <Search />
+                <Search/>
               </el-icon>
             </template>
           </el-input>
         </div>
         <router-link to="/dashboard" class="user-link">
           <el-icon class="user-icon" :size="24">
-            <User />
+            <User/>
           </el-icon>
         </router-link>
         <a @click="logout" class="logout-link">
           <el-icon class="logout-icon" :size="24">
-            <SwitchButton />
+            <SwitchButton/>
           </el-icon>
         </a>
       </el-col>
