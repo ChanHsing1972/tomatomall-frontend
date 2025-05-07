@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { ElMessage, ElSkeletonItem, ElSkeleton, ElDrawer } from 'element-plus';
+import {ref, computed, onMounted, watch} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
+import {ElMessage, ElSkeletonItem, ElSkeleton, ElDrawer, ElButton, ElIcon} from 'element-plus';
 import Header from '../../components/Header.vue';
-import { getBookDetail, getChapterList, getChapterDetail, type Chapter, type ChapterDetail, type BookInfo } from '../../api/book.ts';
+import {getChapterList, getChapterDetail, type Chapter} from '../../api/reader.ts';
+import {getProductDetail} from "../../api/product.ts";
 import SettingsPanel from '../../components/reader/SettingsPanel.vue';
-import { Document, Setting, ArrowLeft, ArrowRight, List } from '@element-plus/icons-vue';
+import {Setting, ArrowLeft, ArrowRight, List} from '@element-plus/icons-vue';
 
 const route = useRoute();
 const router = useRouter();
 
-// 状态
+// 状态定义
 const loading = ref(true);
-const book = ref<BookInfo | null>(null);
+const book = ref<any>(null);
 const chapters = ref<Chapter[]>([]);
-const currentChapter = ref<ChapterDetail | null>(null);
+const currentChapter = ref<Chapter | null>(null);
 const chapterDrawerVisible = ref(false);
 const settingsDrawerVisible = ref(false);
 
@@ -23,48 +24,35 @@ const fontSize = ref(16);
 const theme = ref('default');
 const lineHeight = ref(1.8);
 
-// 获取参数
-const bookId = computed(() => route.query.bookId as string || '1');
+// 获取当前书籍ID和章节ID
+const productId = computed(() => route.query.productId as string || '1');
 const chapterId = computed(() => route.query.chapterId as string);
 
 // 当前章节索引
 const currentChapterIndex = computed(() => {
   if (!currentChapter.value) return 0;
-  return chapters.value.findIndex(c => c.id === currentChapter.value?.id);
+  return chapters.value.findIndex(c => c.chapterId === currentChapter.value?.chapterId);
 });
 
-// 下一章和上一章ID
+// 上/下一章可用性判断
 const nextChapterAvailable = computed(() => {
-  return currentChapter.value?.nextChapterId !== null;
+  return currentChapter.value?.nextChapterNo !== null;
 });
-
 const prevChapterAvailable = computed(() => {
-  return currentChapter.value?.prevChapterId !== null;
+  return currentChapter.value?.prevChapterNo !== null;
 });
 
 // 主题样式
 const readerThemeStyle = computed(() => {
   switch (theme.value) {
     case 'eye-care':
-      return {
-        background: '#f5f5dc',
-        color: '#333333'
-      };
+      return {background: '#f5f5dc', color: '#333333'};
     case 'night':
-      return {
-        background: '#252525',
-        color: '#dddddd'
-      };
+      return {background: '#252525', color: '#dddddd'};
     case 'paper':
-      return {
-        background: '#f8f1e3',
-        color: '#333333'
-      };
+      return {background: '#f8f1e3', color: '#333333'};
     default:
-      return {
-        background: '#ffffff',
-        color: '#333333'
-      };
+      return {background: '#ffffff', color: '#333333'};
   }
 });
 
@@ -80,7 +68,7 @@ const contentStyle = computed(() => {
 // 获取书籍信息
 const fetchBookInfo = async () => {
   try {
-    const response = await getBookDetail(bookId.value);
+    const response = await getProductDetail(productId.value);
     if (response.data.code === '200') {
       book.value = response.data.data;
     } else {
@@ -95,15 +83,13 @@ const fetchBookInfo = async () => {
 // 获取章节列表
 const fetchChapterList = async () => {
   try {
-    const response = await getChapterList(bookId.value);
+    const response = await getChapterList(productId.value);
     if (response.data.code === '200') {
       chapters.value = response.data.data;
-
-      // 如果没有指定章节ID，加载第一章
       if (!chapterId.value && chapters.value.length > 0) {
-        loadChapter(chapters.value[0].id);
+        loadChapter(chapters.value[0].chapterId);
       } else if (chapterId.value) {
-        loadChapter(chapterId.value);
+        loadChapter(Number(chapterId.value));
       }
     } else {
       ElMessage.error('获取章节列表失败');
@@ -115,19 +101,16 @@ const fetchChapterList = async () => {
 };
 
 // 加载指定章节
-const loadChapter = async (id: string) => {
+const loadChapter = async (id: number) => {
   loading.value = true;
   try {
-    const response = await getChapterDetail(bookId.value, id);
+    const response = await getChapterDetail(productId.value, id);
     if (response.data.code === '200') {
       currentChapter.value = response.data.data;
-
-      // 更新URL参数，不刷新页面
+      // 更新URL参数使用 query 更新
       router.replace({
-        query: { ...route.query, chapterId: id }
+        query: {...route.query, chapterId: id.toString()}
       });
-
-      // 滚动到顶部
       window.scrollTo(0, 0);
     } else {
       ElMessage.error('获取章节内容失败');
@@ -142,21 +125,21 @@ const loadChapter = async (id: string) => {
 
 // 下一章
 const goToNextChapter = () => {
-  if (currentChapter.value?.nextChapterId) {
-    loadChapter(currentChapter.value.nextChapterId);
+  if (currentChapter.value?.nextChapterNo) {
+    loadChapter(currentChapter.value.nextChapterNo);
   }
 };
 
 // 上一章
 const goToPrevChapter = () => {
-  if (currentChapter.value?.prevChapterId) {
-    loadChapter(currentChapter.value.prevChapterId);
+  if (currentChapter.value?.prevChapterNo) {
+    loadChapter(currentChapter.value.prevChapterNo);
   }
 };
 
 // 选择章节
 const selectChapter = (chapter: Chapter) => {
-  loadChapter(chapter.id);
+  loadChapter(chapter.chapterId);
   chapterDrawerVisible.value = false;
 };
 
@@ -170,7 +153,7 @@ const saveReaderSettings = () => {
   localStorage.setItem('readerSettings', JSON.stringify(settings));
 };
 
-// 加载保存的阅读设置
+// 加载本地存储的阅读设置
 const loadReaderSettings = () => {
   try {
     const savedSettings = localStorage.getItem('readerSettings');
@@ -186,11 +169,9 @@ const loadReaderSettings = () => {
 };
 
 // 监听设置变化并保存
-watch([fontSize, theme, lineHeight], () => {
-  saveReaderSettings();
-});
+watch([fontSize, theme, lineHeight], saveReaderSettings);
 
-// 初始化
+// 初始化逻辑
 onMounted(async () => {
   loadReaderSettings();
   await fetchBookInfo();
@@ -201,68 +182,61 @@ onMounted(async () => {
 
 <template>
   <div class="reader-page">
-    <Header />
-
+    <Header/>
     <div class="reader-container" :style="readerThemeStyle">
       <div class="reader-header">
         <div class="book-info" v-if="book">
           <h1>{{ book.title }}</h1>
-          <p class="author">{{ book.author }}</p>
+          <p class="author">{{ book.specifications.find(spec => spec.item === "作者")?.value || "未知作者" }}</p>
         </div>
-
         <div class="reader-actions">
           <el-button type="primary" plain circle @click="chapterDrawerVisible = true">
             <el-icon>
-              <List />
+              <List/>
             </el-icon>
           </el-button>
           <el-button type="primary" plain circle @click="settingsDrawerVisible = true">
             <el-icon>
-              <Setting />
+              <Setting/>
             </el-icon>
           </el-button>
         </div>
       </div>
-
       <div class="reader-content">
         <el-skeleton :loading="loading" animated>
           <template #default>
             <div v-if="currentChapter" class="chapter">
-              <h2 class="chapter-title">{{ currentChapter.title }}</h2>
-
-              <div class="chapter-content" :style="contentStyle" v-html="currentChapter.content"></div>
-
+              <h2 class="chapter-title">{{ currentChapter.chapterTitle }}</h2>
+              <div class="chapter-content" :style="contentStyle" v-html="currentChapter.chapterContent"></div>
               <div class="chapter-navigation">
                 <el-button :disabled="!prevChapterAvailable" @click="goToPrevChapter" type="primary" plain>
                   <el-icon>
-                    <ArrowLeft />
-                  </el-icon> 上一章
+                    <ArrowLeft/>
+                  </el-icon>
+                  上一章
                 </el-button>
-
                 <span class="chapter-progress">
                   {{ currentChapterIndex + 1 }} / {{ chapters.length }}
                 </span>
-
                 <el-button :disabled="!nextChapterAvailable" @click="goToNextChapter" type="primary" plain>
-                  下一章 <el-icon>
-                    <ArrowRight />
+                  下一章
+                  <el-icon>
+                    <ArrowRight/>
                   </el-icon>
                 </el-button>
               </div>
             </div>
           </template>
-
           <template #template>
             <div class="skeleton-content">
-              <el-skeleton-item variant="h1" style="width: 40%" />
-              <el-skeleton-item variant="text" style="margin-top: 10px; width: 20%" />
-              <el-skeleton-item variant="h3" style="margin-top: 30px; width: 60%" />
-
+              <el-skeleton-item variant="h1" style="width: 40%"/>
+              <el-skeleton-item variant="text" style="margin-top: 10px; width: 20%"/>
+              <el-skeleton-item variant="h3" style="margin-top: 30px; width: 60%"/>
               <div class="skeleton-paragraphs">
                 <div v-for="i in 8" :key="i">
-                  <el-skeleton-item variant="text" style="margin-top: 16px; width: 100%" />
-                  <el-skeleton-item variant="text" style="margin-top: 10px; width: 95%" />
-                  <el-skeleton-item variant="text" style="margin-top: 10px; width: 90%" />
+                  <el-skeleton-item variant="text" style="margin-top: 16px; width: 100%"/>
+                  <el-skeleton-item variant="text" style="margin-top: 10px; width: 95%"/>
+                  <el-skeleton-item variant="text" style="margin-top: 10px; width: 90%"/>
                 </div>
               </div>
             </div>
@@ -270,20 +244,16 @@ onMounted(async () => {
         </el-skeleton>
       </div>
     </div>
-
-    <!-- 章节抽屉 -->
     <el-drawer v-model="chapterDrawerVisible" title="章节列表" direction="ltr" size="280px">
       <div class="chapter-list">
-        <div v-for="chapter in chapters" :key="chapter.id" class="chapter-item"
-          :class="{ active: currentChapter?.id === chapter.id }" @click="selectChapter(chapter)">
-          {{ chapter.title }}
+        <div v-for="chapter in chapters" :key="chapter.chapterId" class="chapter-item"
+             :class="{ active: currentChapter?.chapterId === chapter.chapterId }" @click="selectChapter(chapter)">
+          {{ chapter.chapterTitle }}
         </div>
       </div>
     </el-drawer>
-
-    <!-- 设置抽屉 -->
     <el-drawer v-model="settingsDrawerVisible" title="阅读设置" direction="rtl" size="320px">
-      <SettingsPanel v-model:fontSize="fontSize" v-model:theme="theme" v-model:lineHeight="lineHeight" />
+      <SettingsPanel v-model:fontSize="fontSize" v-model:theme="theme" v-model:lineHeight="lineHeight"/>
     </el-drawer>
   </div>
 </template>

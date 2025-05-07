@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import {ref, onMounted, watch} from "vue";
-import {useRoute} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
 import {getProductList, getProductDetail, searchProductsByKeyword} from "../../api/product.ts";
 import {addToCart} from "../../api/cart.ts";
 
 const route = useRoute();
+const router = useRouter();
 const searchKeyword = ref("");
 const isSearching = ref(false);
 
@@ -97,6 +98,11 @@ const addToCartHandle = async (productId: string) => {
   }
 };
 
+const goToReader = (productId: string) => {
+  console.log(productId);
+  router.push({path: '/reader', query: {productId: productId}});
+}
+
 // 监听路由参数变化
 watch(
     () => route.query.keyword,
@@ -176,6 +182,7 @@ watch(
         </div>
         <template #footer>
           <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button @click="goToReader(currentProduct.id)">阅读</el-button>
           <el-button type="primary" @click="addToCartHandle(currentProduct.id)">加入购物车</el-button>
         </template>
       </el-dialog>
