@@ -19,3 +19,5 @@ export const AD_MODULE = `${API_MODULE}/advertisements`;
 // 图书模块
 export const READER_MODULE = `${API_MODULE}/reader`;
 
+//评论模块
+export const COMMENT_MODULE = `${API_MODULE}/comments`;
