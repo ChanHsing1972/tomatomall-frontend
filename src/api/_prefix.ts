@@ -18,3 +18,6 @@ export const AD_MODULE = `${API_MODULE}/advertisements`;
 
 // 图书模块
 export const BOOK_MODULE = `${API_MODULE}/books`;
+
+//评论模块
+export const COMMENT_MODULE = `${API_MODULE}/comments`;
