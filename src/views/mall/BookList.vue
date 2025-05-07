@@ -136,8 +136,8 @@ watch(
             <p class="product-description">{{ product.description }}</p>
             <div class="price-rate">
               <span class="product-price">RMB {{ product.price }}</span>
-              <el-rate class="product-rate" v-model="product.rate" disabled show-score
-                       :score-template="`${product.rate} 分`"/>
+              <el-rate class="product-rate" v-model="product.rate" allow-half disabled/>
+              <span class="product-score">{{ product.rate.toFixed(1) }}</span>
             </div>
           </div>
         </el-card>
@@ -286,8 +286,11 @@ watch(
   .price-rate {
     display: flex;
     font-size: 14px;
-    justify-content: space-between;
     align-items: center;
+  }
+
+  .product-rate .el-rate__icon {
+    margin-right: 0px;
   }
 
   .product-price {
@@ -299,10 +302,14 @@ watch(
   }
 
   .product-rate {
-    width: 150px;
-    font-size: 10px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    margin-left: auto; /* 将评分组件推到右侧 */
+    width: auto; /* 去除固定宽度，间距会更紧凑 */
+    --el-rate-disabled-void-color: #ddd;
+  }
+
+  .product-score {
+    color: #ff9900;
+    margin-left: 6px;
   }
 
   /* 详情对话框整体样式 */

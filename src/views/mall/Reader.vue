@@ -262,6 +262,7 @@ onMounted(async () => {
 .reader-page {
   min-height: 100vh;
   background-color: #f8f9fa;
+  margin-top: 60px;
 }
 
 .reader-container {
