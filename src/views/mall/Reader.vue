@@ -36,10 +36,10 @@ const currentChapterIndex = computed(() => {
 
 // 上/下一章可用性判断
 const nextChapterAvailable = computed(() => {
-  return currentChapter.value?.nextChapterNo !== null;
+  return currentChapter.value?.nextChapterNo !== 0;
 });
 const prevChapterAvailable = computed(() => {
-  return currentChapter.value?.prevChapterNo !== null;
+  return currentChapter.value?.prevChapterNo !== 0;
 });
 
 // 主题样式
