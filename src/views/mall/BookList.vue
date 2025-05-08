@@ -284,8 +284,7 @@ watch(
               <span class="product-price">RMB {{ product.price }}</span>
               <el-rate class="product-rate" v-model="product.rate" allow-half disabled/>
               <span class="product-score">{{ product.rate.toFixed(1) }}</span>
-              <el-rate class="product-rate" v-model="product.rate" disabled show-score
-                       :score-template="`${product.rate} 分`" />
+
             </div>
           </div>
         </el-card>
