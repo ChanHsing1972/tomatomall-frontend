@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import { ElMessage } from "element-plus";
 import Header from "../../components/Header.vue";
-import { getProductList, getProductDetail, searchProductsByKeyword } from "../../api/product.ts";
-import { addToCart } from "../../api/cart.ts";
-import { getAllCommentsByProductId, isLikeComment, likeOrDislike, addComment, deleteComment } from "../../api/comment.ts";
+import {getProductList, getProductDetail, searchProductsByKeyword} from "../../api/product.ts";
+import {addToCart} from "../../api/cart.ts";
+import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
 
 const route = useRoute();
+const router = useRouter();
 const searchKeyword = ref("");
 const isSearching = ref(false);
 const username = sessionStorage.getItem("username") || "";
@@ -243,6 +244,11 @@ const fetchComments = async () => {
   }
 };
 
+const goToReader = (productId: string) => {
+  console.log(productId);
+  router.push({path: '/reader', query: {productId: productId}});
+}
+
 // 监听路由参数变化
 watch(
     () => route.query.keyword,
@@ -276,6 +282,8 @@ watch(
             <p class="product-description">{{ product.description }}</p>
             <div class="price-rate">
               <span class="product-price">RMB {{ product.price }}</span>
+              <el-rate class="product-rate" v-model="product.rate" allow-half disabled/>
+              <span class="product-score">{{ product.rate.toFixed(1) }}</span>
               <el-rate class="product-rate" v-model="product.rate" disabled show-score
                        :score-template="`${product.rate} 分`" />
             </div>
@@ -384,6 +392,8 @@ watch(
         </div>
         <template #footer>
           <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button @click="goToReader(currentProduct.id)">阅读</el-button>
+          <el-button type="primary" @click="addToCartHandle(currentProduct.id)">加入购物车</el-button>
           <el-button type="primary" @click="addToCartHandle(currentProduct.id)">加入购物袋</el-button>
         </template>
       </el-dialog>
@@ -414,12 +424,14 @@ watch(
 
 .booklist-container {
   /* 全局基础样式 */
+
   * {
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     box-sizing: border-box;
   }
 
   /* 主体容器 */
+
   .main-container {
     padding: 100px 40px 40px;
     max-width: 2560px;
@@ -427,6 +439,7 @@ watch(
   }
 
   /* 产品网格布局 */
+
   .product-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(200px, 1fr));
@@ -437,6 +450,7 @@ watch(
   }
 
   /* 产品卡片 */
+
   .product-card {
     border: none;
     border-radius: 16px;
@@ -452,16 +466,19 @@ watch(
   }
 
   /* 卡片图片区域 */
+
   .card-image-wrapper {
     width: 100%;
     height: 280px;
     overflow: hidden;
     border-radius: 14px;
+    /* 将圆角放到容器上 */
   }
 
   .product-image {
     width: 100%;
     height: 100%;
+    /* 移除图片本身的 border-radius */
     object-fit: cover;
     transition: transform 0.3s ease;
     margin-bottom: 0;
@@ -472,6 +489,7 @@ watch(
   }
 
   /* 卡片信息 */
+
   .product-title {
     font-size: 18px;
     font-weight: 600;
@@ -489,8 +507,11 @@ watch(
     height: 20px;
     overflow: hidden;
     flex-grow: 0;
+    /* 不让第一项继续扩展 */
     white-space: nowrap;
+    /* 隐藏超出部分 */
     text-overflow: ellipsis;
+    /* 显示省略号 */
   }
 
   .price-rate {
@@ -498,6 +519,10 @@ watch(
     font-size: 14px;
     justify-content: space-between;
     align-items: center;
+  }
+
+  .product-rate .el-rate__icon {
+    margin-right: 0px;
   }
 
   .product-price {
@@ -509,16 +534,22 @@ watch(
   }
 
   .product-rate {
-    width: 150px;
-    font-size: 10px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    margin-left: auto; /* 将评分组件推到右侧 */
+    width: auto; /* 去除固定宽度，间距会更紧凑 */
+    --el-rate-disabled-void-color: #ddd;
+  }
+
+  .product-score {
+    color: #ff9900;
+    margin-left: 6px;
   }
 
   /* 详情对话框整体样式 */
+
   .detail-dialog {
     padding: 20px 30px;
     border-radius: 30px;
+    /* 圆角处理 */
   }
 
   .detail-dialog .el-dialog__header {
@@ -532,12 +563,14 @@ watch(
   }
 
   /* 对话框内容布局 */
+
   .dialog-content {
     display: flex;
     gap: 50px;
   }
 
   /* 左侧大图区域 */
+
   .dialog-image {
     flex: 0 0 35%;
     display: flex;
@@ -552,6 +585,7 @@ watch(
   }
 
   /* 右侧信息区域 */
+
   .dialog-info {
     flex: 1 1 45%;
     display: flex;
@@ -560,6 +594,7 @@ watch(
   }
 
   /* 信息分为两列：左侧为标题，右侧为内容 */
+
   .info-section {
     display: flex;
     flex-direction: column;
@@ -575,6 +610,7 @@ watch(
     font-size: 12px;
     color: #999;
     width: 70px;
+    /* 固定宽度 */
     text-align: left;
   }
 
@@ -593,6 +629,7 @@ watch(
   }
 
   /* 产品详细描述区域 */
+
   .product-detail {
     font-size: 15px;
     line-height: 1.6;
@@ -668,6 +705,7 @@ watch(
   }
 
   /* 底部按钮 */
+
   .footer-btn {
     border-radius: 20px;
     padding: 8px 20px;
@@ -684,5 +722,6 @@ watch(
     .dialog-info {
       flex: 1 1 100%;
     }
-  }}
+  }
+}
 </style>
