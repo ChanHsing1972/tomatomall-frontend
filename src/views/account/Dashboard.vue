@@ -20,6 +20,7 @@ const avatar = ref(''); // 用于存储头像的 URL
 const newName = ref("");
 const newEmail = ref("");
 const newLocation = ref("");
+const newTelephone = ref("");
 
 const showInfoEdit = ref(true); // true：编辑个人信息；false：修改密码
 
@@ -44,6 +45,7 @@ function getUserInfo() {
     newName.value = name.value;
     newEmail.value = email.value;
     newLocation.value = location.value;
+    newTelephone.value = telephone.value;
   });
 }
 
@@ -55,6 +57,7 @@ function updateInfo() {
   accountInfoUpdate({
     name: newName.value,
     location: newLocation.value,
+    telephone: newTelephone.value,
     email: newEmail.value,
   }).then((res) => {
     if (res.data.code === "200") {
@@ -219,7 +222,7 @@ const goToAd = () => {
             <el-input v-model="newName" placeholder="请输入昵称"/>
           </el-form-item>
           <el-form-item label="联系电话">
-            <el-input v-model="telephone" disabled/>
+            <el-input v-model="newTelephone" placeholder="请输入手机号"/>
           </el-form-item>
           <el-form-item label="邮箱">
             <el-input v-model="newEmail" placeholder="请输入邮箱"/>

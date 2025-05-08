@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import {ref, computed, onMounted, watch} from 'vue';
-import {useRoute, useRouter} from 'vue-router';
-import {ElMessage, ElSkeletonItem, ElSkeleton, ElDrawer, ElButton, ElIcon} from 'element-plus';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { ElMessage, ElSkeletonItem, ElSkeleton, ElDrawer, ElButton, ElIcon } from 'element-plus';
 import Header from '../../components/Header.vue';
-import {getChapterList, getChapterDetail, type Chapter} from '../../api/reader.ts';
-import {getProductDetail} from "../../api/product.ts";
+import { getChapterList, getChapterDetail, type Chapter } from '../../api/reader.ts';
+import { getProductDetail } from "../../api/product.ts";
 import SettingsPanel from '../../components/reader/SettingsPanel.vue';
-import {Setting, ArrowLeft, ArrowRight, List} from '@element-plus/icons-vue';
+import { Setting, ArrowLeft, ArrowRight, List } from '@element-plus/icons-vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -46,13 +46,13 @@ const prevChapterAvailable = computed(() => {
 const readerThemeStyle = computed(() => {
   switch (theme.value) {
     case 'eye-care':
-      return {background: '#f5f5dc', color: '#333333'};
+      return { background: '#f5f5dc', color: '#333333' };
     case 'night':
-      return {background: '#252525', color: '#dddddd'};
+      return { background: '#252525', color: '#dddddd' };
     case 'paper':
-      return {background: '#f8f1e3', color: '#333333'};
+      return { background: '#f8f1e3', color: '#333333' };
     default:
-      return {background: '#ffffff', color: '#333333'};
+      return { background: '#ffffff', color: '#333333' };
   }
 });
 
@@ -109,7 +109,7 @@ const loadChapter = async (id: number) => {
       currentChapter.value = response.data.data;
       // 更新URL参数使用 query 更新
       router.replace({
-        query: {...route.query, chapterId: id.toString()}
+        query: { ...route.query, chapterId: id.toString() }
       });
       window.scrollTo(0, 0);
     } else {
@@ -182,22 +182,22 @@ onMounted(async () => {
 
 <template>
   <div class="reader-page">
-    <Header/>
+    <Header />
     <div class="reader-container" :style="readerThemeStyle">
       <div class="reader-header">
         <div class="book-info" v-if="book">
           <h1>{{ book.title }}</h1>
-          <p class="author">{{ book.specifications.find(spec => spec.item === "作者")?.value || "未知作者" }}</p>
+          <p class="author">{{book.specifications.find(spec => spec.item === "作者")?.value || "未知作者"}}</p>
         </div>
         <div class="reader-actions">
           <el-button type="primary" plain circle @click="chapterDrawerVisible = true">
             <el-icon>
-              <List/>
+              <List />
             </el-icon>
           </el-button>
           <el-button type="primary" plain circle @click="settingsDrawerVisible = true">
             <el-icon>
-              <Setting/>
+              <Setting />
             </el-icon>
           </el-button>
         </div>
@@ -211,7 +211,7 @@ onMounted(async () => {
               <div class="chapter-navigation">
                 <el-button :disabled="!prevChapterAvailable" @click="goToPrevChapter" type="primary" plain>
                   <el-icon>
-                    <ArrowLeft/>
+                    <ArrowLeft />
                   </el-icon>
                   上一章
                 </el-button>
@@ -221,7 +221,7 @@ onMounted(async () => {
                 <el-button :disabled="!nextChapterAvailable" @click="goToNextChapter" type="primary" plain>
                   下一章
                   <el-icon>
-                    <ArrowRight/>
+                    <ArrowRight />
                   </el-icon>
                 </el-button>
               </div>
@@ -229,14 +229,14 @@ onMounted(async () => {
           </template>
           <template #template>
             <div class="skeleton-content">
-              <el-skeleton-item variant="h1" style="width: 40%"/>
-              <el-skeleton-item variant="text" style="margin-top: 10px; width: 20%"/>
-              <el-skeleton-item variant="h3" style="margin-top: 30px; width: 60%"/>
+              <el-skeleton-item variant="h1" style="width: 40%" />
+              <el-skeleton-item variant="text" style="margin-top: 10px; width: 20%" />
+              <el-skeleton-item variant="h3" style="margin-top: 30px; width: 60%" />
               <div class="skeleton-paragraphs">
                 <div v-for="i in 8" :key="i">
-                  <el-skeleton-item variant="text" style="margin-top: 16px; width: 100%"/>
-                  <el-skeleton-item variant="text" style="margin-top: 10px; width: 95%"/>
-                  <el-skeleton-item variant="text" style="margin-top: 10px; width: 90%"/>
+                  <el-skeleton-item variant="text" style="margin-top: 16px; width: 100%" />
+                  <el-skeleton-item variant="text" style="margin-top: 10px; width: 95%" />
+                  <el-skeleton-item variant="text" style="margin-top: 10px; width: 90%" />
                 </div>
               </div>
             </div>
@@ -247,13 +247,13 @@ onMounted(async () => {
     <el-drawer v-model="chapterDrawerVisible" title="章节列表" direction="ltr" size="280px">
       <div class="chapter-list">
         <div v-for="chapter in chapters" :key="chapter.chapterId" class="chapter-item"
-             :class="{ active: currentChapter?.chapterId === chapter.chapterId }" @click="selectChapter(chapter)">
+          :class="{ active: currentChapter?.chapterId === chapter.chapterId }" @click="selectChapter(chapter)">
           {{ chapter.chapterTitle }}
         </div>
       </div>
     </el-drawer>
     <el-drawer v-model="settingsDrawerVisible" title="阅读设置" direction="rtl" size="320px">
-      <SettingsPanel v-model:fontSize="fontSize" v-model:theme="theme" v-model:lineHeight="lineHeight"/>
+      <SettingsPanel v-model:fontSize="fontSize" v-model:theme="theme" v-model:lineHeight="lineHeight" />
     </el-drawer>
   </div>
 </template>

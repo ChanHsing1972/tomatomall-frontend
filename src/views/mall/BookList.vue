@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import {ref, onMounted, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
-import { ElMessage } from "element-plus";
+import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
 import {getProductList, getProductDetail, searchProductsByKeyword} from "../../api/product.ts";
 import {addToCart} from "../../api/cart.ts";
@@ -12,7 +12,7 @@ const router = useRouter();
 const searchKeyword = ref("");
 const isSearching = ref(false);
 const username = sessionStorage.getItem("username") || "";
-const isUserAdmin = sessionStorage.getItem("role")==='admin'; // 假设有一个方法来判断用户是否是管理员
+const isUserAdmin = sessionStorage.getItem("role") === 'admin'; // 假设有一个方法来判断用户是否是管理员
 
 // 搜索产品
 const searchProducts = async (keyword: string) => {
@@ -73,6 +73,7 @@ interface Comment {
 const comments = ref<Comment[]>([]);
 const newCommentContent = ref(""); // 新评论内容
 const newCommentParentId = ref(""); // 新评论的父评论 ID
+const replyingTo = ref(""); // 正在回复的评论用户名
 
 onMounted(() => {
   fetchProducts();
@@ -140,7 +141,7 @@ const openDetailDialog = async (product: Product) => {
       getProductDetail(product.id),
       getAllCommentsByProductId(product.id).catch(e => {
         console.error("获取评论失败:", e);
-        return { data: [] }; // 确保返回数组结构
+        return {data: []}; // 确保返回数组结构
       })
     ]);
 
@@ -158,7 +159,7 @@ const openDetailDialog = async (product: Product) => {
 };
 
 const addToCartHandle = async (productId: string) => {
-  const response = await addToCart({ productId: productId.toString(), quantity: 1 });
+  const response = await addToCart({productId: productId.toString(), quantity: 1});
   console.log(response);
   if (response.data.code == "200") {
     ElMessage({
@@ -200,6 +201,7 @@ const addNewComment = async () => {
       ElMessage.success('评论成功');
       newCommentContent.value = ""; // 清空输入框
       newCommentParentId.value = ""; // 清空父评论 ID
+      replyingTo.value = ""; // 清空回复对象
       await fetchComments(); // 刷新评论列表
     } else {
       ElMessage.error(response.msg || '评论失败');
@@ -249,6 +251,24 @@ const goToReader = (productId: string) => {
   router.push({path: '/reader', query: {productId: productId}});
 }
 
+// 设置回复
+const setReply = (comment: Comment) => {
+  newCommentParentId.value = comment.commentId;
+  replyingTo.value = comment.username;
+  // 自动聚焦到评论框
+  setTimeout(() => {
+    document.querySelector('.reply-input')?.scrollIntoView({behavior: 'smooth'});
+    const textarea = document.querySelector('.reply-input textarea') as HTMLTextAreaElement;
+    if (textarea) textarea.focus();
+  }, 100);
+};
+
+// 取消回复
+const cancelReply = () => {
+  newCommentParentId.value = "";
+  replyingTo.value = "";
+};
+
 // 监听路由参数变化
 watch(
     () => route.query.keyword,
@@ -263,19 +283,19 @@ watch(
         fetchProducts(); // 恢复显示所有产品
       }
     },
-    { immediate: true }
+    {immediate: true}
 );
 </script>
 
 <template>
-  <Header />
+  <Header/>
   <div class="booklist-container">
     <el-main class="main-container">
       <div v-if="productList.length" class="product-grid">
         <el-card class="product-card" shadow="hover" v-for="product in productList" :key="product.id"
                  @click="openDetailDialog(product)">
           <div class="card-image-wrapper">
-            <img :src="product.cover" alt="封面" class="product-image" />
+            <img :src="product.cover" alt="封面" class="product-image"/>
           </div>
           <div class="card-info">
             <h2 class="product-title" :title="product.title">{{ product.title }}</h2>
@@ -284,7 +304,6 @@ watch(
               <span class="product-price">RMB {{ product.price }}</span>
               <el-rate class="product-rate" v-model="product.rate" allow-half disabled/>
               <span class="product-score">{{ product.rate.toFixed(1) }}</span>
-
             </div>
           </div>
         </el-card>
@@ -293,139 +312,152 @@ watch(
         <el-empty description="暂无数据"></el-empty>
       </div>
 
-      <!-- 修改后的详情对话框 -->
-      <el-dialog v-model="detailDialogVisible" width="60%" top="10vh" class="detail-dialog">
+      <!-- 优化后的详情对话框 -->
+      <el-dialog v-model="detailDialogVisible" width="80%" top="5vh" class="detail-dialog" destroy-on-close>
         <div class="dialog-content">
           <!-- 左侧大图区域 -->
           <div class="dialog-image">
-            <el-image :src="currentProduct.cover" fit="cover" class="detail-cover" />
+            <el-image :src="currentProduct.cover" fit="cover" class="detail-cover"/>
+            <div class="product-actions">
+              <el-button class="action-button read-button" @click="goToReader(currentProduct.id)">
+                阅读
+              </el-button>
+              <el-button class="action-button cart-button" type="primary" @click="addToCartHandle(currentProduct.id)">
+                加入购物袋
+              </el-button>
+            </div>
           </div>
-          <!-- 右侧信息区域：所有信息分两行排列 -->
+
+          <!-- 右侧信息区域 -->
           <div class="dialog-info">
-            <div class="info-section">
-              <div class="info-row">
-                <div class="info-label">名称</div>
-                <div class="info-value">{{ currentProduct.title }}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">价格</div>
-                <div class="info-value">RMB {{ currentProduct.price }}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">评分</div>
-                <div class="info-value">{{ currentProduct.rate }} 分</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">描述</div>
-                <div class="info-value">{{ currentProduct.description }}</div>
-              </div>
-              <div class="info-row" v-for="spec in currentProduct.specifications" :key="spec.id">
-                <div class="info-label">{{ spec.item }}</div>
-                <div class="info-value">{{ spec.value }}</div>
+            <div class="product-header">
+              <h1 class="product-title">{{ currentProduct.title }}</h1>
+              <div class="product-meta">
+                <div class="meta-price">RMB {{ currentProduct.price }}</div>
+                <div class="meta-rating">
+                  <el-rate v-model="currentProduct.rate" disabled allow-half/>
+                  <span>{{ currentProduct.rate.toFixed(1) }}</span>
+                </div>
               </div>
             </div>
-            <div class="product-detail" v-html="currentProduct.detail"></div>
 
-            <!-- 评论区域 -->
+            <div class="product-specs">
+              <div class="spec-item" v-for="spec in currentProduct.specifications" :key="spec.id">
+                <div class="spec-label">{{ spec.item }}</div>
+                <div class="spec-value">{{ spec.value }}</div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-label">描述</div>
+                <div class="spec-value description">{{ currentProduct.description }}</div>
+              </div>
+            </div>
+
+            <div class="product-detail-content" v-html="currentProduct.detail"></div>
+
+            <!-- 评论部分 -->
             <div class="comments-section">
-              <h3>用户评论</h3>
-              <div v-if="Array.isArray(comments) && comments.length">
-                <div class="comment-item" v-for="comment in comments" :key="comment.commentId" >
-                  <div v-if="!comment.parentId">
-                  <div class="comment-header" >
-                    <div>
-                      <span class="comment-user">{{ comment.username }}</span>
-                      <span class="comment-time">{{ new Date(comment.createTime).toLocaleString() }}</span>
-                    </div>
-                    <div>
-                      <span
-                          class="comment-likes"
-                          :class="{ liked: comment.isLiked }"
-                          @click="handleLike(comment)"
-                      >
-                        {{ comment.isLiked ? '❤️' : '🤍' }} {{ comment.likeCount }}
-                      </span>
-                      <el-button v-if="comment.username === username || isUserAdmin" type="text" @click="deleteCommentById(comment.commentId)">删除</el-button>
-                    </div>
-                  </div>
-                  <div class="comment-content">{{ comment.content }}</div>
-                  <!-- 子评论 -->
-                  <div v-for="childComment in comments.filter(c => c.parentId === comment.commentId)" :key="childComment.commentId" class="child-comment">
-                    <div class="comment-header">
-                      <div>
-                        <span class="comment-user">{{ childComment.username }}</span>
-                        <span class="comment-time">{{ new Date(childComment.createTime).toLocaleString() }}</span>
+              <div class="section-header">
+                <h3>读者评论</h3>
+                <span class="comment-count">{{ comments.length }} 条评论</span>
+              </div>
+
+              <div v-if="Array.isArray(comments) && comments.length" class="comments-list">
+                <div class="comment-card" v-for="comment in comments.filter(c => !c.parentId)" :key="comment.commentId">
+                  <!-- 主评论 -->
+                  <div class="comment-main">
+                    <div class="comment-avatar">{{ comment.username.charAt(0).toUpperCase() }}</div>
+                    <div class="comment-body">
+                      <div class="comment-header">
+                        <span class="comment-user">{{ comment.username }}</span>
+                        <span class="comment-time">{{ new Date(comment.createTime).toLocaleString() }}</span>
                       </div>
-                      <div>
-                        <span
-                            class="comment-likes"
-                            :class="{ liked: childComment.isLiked }"
-                            @click="handleLike(childComment)"
-                        >
-                          {{ childComment.isLiked ? '❤️' : '🤍' }} {{ childComment.likeCount }}
-                        </span>
-                        <el-button v-if="childComment.username === username || isUserAdmin" type="text" @click="deleteCommentById(childComment.commentId)">删除</el-button>
+
+                      <div class="comment-content">{{ comment.content }}</div>
+
+                      <div class="comment-actions">
+                        <div class="action-like" @click="handleLike(comment)" :class="{ active: comment.isLiked }">
+                          <span :class="comment.isLiked ? 'el-icon-star-filled' : 'el-icon-star'"></span>
+                          <span>{{ comment.likeCount }}</span>
+                        </div>
+                        <div class="action-reply" @click="setReply(comment)">
+                          <span class="el-icon-chat-line-round"></span> 回复
+                        </div>
+                        <div v-if="comment.username === username || isUserAdmin" class="action-delete"
+                             @click="deleteCommentById(comment.commentId)">
+                          <span class="el-icon-delete"></span> 删除
+                        </div>
                       </div>
                     </div>
-                    <div class="comment-content">{{ childComment.content }}</div>
                   </div>
+
+                  <!-- 子评论列表 -->
+                  <div class="child-comments" v-if="comments.some(c => c.parentId === comment.commentId)">
+                    <div class="child-comment"
+                         v-for="childComment in comments.filter(c => c.parentId === comment.commentId)"
+                         :key="childComment.commentId">
+                      <div class="comment-avatar small">{{ childComment.username.charAt(0).toUpperCase() }}</div>
+                      <div class="comment-body">
+                        <div class="comment-header">
+                          <span class="comment-user">{{ childComment.username }}</span>
+                          <span class="comment-time">{{ new Date(childComment.createTime).toLocaleString() }}</span>
+                        </div>
+
+                        <div class="comment-content">{{ childComment.content }}</div>
+
+                        <div class="comment-actions">
+                          <div class="action-like" @click="handleLike(childComment)"
+                               :class="{ active: childComment.isLiked }">
+                            <span :class="childComment.isLiked ? 'el-icon-star-filled' : 'el-icon-star'"></span>
+                            <span>{{ childComment.likeCount }}</span>
+                          </div>
+                          <div class="action-reply" @click="setReply(childComment)">
+                            <span class="el-icon-chat-line-round"></span> 回复
+                          </div>
+                          <div v-if="childComment.username === username || isUserAdmin" class="action-delete"
+                               @click="deleteCommentById(childComment.commentId)">
+                            <span class="el-icon-delete"></span> 删除
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div v-else class="no-comments">
-                暂无评论
-              </div>
-            </div>
 
-            <!-- 添加评论 -->
-            <div class="add-comment-section">
-              <el-input
-                  v-model="newCommentContent"
-                  type="textarea"
-                  placeholder="发表评论..."
-                  rows="3"
-              ></el-input>
-              <el-button @click="addNewComment">提交评论</el-button>
+              <div v-else class="no-comments">
+                <i class="el-icon-chat-dot-round"></i>
+                <p>还没有评论，快来发表第一条吧！</p>
+              </div>
+
+              <!-- 添加评论 -->
+              <div class="add-comment-section">
+                <div v-if="replyingTo" class="replying-to">
+                  <span>回复给：{{ replyingTo }}</span>
+                  <el-button type="text" @click="cancelReply" class="cancel-reply">取消回复</el-button>
+                </div>
+                <el-input v-model="newCommentContent" type="textarea"
+                          :placeholder="replyingTo ? `回复 ${replyingTo}...` : '发表你的想法...'" rows="3"
+                          class="reply-input"
+                          resize="none"></el-input>
+                <el-button class="submit-comment" @click="addNewComment">
+                  <span class="el-icon-s-promotion"></span> 发布评论
+                </el-button>
+              </div>
             </div>
           </div>
         </div>
-        <template #footer>
-          <el-button @click="detailDialogVisible = false">关闭</el-button>
-          <el-button @click="goToReader(currentProduct.id)">阅读</el-button>
-          <el-button type="primary" @click="addToCartHandle(currentProduct.id)">加入购物车</el-button>
-          <el-button type="primary" @click="addToCartHandle(currentProduct.id)">加入购物袋</el-button>
-        </template>
       </el-dialog>
     </el-main>
   </div>
 </template>
+
 <style>
-.comment-time {
-  font-size: 12px;
-  color: #999;
-  margin-left: 10px;
-}
-
-.comment-likes {
-  color: #999;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.comment-likes:hover {
-  transform: scale(1.1);
-}
-
-.comment-likes.liked {
-  color: #f56c6c;
-}
-
 .booklist-container {
+
   /* 全局基础样式 */
 
   * {
-    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: "sf pro display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     box-sizing: border-box;
   }
 
@@ -471,13 +503,11 @@ watch(
     height: 280px;
     overflow: hidden;
     border-radius: 14px;
-    /* 将圆角放到容器上 */
   }
 
   .product-image {
     width: 100%;
     height: 100%;
-    /* 移除图片本身的 border-radius */
     object-fit: cover;
     transition: transform 0.3s ease;
     margin-bottom: 0;
@@ -506,11 +536,8 @@ watch(
     height: 20px;
     overflow: hidden;
     flex-grow: 0;
-    /* 不让第一项继续扩展 */
     white-space: nowrap;
-    /* 隐藏超出部分 */
     text-overflow: ellipsis;
-    /* 显示省略号 */
   }
 
   .price-rate {
@@ -533,8 +560,8 @@ watch(
   }
 
   .product-rate {
-    margin-left: auto; /* 将评分组件推到右侧 */
-    width: auto; /* 去除固定宽度，间距会更紧凑 */
+    margin-left: auto;
+    width: auto;
     --el-rate-disabled-void-color: #ddd;
   }
 
@@ -543,183 +570,479 @@ watch(
     margin-left: 6px;
   }
 
-  /* 详情对话框整体样式 */
+  /* 详情对话框 - 完全重新设计 */
 
   .detail-dialog {
-    padding: 20px 30px;
-    border-radius: 30px;
-    /* 圆角处理 */
+    border-radius: 20px;
   }
 
   .detail-dialog .el-dialog__header {
-    background-color: #fff;
-    border-bottom: none;
-    color: #333;
+    display: none;
   }
 
   .detail-dialog .el-dialog__body {
-    padding: 30px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 20px;
   }
 
-  /* 对话框内容布局 */
+  .detail-dialog .el-dialog__footer {
+    display: none;
+  }
 
   .dialog-content {
     display: flex;
-    gap: 50px;
+    min-height: 85vh;
   }
 
-  /* 左侧大图区域 */
+  /* 左侧图片区域 */
 
   .dialog-image {
-    flex: 0 0 35%;
+    flex: 0 0 40%;
+    background-color: #f5f5f7;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    padding: 60px;
+    position: relative;
   }
 
   .detail-cover {
     width: 100%;
-    height: 450px;
+    height: 50%;
     object-fit: cover;
-    border-radius: 15px;
+    border-radius: 12px;
+  }
+
+  .product-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    width: 100%;
+  }
+
+  .action-button {
+    flex: 1;
+    height: 50px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+  }
+
+  .read-button {
+    background-color: #f5f5f7;
+    color: #1d1d1f;
+    border: 1px solid #d2d2d7;
+  }
+
+  .read-button:hover {
+    background-color: #e8e8ed;
+  }
+
+  .cart-button {
+    background: linear-gradient(135deg, #06c, #0091ff);
+    color: white;
+  }
+
+  .cart-button:hover {
+    box-shadow: 0 5px 15px rgba(0, 102, 204, 0.3);
   }
 
   /* 右侧信息区域 */
 
   .dialog-info {
-    flex: 1 1 45%;
+    flex: 0 0 60%;
+    padding: 60px;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
   }
 
-  /* 信息分为两列：左侧为标题，右侧为内容 */
+  .product-header {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f0;
+  }
 
-  .info-section {
+  .product-header h1 {
+    font-size: 32px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin: 0 0 15px 0;
+    line-height: 1.2;
+  }
+
+  .product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -15px;
+  }
+
+  .meta-price {
+    margin-top: 0;
+    font-size: 24px;
+    font-weight: 400;
+    color: #1d1d1f;
+  }
+
+  .meta-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .meta-rating .el-rate__icon {
+    margin-right: 0;
+  }
+
+  .meta-rating span {
+    font-size: 16px;
+    font-weight: 500;
+    color: #ff9500;
+  }
+
+  /* 产品规格 */
+
+  .product-specs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    margin-bottom: 5px;
+  }
+
+  .spec-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .spec-label {
+    font-size: 13px;
+    color: #86868b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .spec-value {
+    font-size: 17px;
+    color: #1d1d1f;
+    font-weight: 400;
+  }
+
+  .spec-value.description {
+    font-size: 17px;
+    line-height: 1.5;
+    grid-column: span 2;
+  }
+
+  /* 产品详情内容 */
+
+  .product-detail-content {
+    background-color: #f5f5f7;
+    border-radius: 16px;
+    padding: 25px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  /* 评论部分 - 完全重新设计 */
+
+  .comments-section {
+    background-color: #fff;
+    border-radius: 16px;
+    padding: 0;
+    margin-top: 10px;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .section-header h3 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin: 0;
+  }
+
+  .comment-count {
+    font-size: 14px;
+    color: #86868b;
+  }
+
+  /* 评论列表 */
+
+  .comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .comment-card {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
 
-  .info-row {
+  .comment-main {
+    display: flex;
+    gap: 15px;
+  }
+
+  .comment-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #0091ff, #06c);
+    color: white;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-  }
-
-  .info-label {
-    font-size: 12px;
-    color: #999;
-    width: 70px;
-    /* 固定宽度 */
-    text-align: left;
-  }
-
-  .info-value {
-    flex-grow: 0;
-    font-size: 15px;
-    color: #333;
-    font-weight: 400;
-    width: 350px;
-    height: 21px;
-    overflow-y: auto;
-    overflow-wrap: break-word;
-    white-space: normal;
-    word-break: break-word;
-    text-align: left;
-  }
-
-  /* 产品详细描述区域 */
-
-  .product-detail {
-    font-size: 15px;
-    line-height: 1.6;
-    color: #444;
-    padding: 20px;
-    border: 1px solid #eaeaea;
-    border-radius: 8px;
-    background-color: #fff;
-    overflow-wrap: break-word;
-    white-space: normal;
-    word-break: break-word;
-  }
-
-  /* 评论区域样式 */
-  .comments-section {
-    margin-top: 20px;
-    padding: 20px;
-    border: 1px solid #eaeaea;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-  }
-
-  .comments-section h3 {
-    margin-bottom: 15px;
-    color: #333;
+    justify-content: center;
     font-size: 18px;
+    font-weight: 600;
+    flex-shrink: 0;
   }
 
-  .comment-item {
-    padding: 15px 0;
-    border-bottom: 1px solid #eee;
+  .comment-avatar.small {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
   }
 
-  .comment-item:last-child {
-    border-bottom: none;
+  .comment-body {
+    flex: 1;
   }
 
   .comment-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 8px;
   }
 
   .comment-user {
-    font-weight: bold;
-    color: #1b1a1a;
+    font-weight: 600;
+    color: #1d1d1f;
+    font-size: 15px;
   }
 
-  .comment-likes {
-    color: #f56c6c;
-    font-size: 14px;
+  .comment-time {
+    font-size: 12px;
+    color: #86868b;
   }
 
   .comment-content {
-    color: #666;
+    font-size: 15px;
     line-height: 1.5;
+    color: #424245;
+    margin-bottom: 12px;
+  }
+
+  .comment-actions {
+    display: flex;
+    gap: 16px;
+  }
+
+  .action-like,
+  .action-reply,
+  .action-delete {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #86868b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .action-like:hover,
+  .action-reply:hover {
+    color: #06c;
+  }
+
+  .action-delete:hover {
+    color: #ff3b30;
+  }
+
+  .action-like.active {
+    color: #ff9500;
+  }
+
+  /* 子评论 */
+
+  .child-comments {
+    margin-left: 55px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 5px;
   }
 
   .child-comment {
-    margin-left: 20px;
-    border-left: 1px solid #ccc;
-    padding-left: 10px;
+    display: flex;
+    gap: 12px;
+    background-color: #f5f5f7;
+    border-radius: 12px;
+    padding: 16px;
   }
 
-  .add-comment-section {
-    margin-top: 20px;
-  }
+  /* 无评论状态 */
 
   .no-comments {
-    color: #999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    color: #86868b;
     text-align: center;
-    padding: 20px;
   }
 
-  /* 底部按钮 */
+  .no-comments i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    color: #c7c7cc;
+  }
 
-  .footer-btn {
-    border-radius: 20px;
-    padding: 8px 20px;
+  .no-comments p {
+    font-size: 16px;
+    margin: 0;
+  }
+
+  /* 添加评论区域 */
+
+  .add-comment-section {
+    margin-top: 30px;
+    background-color: #f5f5f7;
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+  }
+
+  .replying-to {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
     font-size: 14px;
+    color: #06c;
+  }
+
+  .cancel-reply {
+    color: #86868b;
+    font-size: 13px;
+    padding: 0;
+  }
+
+  .reply-input .el-textarea__inner {
+    border: none !important;
+    background-color: white !important;
+    border-radius: 10px !important;
+    padding: 15px !important;
+    font-size: 15px !important;
+    transition: box-shadow 0.3s ease !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .reply-input .el-textarea__inner:focus {
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.3) !important;
+  }
+
+  .submit-comment {
+    display: block;
+    margin-left: auto;
+    margin-top: 15px;
+    background: linear-gradient(135deg, #06c, #0091ff);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .submit-comment:hover {
+    box-shadow: 0 5px 15px rgba(0, 102, 204, 0.3);
+  }
+
+  /* 添加图标样式 */
+
+  .el-icon-reading:before {
+    content: "📖";
+  }
+
+  .el-icon-shopping-bag:before {
+    content: "🛍️";
+  }
+
+  .el-icon-star:before {
+    content: "☆";
+  }
+
+  .el-icon-star-filled:before {
+    content: "★";
+  }
+
+  .el-icon-chat-line-round:before {
+    content: "💬";
+  }
+
+  .el-icon-delete:before {
+    content: "🗑️";
+  }
+
+  .el-icon-chat-dot-round:before {
+    content: "💭";
+  }
+
+  .el-icon-s-promotion:before {
+    content: "📤";
   }
 
   /* 响应式调整 */
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     .dialog-content {
       flex-direction: column;
     }
 
     .dialog-image,
     .dialog-info {
-      flex: 1 1 100%;
+      flex: none;
+      width: 100%;
+      max-width: none;
+      padding: 20px;
+    }
+
+    .product-specs {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dialog-image .detail-cover {
+      height: auto;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .product-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .product-specs {
+      grid-template-columns: 1fr;
+    }
+
+    .dialog-content {
+      min-height: auto;
     }
   }
 }
