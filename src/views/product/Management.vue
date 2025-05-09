@@ -169,7 +169,14 @@ const handleCreateProduct = async () => {
       ElMessage.warning("请填写完整商品信息");
       return;
     }
-
+    if (Number(newProduct.value.price) <= 0) {
+      ElMessage.warning("商品价格必须大于 0");
+      return;
+    }
+    if (newProduct.value.rate < 0 || newProduct.value.rate > 5) {
+      ElMessage.warning("评分必须在 0 到 5 之间");
+      return;
+    }
     // 转换表单规格为API需要的完整格式
     const apiSpecifications: Spec[] = newProduct.value.specifications
         .filter((spec: FormSpec) => spec.item && spec.value)
@@ -227,7 +234,14 @@ const handleUpdateProduct = async () => {
       ElMessage.warning("请填写完整商品信息");
       return;
     }
-
+    if (Number(currentProduct.value.price) <= 0) {
+      ElMessage.warning("商品价格必须大于 0");
+      return;
+    }
+    if (currentProduct.value.rate < 0 || currentProduct.value.rate > 5) {
+      ElMessage.warning("评分必须在 0 到 5 之间");
+      return;
+    }
     // 确保规格参数完整
     const specsToUpdate: Spec[] = currentProduct.value.specifications
         .filter((spec: Spec) => spec.item && spec.value)
