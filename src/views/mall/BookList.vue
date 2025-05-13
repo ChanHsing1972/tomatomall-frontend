@@ -168,6 +168,9 @@ const addToCartHandle = async (productId: string) => {
       duration: 1000,
       grouping: true,
     });
+  } else if (!username) {
+    ElMessage.warning('请先登录');
+    return;
   } else {
     ElMessage({
       message: "加入购物袋失败：" + response.data.msg,
@@ -207,7 +210,7 @@ const addNewComment = async () => {
       ElMessage.error(response.msg || '评论失败');
     }
   } catch (error) {
-    ElMessage.error('评论失败');
+    ElMessage.error('评论失败' + error);
     console.error(error);
   }
 };
@@ -247,6 +250,10 @@ const fetchComments = async () => {
 };
 
 const goToReader = (productId: string) => {
+  if (!username) {
+    ElMessage.warning('请先登录');
+    return;
+  }
   console.log(productId);
   router.push({path: '/reader', query: {productId: productId}});
 }
