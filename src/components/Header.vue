@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import {useRouter} from 'vue-router'
-import {ElMessageBox} from "element-plus";
-import {ref} from "vue";
-import {User, SwitchButton, Search} from "@element-plus/icons-vue";
+import { useRouter } from 'vue-router';
+import { ElMessageBox } from 'element-plus';
+import { ref, onMounted } from 'vue';
+import { User, SwitchButton, Search } from '@element-plus/icons-vue';
+import { getSearchHistory, saveSearchHistory, clearSearchHistory } from '../api/searchhistory';
 
 const router = useRouter();
 const searchQuery = ref("");
+const searchHistory = ref<string[]>([]);
+const username = ref(sessionStorage.getItem("username") || "");
 
 function logout() {
   ElMessageBox.confirm("确认退出登录吗？", "提示", {
@@ -17,19 +20,52 @@ function logout() {
     router.push({path: "/login"});
   });
 }
-
-function handleSearch() {
-
-  if (searchQuery.value.trim()) {
-    router.push({
-      path: "/booklist",
-      query: {keyword: searchQuery.value.trim()}
-    });
-  } else {
-    router.push({path: "/booklist"});
+// 获取搜索历史
+async function fetchSearchHistory() {
+  try {
+    const response = await getSearchHistory();
+    searchHistory.value = response || [];
+  } catch (error) {
+    console.error('获取搜索历史失败:', error);
   }
 }
 
+// 保存搜索历史
+async function handleSaveSearchHistory(query: string) {
+  try {
+    await saveSearchHistory(query);
+  } catch (error) {
+    console.error('保存搜索历史失败:', error);
+  }
+}
+
+// 初始化搜索历史
+onMounted(() => {
+  fetchSearchHistory();
+});
+
+function handleSearch() {
+  const trimmedQuery = searchQuery.value.trim();
+  if (trimmedQuery) {
+    // 更新历史记录到后端
+    handleSaveSearchHistory(trimmedQuery);
+
+    // 跳转到搜索结果页面
+    router.push({
+      path: '/booklist',
+      query: { keyword: trimmedQuery },
+    });
+  } else {
+    router.push({ path: '/booklist' });
+  }
+}
+
+function clearHistory() {
+  searchHistory.value = [];
+  clearSearchHistory().catch((error) => {
+    console.error('清除搜索历史失败:', error);
+  });
+}
 </script>
 
 <template>
@@ -55,20 +91,43 @@ function handleSearch() {
       <!-- 右侧：搜索框及用户操作 -->
       <el-col :span="6" class="right-section">
         <div>
-          <el-input v-model="searchQuery" placeholder="搜索" clearable @keyup.enter="handleSearch" class="nav-search">
+          <el-input
+              v-model="searchQuery"
+              placeholder="搜索"
+              clearable
+              @keyup.enter="handleSearch"
+              class="nav-search"
+          >
             <template #prefix>
               <el-icon class="search-icon" @click="handleSearch">
-                <Search/>
+                <Search />
               </el-icon>
             </template>
           </el-input>
+          <!-- 搜索历史 -->
+          <el-dropdown v-if="searchHistory.length" trigger="click" class="search-history-dropdown">
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                    v-for="(item, index) in searchHistory"
+                    :key="index"
+                    @click="searchQuery = item; handleSearch()"
+                >
+                  {{ item }}
+                </el-dropdown-item>
+                <el-dropdown-item divided @click="clearHistory">
+                  清除历史记录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
         <router-link to="/dashboard" class="user-link">
           <el-icon class="user-icon" :size="24">
             <User/>
           </el-icon>
         </router-link>
-        <a @click="logout" class="logout-link">
+        <a v-if="username" @click="logout" class="logout-link">
           <el-icon class="logout-icon" :size="24">
             <SwitchButton/>
           </el-icon>
