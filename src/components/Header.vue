@@ -1,76 +1,129 @@
 <script setup lang="ts">
-import {useRouter} from 'vue-router'
-import {ElMessageBox} from "element-plus";
-import {ref} from "vue";
-import {User, SwitchButton, Search} from "@element-plus/icons-vue";
+import { useRouter } from 'vue-router';
+import { ElMessageBox } from 'element-plus';
+import { ref, onMounted } from 'vue';
+import { User, SwitchButton, Search } from '@element-plus/icons-vue';
+import { getSearchHistory, saveSearchHistory, clearSearchHistory } from '../api/searchhistory';
 
 const router = useRouter();
-const searchQuery = ref("");
+const searchQuery = ref('');
+const searchHistory = ref<string[]>([]);
+
+// 获取搜索历史
+async function fetchSearchHistory() {
+  try {
+    const response = await getSearchHistory();
+    searchHistory.value = response || [];
+  } catch (error) {
+    console.error('获取搜索历史失败:', error);
+  }
+}
+
+// 保存搜索历史
+async function handleSaveSearchHistory(query: string) {
+  try {
+    await saveSearchHistory(query);
+  } catch (error) {
+    console.error('保存搜索历史失败:', error);
+  }
+}
+
+// 初始化搜索历史
+onMounted(() => {
+  fetchSearchHistory();
+});
 
 function logout() {
-  ElMessageBox.confirm("确认退出登录吗？", "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning",
+  ElMessageBox.confirm('确认退出登录吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
   }).then(() => {
-    sessionStorage.setItem("token", "");
-    router.push({path: "/login"});
+    sessionStorage.setItem('token', '');
+    router.push({ path: '/login' });
   });
 }
 
 function handleSearch() {
+  const trimmedQuery = searchQuery.value.trim();
+  if (trimmedQuery) {
+    // 更新历史记录到后端
+    handleSaveSearchHistory(trimmedQuery);
 
-  if (searchQuery.value.trim()) {
+    // 跳转到搜索结果页面
     router.push({
-      path: "/booklist",
-      query: {keyword: searchQuery.value.trim()}
+      path: '/booklist',
+      query: { keyword: trimmedQuery },
     });
   } else {
-    router.push({path: "/booklist"});
+    router.push({ path: '/booklist' });
   }
 }
 
+function clearHistory() {
+  searchHistory.value = [];
+  clearSearchHistory().catch((error) => {
+    console.error('清除搜索历史失败:', error);
+  });
+}
 </script>
 
 <template>
   <el-header class="header">
     <el-row class="nav-row" type="flex" text-align="middle">
-      <!-- 左侧：LOGO -->
       <el-col :span="1"></el-col>
-
       <el-col :span="6" class="logo-col">
         <router-link to="/home" class="logo-link">
           <h1 class="logo-text">番茄书城</h1>
         </router-link>
       </el-col>
-
-      <!-- 中间：导航链接 -->
       <el-col :span="10" class="nav-links">
         <router-link to="/home" class="nav-item">主页</router-link>
         <router-link to="/booklist" class="nav-item">书库</router-link>
         <router-link to="/cart" class="nav-item">购物袋</router-link>
         <router-link to="/orders" class="nav-item">订单</router-link>
       </el-col>
-
-      <!-- 右侧：搜索框及用户操作 -->
       <el-col :span="6" class="right-section">
         <div>
-          <el-input v-model="searchQuery" placeholder="搜索" clearable @keyup.enter="handleSearch" class="nav-search">
+          <el-input
+              v-model="searchQuery"
+              placeholder="搜索"
+              clearable
+              @keyup.enter="handleSearch"
+              class="nav-search"
+          >
             <template #prefix>
               <el-icon class="search-icon" @click="handleSearch">
-                <Search/>
+                <Search />
               </el-icon>
             </template>
           </el-input>
+          <!-- 搜索历史 -->
+          <el-dropdown v-if="searchHistory.length" trigger="click" class="search-history-dropdown">
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                    v-for="(item, index) in searchHistory"
+                    :key="index"
+                    @click="searchQuery = item; handleSearch()"
+                >
+                  {{ item }}
+                </el-dropdown-item>
+                <el-dropdown-item divided @click="clearHistory">
+                  清除历史记录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
         <router-link to="/dashboard" class="user-link">
           <el-icon class="user-icon" :size="24">
-            <User/>
+            <User />
           </el-icon>
         </router-link>
         <a @click="logout" class="logout-link">
           <el-icon class="logout-icon" :size="24">
-            <SwitchButton/>
+            <SwitchButton />
           </el-icon>
         </a>
       </el-col>
@@ -190,6 +243,11 @@ function handleSearch() {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.search-history-dropdown {
+  position: relative;
+  z-index: 2000;
 }
 
 /* 响应式调整：浏览器窗口较小时减少间距 */

@@ -21,3 +21,6 @@ export const READER_MODULE = `${API_MODULE}/reader`;
 
 //评论模块
 export const COMMENT_MODULE = `${API_MODULE}/comments`;
+
+//搜索历史模块
+export const SEARCHHISTORY_MODULE = `${API_MODULE}/searchhistory`;
