@@ -6,6 +6,7 @@ import {User, SwitchButton, Search} from "@element-plus/icons-vue";
 
 const router = useRouter();
 const searchQuery = ref("");
+const username = sessionStorage.getItem("username") || "";
 
 function logout() {
   ElMessageBox.confirm("确认退出登录吗？", "提示", {
@@ -14,7 +15,7 @@ function logout() {
     type: "warning",
   }).then(() => {
     sessionStorage.setItem("token", "");
-    router.push({path: "/login"});
+    router.push({path: "/home"});
   });
 }
 
@@ -68,7 +69,7 @@ function handleSearch() {
             <User/>
           </el-icon>
         </router-link>
-        <a @click="logout" class="logout-link">
+        <a v-if="username" @click="logout" class="logout-link">
           <el-icon class="logout-icon" :size="24">
             <SwitchButton/>
           </el-icon>

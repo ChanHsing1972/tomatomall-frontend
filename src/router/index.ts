@@ -5,7 +5,7 @@ const router = createRouter({
   routes: [
     {
       path: "/",
-      redirect: "/login",
+      redirect: "/home",
     },
     {
       path: "/login",
@@ -70,33 +70,37 @@ const router = createRouter({
   ],
 });
 
+const protectedRoutes = ["/cart", "/orders", "/dashboard"];
+const adminOnlyRoutes = ["/management", "/ad"];
+
 router.beforeEach((to, _, next) => {
-  const token: string | null = sessionStorage.getItem("token");
-  const role: string | null = sessionStorage.getItem("role");
+  const token = sessionStorage.getItem("token");
+  const role = sessionStorage.getItem("role");
+  const isAuthenticated = !!token;
 
-  if (to.meta.title) {
-    document.title = to.meta.title;
+  const requiresAuth = protectedRoutes.some((path) => to.path.startsWith(path));
+  const requiresAdmin = adminOnlyRoutes.some((path) =>
+    to.path.startsWith(path)
+  );
+
+  if (requiresAdmin && role !== "admin") {
+    next({
+      path: "/404", // 修改为重定向到登录页
+      query: { redirect: to.fullPath },
+    });
+    return;
   }
 
-  if (token) {
-    if (to.meta.permission) {
-      if (to.meta.permission.includes(role!)) {
-        next();
-      } else {
-        next("/404");
-      }
-    } else {
-      next();
-    }
-  } else {
-    if (to.path === "/login") {
-      next();
-    } else if (to.path === "/register") {
-      next();
-    } else {
-      next("/login");
-    }
+  if (requiresAuth && !isAuthenticated) {
+    next({
+      path: "/login", // 修改为重定向到登录页
+      query: { redirect: to.fullPath },
+    });
+    return;
   }
+
+  // 其他情况正常访问（游客可访问的页面）
+  next();
 });
 
 export { router };
