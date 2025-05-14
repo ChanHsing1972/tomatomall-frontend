@@ -23,4 +23,4 @@ export const READER_MODULE = `${API_MODULE}/reader`;
 export const COMMENT_MODULE = `${API_MODULE}/comments`;
 
 //搜索历史模块
-export const SEARCHHISTORY_MODULE = `${API_MODULE}/searchhistory`;
+export const SEARCH_HISTORY_MODULE = `${API_MODULE}/search_history`;

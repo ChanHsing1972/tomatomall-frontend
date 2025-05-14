@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { ElMessageBox } from 'element-plus';
-import { ref, onMounted } from 'vue';
-import { User, SwitchButton, Search } from '@element-plus/icons-vue';
-import { getSearchHistory, saveSearchHistory, clearSearchHistory } from '../api/searchhistory';
+import {useRouter} from 'vue-router';
+import {ElMessageBox} from 'element-plus';
+import {onMounted, ref} from 'vue';
+import {Search, SwitchButton, User} from '@element-plus/icons-vue';
+import {clearSearchHistory, getSearchHistory, saveSearchHistory, SearchHistory} from '../api/search_history.ts';
 
 const router = useRouter();
 const searchQuery = ref("");
-const searchHistory = ref<string[]>([]);
-const username = ref(sessionStorage.getItem("username") || "");
+const searchHistory = ref<SearchHistory[]>([]);
+const token = ref(sessionStorage.getItem("token") || "");
 
 function logout() {
   ElMessageBox.confirm("确认退出登录吗？", "提示", {
@@ -16,15 +16,17 @@ function logout() {
     cancelButtonText: "取消",
     type: "warning",
   }).then(() => {
-    sessionStorage.setItem("token", "");
-    router.push({path: "/login"});
+    sessionStorage.clear();
+    router.push({path: "/home"});
   });
 }
+
 // 获取搜索历史
 async function fetchSearchHistory() {
   try {
     const response = await getSearchHistory();
-    searchHistory.value = response || [];
+    searchHistory.value = response.data.data;
+    console.log(searchHistory.value);
   } catch (error) {
     console.error('获取搜索历史失败:', error);
   }
@@ -32,8 +34,10 @@ async function fetchSearchHistory() {
 
 // 保存搜索历史
 async function handleSaveSearchHistory(query: string) {
+  if (!query.trim()) return;
   try {
     await saveSearchHistory(query);
+    await fetchSearchHistory(); // 更新搜索历史列表
   } catch (error) {
     console.error('保存搜索历史失败:', error);
   }
@@ -41,30 +45,41 @@ async function handleSaveSearchHistory(query: string) {
 
 // 初始化搜索历史
 onMounted(() => {
-  fetchSearchHistory();
+  // 只有在用户登录状态下才获取搜索历史
+  if (token.value) {
+    fetchSearchHistory();
+  }
 });
 
 function handleSearch() {
-  const trimmedQuery = searchQuery.value.trim();
-  if (trimmedQuery) {
-    // 更新历史记录到后端
-    handleSaveSearchHistory(trimmedQuery);
+  if (!searchQuery.value.trim()) return;
 
-    // 跳转到搜索结果页面
-    router.push({
-      path: '/booklist',
-      query: { keyword: trimmedQuery },
-    });
-  } else {
-    router.push({ path: '/booklist' });
-  }
+  // 保存搜索历史并导航到搜索结果页
+  handleSaveSearchHistory(searchQuery.value);
+  router.push({
+    path: '/booklist',
+    query: {keyword: searchQuery.value}
+  });
 }
 
 function clearHistory() {
-  searchHistory.value = [];
-  clearSearchHistory().catch((error) => {
-    console.error('清除搜索历史失败:', error);
-  });
+  ElMessageBox.confirm("确认清空所有搜索历史？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  }).then(async () => {
+    try {
+      await clearSearchHistory();
+      searchHistory.value = [];
+    } catch (error) {
+      console.error('清空搜索历史失败:', error);
+    }
+  })
+}
+
+// 跳转到登录页
+function goToLogin() {
+  router.push('/login');
 }
 </script>
 
@@ -90,48 +105,64 @@ function clearHistory() {
 
       <!-- 右侧：搜索框及用户操作 -->
       <el-col :span="6" class="right-section">
-        <div>
-          <el-input
-              v-model="searchQuery"
-              placeholder="搜索"
-              clearable
-              @keyup.enter="handleSearch"
-              class="nav-search"
-          >
+        <!-- 有历史时，整个输入框都由 el-dropdown 包裹 -->
+        <el-dropdown v-if="searchHistory.length" class="search-history-dropdown" trigger="click">
+          <!-- Default slot：作为触发器的输入框 -->
+          <template #default>
+            <el-input v-model="searchQuery" class="nav-search" clearable placeholder="搜索" @keyup.enter="handleSearch">
+              <template #prefix>
+                <el-icon class="search-icon" @click="handleSearch">
+                  <Search/>
+                </el-icon>
+              </template>
+            </el-input>
+          </template>
+
+          <!-- Dropdown slot：下拉的历史列表 -->
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-for="item in searchHistory" :key="item.id"
+                                @click="searchQuery = item.query; handleSearch()">
+                {{ item.query }}
+              </el-dropdown-item>
+              <el-dropdown-item divided @click="clearHistory">
+                清除历史记录
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+
+        <!-- 无历史时，单独渲染一个普通输入框 -->
+        <div v-else>
+          <el-input v-model="searchQuery" class="nav-search" clearable placeholder="搜索" @keyup.enter="handleSearch">
             <template #prefix>
               <el-icon class="search-icon" @click="handleSearch">
-                <Search />
+                <Search/>
               </el-icon>
             </template>
           </el-input>
-          <!-- 搜索历史 -->
-          <el-dropdown v-if="searchHistory.length" trigger="click" class="search-history-dropdown">
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item
-                    v-for="(item, index) in searchHistory"
-                    :key="index"
-                    @click="searchQuery = item; handleSearch()"
-                >
-                  {{ item }}
-                </el-dropdown-item>
-                <el-dropdown-item divided @click="clearHistory">
-                  清除历史记录
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
         </div>
-        <router-link to="/dashboard" class="user-link">
-          <el-icon class="user-icon" :size="24">
-            <User/>
-          </el-icon>
-        </router-link>
-        <a v-if="username" @click="logout" class="logout-link">
-          <el-icon class="logout-icon" :size="24">
-            <SwitchButton/>
-          </el-icon>
-        </a>
+
+        <!-- 根据登录状态显示不同的用户相关操作 -->
+        <template v-if="token">
+          <!-- 已登录：显示个人中心和退出登录 -->
+          <router-link class="user-link" to="/dashboard">
+            <el-icon :size="24" class="user-icon">
+              <User/>
+            </el-icon>
+          </router-link>
+          <a class="logout-link" @click="logout">
+            <el-icon :size="24" class="logout-icon">
+              <SwitchButton/>
+            </el-icon>
+          </a>
+        </template>
+        <template v-else>
+          <!-- 未登录：显示登录入口 -->
+          <a class="login-link" @click="goToLogin">
+            <span class="login-text">登录</span>
+          </a>
+        </template>
       </el-col>
     </el-row>
   </el-header>
@@ -249,6 +280,25 @@ function clearHistory() {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.login-link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.login-text {
+  color: #666;
+  font-size: 14px;
+  transition: color 0.3s ease;
+  padding: 5px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+}
+
+.login-text:hover {
+  color: #000;
+  border-color: #c6c6c6;
 }
 
 /* 响应式调整：浏览器窗口较小时减少间距 */

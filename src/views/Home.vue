@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
-import { ref, onMounted } from "vue";
-import { getAllAds } from "../api/ad.ts";
-import { getProductDetail } from "../api/product.ts";
-import { ElMessage } from "element-plus";
+import {onMounted, ref} from "vue";
+import {getAllAds} from "../api/ad.ts";
+import {getProductDetail} from "../api/product.ts";
+import {ElMessage} from "element-plus";
 
 type ad = {
   id: string,
@@ -14,14 +14,43 @@ type ad = {
   productId: string,
 };
 const adsDialogVisible = ref(false);
+const hideAds = ref(false);
+const currentAdIndex = ref(0);
+const autoPlayTimer = ref<number | null>(null);
+const autoPlayInterval = 5000;
 
 const adList = ref<ad[]>([]);
 const displayedAds = ref<ad[]>([]);
 
 const handleClose = () => {
   console.log('广告弹窗已关闭');
-  // 可以在这里添加关闭弹窗后的操作，如记录日志等
+  stopAutoPlay();
+  if (hideAds.value) {
+    localStorage.setItem('hideAds', 'true');
+    ElMessage.success('已设置为不再显示广告');
+  }
 };
+
+const stopAutoPlay = () => {
+  if (autoPlayTimer.value) {
+    clearInterval(autoPlayTimer.value);
+    autoPlayTimer.value = null;
+  }
+};
+
+const nextAd = () => {
+  if (displayedAds.value.length > 1) {
+    currentAdIndex.value = (currentAdIndex.value + 1) % displayedAds.value.length;
+  }
+};
+
+const startAutoPlay = () => {
+  stopAutoPlay();
+  autoPlayTimer.value = window.setInterval(() => {
+    nextAd();
+  }, autoPlayInterval);
+};
+
 const fetchAds = async () => {
   try {
     const response = await getAllAds();
@@ -34,6 +63,14 @@ const fetchAds = async () => {
 };
 
 interface Product {
+  id: "",
+  title: "",
+  description: "",
+  price: "",
+  rate: 0,
+  cover: "",
+  detail: "",
+  specifications: [],
 }
 
 const currentProduct = ref<Product>({
@@ -63,17 +100,17 @@ onMounted(async () => {
 });
 // 模拟推荐书籍数据
 const recommendedBooks = ref<
-  { id: number; title: string; cover: string; desc: string; price: number }[]
+    { id: number; title: string; cover: string; desc: string; price: number }[]
 >([]);
 
 // 新书上架
 const newArrivals = ref<
-  { id: number; title: string; cover: string; author: string; price: number }[]
+    { id: number; title: string; cover: string; author: string; price: number }[]
 >([]);
 
 // 热门分类
 const categories = ref<
-  { id: number; name: string; icon: string; count: number }[]
+    { id: number; name: string; icon: string; count: number }[]
 >([]);
 
 // 特色书籍
@@ -88,12 +125,17 @@ const featuredBook = ref({
 
 // 动画控制
 const heroVisible = ref(false);
-
 onMounted(async () => {
   await fetchAds();
 
-  const maxAdsToShow = 3;
-  const availableAds = adList.value.slice(); // 使用 slice() 来复制数组
+  // 检查用户是否选择不再显示广告
+  const savedHideAds = localStorage.getItem('hideAds');
+  if (savedHideAds === 'true') {
+    hideAds.value = true;
+  }
+
+  const maxAdsToShow = 5; // 增加展示的广告数量用于轮播
+  const availableAds = adList.value.slice();
   const selectedAds = [];
 
   while (selectedAds.length < maxAdsToShow && availableAds.length > 0) {
@@ -103,11 +145,14 @@ onMounted(async () => {
   }
 
   displayedAds.value = selectedAds;
+
   setTimeout(() => {
-    if (adList.value.length > 0) {
+    if (adList.value.length > 0 && !hideAds.value) {
       adsDialogVisible.value = true;
-    } else {
-      ElMessage.error('没有广告可显示');
+      // 如果有多个广告，启动自动轮播
+      if (displayedAds.value.length > 1) {
+        startAutoPlay();
+      }
     }
     heroVisible.value = true;
 
@@ -143,16 +188,16 @@ onMounted(async () => {
     ];
 
     categories.value = [
-      { id: 1, name: "文学小说", icon: "📚", count: 1280 },
-      { id: 2, name: "科技前沿", icon: "🔬", count: 853 },
-      { id: 3, name: "艺术设计", icon: "🎨", count: 672 },
-      { id: 4, name: "生活方式", icon: "☕️", count: 945 },
-      { id: 5, name: "经济管理", icon: "📊", count: 1056 },
-      { id: 6, name: "历史文化", icon: "🏛️", count: 789 },
-      { id: 7, name: "运动健身", icon: "🏋️", count: 900 },
-      { id: 8, name: "美食烹饪", icon: "🍳", count: 1120 },
-      { id: 9, name: "旅游攻略", icon: "✈️", count: 730 },
-      { id: 10, name: "音乐艺术", icon: "🎵", count: 640 }
+      {id: 1, name: "文学小说", icon: "📚", count: 1280},
+      {id: 2, name: "科技前沿", icon: "🔬", count: 853},
+      {id: 3, name: "艺术设计", icon: "🎨", count: 672},
+      {id: 4, name: "生活方式", icon: "☕️", count: 945},
+      {id: 5, name: "经济管理", icon: "📊", count: 1056},
+      {id: 6, name: "历史文化", icon: "🏛️", count: 789},
+      {id: 7, name: "运动健身", icon: "🏋️", count: 900},
+      {id: 8, name: "美食烹饪", icon: "🍳", count: 1120},
+      {id: 9, name: "旅游攻略", icon: "✈️", count: 730},
+      {id: 10, name: "音乐艺术", icon: "🎵", count: 640}
     ];
 
     newArrivals.value = [
@@ -198,21 +243,60 @@ const formatPrice = (price: number) => {
 <template>
   <div class="home">
     <!-- 顶部导航 -->
-    <Header />
-    <el-dialog title="推荐" v-model="adsDialogVisible" width="35%" class="ad-dialog" @close="handleClose">
-      <div class="ad-container">
-        <div v-for="ad in displayedAds" :key="ad.id" class="ad-item" @click="openDetailDialog(ad.productId)">
-          <img :src="ad.imgUrl" alt="广告图片" class="ad-image" />
-          <h3>{{ ad.title }}</h3>
-          <p>{{ ad.content }}</p>
+    <Header/>
+
+    <!-- 美化后的广告弹窗 -->
+    <el-dialog v-model="adsDialogVisible" :show-close="false" class="ad-dialog" destroy-on-close width="50%"
+               @close="handleClose">
+      <template #header>
+        <div class="ad-dialog-header">
+          <h3>精品推荐</h3>
+          <div class="ad-controls">
+            <el-checkbox v-model="hideAds" label="不再显示" size="small"/>
+            <el-button class="close-btn" type="text" @click="adsDialogVisible = false">
+              <i class="el-icon-close">×</i>
+            </el-button>
+          </div>
+        </div>
+      </template>
+
+      <div class="ad-carousel">
+        <div class="carousel-container">
+          <transition-group class="ad-transition-group" name="ad-fade" tag="div">
+            <div v-for="(ad, index) in displayedAds" v-show="currentAdIndex === index" :key="ad.id" class="ad-item"
+                 @click="openDetailDialog(ad.productId)">
+              <div class="ad-image-container">
+                <img :src="ad.imgUrl" alt="广告图片" class="ad-image"/>
+              </div>
+              <div class="ad-content">
+                <h3 class="ad-title">{{ ad.title }}</h3>
+                <p class="ad-description">{{ ad.content }}</p>
+                <el-button class="view-more-btn" round type="primary">查看详情</el-button>
+              </div>
+            </div>
+          </transition-group>
+        </div>
+
+        <!-- 广告指示器 -->
+        <div v-if="displayedAds.length > 1" class="ad-indicators">
+          <span v-for="(_, index) in displayedAds" :key="index"
+                :class="['ad-indicator', { 'active': index === currentAdIndex }]"
+                @click="currentAdIndex = index"></span>
         </div>
       </div>
+
+      <template #footer>
+        <div class="ad-dialog-footer">
+          <span class="ad-note">根据您的兴趣推荐</span>
+          <el-button type="primary" @click="adsDialogVisible = false">我知道了</el-button>
+        </div>
+      </template>
     </el-dialog>
 
     <el-dialog v-model="detailDialogVisible" title="商品详情" width="50%">
       <div class="product-detail">
         <div class="detail-header">
-          <img :src="currentProduct.cover" class="product-cover" />
+          <img :src="currentProduct.cover" class="product-cover"/>
           <div class="product-info">
             <h2>{{ currentProduct.title }}</h2>
             <div class="product-price">价格: {{ currentProduct.price }}</div>
@@ -247,8 +331,8 @@ const formatPrice = (price: number) => {
         </div>
         <div class="hero-image">
           <img
-            src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80"
-            alt="Hero Image">
+              alt="Hero Image"
+              src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80">
         </div>
       </div>
       <div class="hero-bg"></div>
@@ -284,7 +368,7 @@ const formatPrice = (price: number) => {
       <div class="display-books">
         <div class="recommended-book" v-for="book in recommendedBooks" :key="book.id">
           <div class="display-book-cover">
-            <img :src="book.cover" alt="书籍封面" />
+            <img :src="book.cover" alt="书籍封面"/>
           </div>
           <div class="display-book-info">
             <h3>{{ book.title }}</h3>
@@ -307,7 +391,7 @@ const formatPrice = (price: number) => {
       <div class="display-books">
         <div class="new-book" v-for="book in newArrivals" :key="book.id">
           <div class="display-book-cover">
-            <img :src="book.cover" alt="书籍封面" />
+            <img :src="book.cover" alt="书籍封面"/>
             <div class="new-tag">NEW</div>
           </div>
           <div class="display-book-info">
@@ -335,7 +419,7 @@ const formatPrice = (price: number) => {
             </div>
           </div>
           <div class="featured-image">
-            <img :src="featuredBook.cover" alt="特色书籍封面" />
+            <img :src="featuredBook.cover" alt="特色书籍封面"/>
           </div>
         </div>
       </div>
@@ -369,15 +453,17 @@ const formatPrice = (price: number) => {
         <h2>订阅获取更新</h2>
         <p>第一时间获取新书资讯和独家优惠</p>
         <div class="subscribe-form">
-          <input type="email" placeholder="输入您的邮箱地址" />
+          <input placeholder="输入您的邮箱地址" type="email"/>
           <button>订阅</button>
         </div>
       </div>
     </section>
 
     <!-- 页脚 -->
-    <Footer />
+    <Footer/>
   </div>
+
+  <el-backtop :bottom="50" :right="20"/>
 </template>
 
 <style scoped>
@@ -1131,7 +1217,175 @@ const formatPrice = (price: number) => {
   background: #f5f5f7;
 }
 
+/* 美化广告弹窗 */
+.ad-dialog :deep(.el-dialog) {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.ad-dialog :deep(.el-dialog__header) {
+  padding: 15px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-right: 0;
+}
+
+.ad-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.ad-dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.ad-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.close-btn {
+  font-size: 20px;
+  color: #909399;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  color: #409EFF;
+}
+
+.ad-carousel {
+  position: relative;
+  padding: 10px 0;
+}
+
+.carousel-container {
+  position: relative;
+  min-height: 300px;
+}
+
+.ad-transition-group {
+  position: relative;
+}
+
+.ad-item {
+  display: flex;
+  gap: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.ad-image-container {
+  flex: 0 0 250px;
+  height: 250px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ad-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.ad-item:hover .ad-image {
+  transform: scale(1.05);
+}
+
+.ad-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px 10px;
+}
+
+.ad-title {
+  font-size: 24px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.ad-description {
+  margin-bottom: 20px;
+  color: #666;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.view-more-btn {
+  align-self: flex-start;
+}
+
+.ad-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.ad-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.ad-indicator.active {
+  background-color: #409EFF;
+  transform: scale(1.2);
+}
+
+.ad-dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.ad-note {
+  font-size: 14px;
+  color: #909399;
+}
+
+/* 广告轮播动画 */
+.ad-fade-enter-active,
+.ad-fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.ad-fade-enter-from,
+.ad-fade-leave-to {
+  opacity: 0;
+}
+
 /* 响应式调整 */
+@media (max-width: 768px) {
+  .ad-dialog :deep(.el-dialog) {
+    width: 90% !important;
+  }
+
+  .ad-item {
+    flex-direction: column;
+  }
+
+  .ad-image-container {
+    width: 100%;
+    flex: 0 0 auto;
+    height: 200px;
+  }
+}
+
 @media (max-width: 1024px) {
   .category-card {
     width: calc(33.33% - 24px);

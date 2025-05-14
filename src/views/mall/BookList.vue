@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {ref, onMounted, watch} from "vue";
+import {onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
-import {getProductList, getProductDetail, searchProductsByKeyword} from "../../api/product.ts";
+import {getProductDetail, getProductList, searchProductsByKeyword} from "../../api/product.ts";
 import {addToCart} from "../../api/cart.ts";
 import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
 
@@ -456,6 +456,8 @@ watch(
       </el-dialog>
     </el-main>
   </div>
+
+  <el-backtop :bottom="50" :right="20"/>
 </template>
 
 <style>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import {ref, computed} from 'vue';
-import {ElInput, ElButton, ElMessage} from "element-plus";
+import {computed, ref} from 'vue';
+import {ElButton, ElInput, ElMessage} from "element-plus";
 import {accountInfo, accountLogin} from "../../api/account.ts";
 import {useRouter} from 'vue-router'
 
@@ -62,7 +62,8 @@ function handleLogin() {
         </div>
         <div class="login-input-group">
           <label for="password" class="login-input-label">密码</label>
-          <el-input id="password" type="password" v-model="password" placeholder="••••••••" class="input-field"/>
+          <el-input id="password" v-model="password" class="input-field" placeholder="••••••••" show-password
+                    type="password"/>
         </div>
         <div class="login-button-group">
           <el-button type="primary" @click.prevent="handleLogin" :disabled="loginDisabled" class="login-button">

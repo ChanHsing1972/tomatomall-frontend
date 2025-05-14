@@ -10,13 +10,14 @@ import {UserFilled} from "@element-plus/icons-vue";
 const router = useRouter();
 const role = sessionStorage.getItem("role") || "user";
 const name = ref("");
-const username = sessionStorage.getItem("username") || "默认用户名";
+const username = sessionStorage.getItem("username") || "游客";
 const telephone = ref("");
 const location = ref("");
 const createTime = ref("");
 const email = ref("");
-const avatar = ref(''); // 用于存储头像的 URL
+const avatar = ref(""); // 用于存储头像的 URL
 
+// 新建的变量
 const newName = ref("");
 const newEmail = ref("");
 const newLocation = ref("");
@@ -238,7 +239,7 @@ const goToAd = () => {
       <div v-else class="form-container">
         <el-form label-position="top">
           <el-form-item label="新密码">
-            <el-input type="password" v-model="password" placeholder="••••••••"/>
+            <el-input v-model="password" placeholder="••••••••" show-password type="password"/>
           </el-form-item>
           <el-form-item :label="hasConfirmPasswordInput && !isPasswordIdentical
             ? '密码不一致'
@@ -246,7 +247,7 @@ const goToAd = () => {
             ">
             <el-input type="password" v-model="confirmPassword" placeholder="••••••••" :class="{
               'error-warn-input': hasConfirmPasswordInput && !isPasswordIdentical,
-            }"/>
+            }" show-password/>
           </el-form-item>
           <el-form-item>
             <el-button class="button" @click="updatePassword" :disabled="changeDisabled">修改密码</el-button>
