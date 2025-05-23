@@ -1,14 +1,27 @@
 <script setup lang="ts">
 import {useRouter} from 'vue-router';
 import {ElMessageBox} from 'element-plus';
-import {onMounted, ref} from 'vue';
-import {Search, SwitchButton, User} from '@element-plus/icons-vue';
+import {onMounted, onUnmounted, ref} from 'vue';
+import {Message, Search, SwitchButton, User} from '@element-plus/icons-vue';
 import {clearSearchHistory, getSearchHistory, saveSearchHistory, SearchHistory} from '../api/search_history.ts';
+import {getUnreadCount} from '../api/message.ts';
 
 const router = useRouter();
 const searchQuery = ref("");
 const searchHistory = ref<SearchHistory[]>([]);
 const token = ref(sessionStorage.getItem("token") || "");
+const unreadCount = ref(0);
+
+const fetchUnreadCount = async () => {
+  try {
+    const res = await getUnreadCount();
+    if (res.code === '200') {
+      unreadCount.value = res.data;
+    }
+  } catch (error) {
+    console.error('获取未读消息数失败:', error);
+  }
+};
 
 function logout() {
   ElMessageBox.confirm("确认退出登录吗？", "提示", {
@@ -48,6 +61,18 @@ onMounted(() => {
   // 只有在用户登录状态下才获取搜索历史
   if (token.value) {
     fetchSearchHistory();
+  }
+  // 只有在用户登录状态下才获取搜索历史和未读消息数
+  if (token.value) {
+    fetchSearchHistory();
+    fetchUnreadCount();
+
+    // 定时刷新未读消息数
+    const intervalId = setInterval(fetchUnreadCount, 30000); // 每30秒更新一次
+
+    onUnmounted(() => {
+      clearInterval(intervalId);
+    });
   }
 });
 
@@ -146,6 +171,12 @@ function goToLogin() {
         <!-- 根据登录状态显示不同的用户相关操作 -->
         <template v-if="token">
           <!-- 已登录：显示个人中心和退出登录 -->
+          <router-link class="user-link" to="/messages">
+            <el-icon :size="24" class="user-icon">
+              <Message/>
+            </el-icon>
+            <el-badge v-if="unreadCount > 0" :value="unreadCount" class="unread-badge" type="danger"/>
+          </router-link>
           <router-link class="user-link" to="/dashboard">
             <el-icon :size="24" class="user-icon">
               <User/>
@@ -299,6 +330,11 @@ function goToLogin() {
 .login-text:hover {
   color: #000;
   border-color: #c6c6c6;
+}
+
+.unread-badge {
+  margin-left: -5px;
+  margin-top: -15px;
 }
 
 /* 响应式调整：浏览器窗口较小时减少间距 */

@@ -5,7 +5,7 @@ import {parseRole, parseTime} from "../../utils";
 import {useRouter} from "vue-router";
 import Header from "../../components/Header.vue";
 import {ElMessage, ElMessageBox, UploadProps} from "element-plus";
-import {UserFilled} from "@element-plus/icons-vue";
+import {Camera, UserFilled} from "@element-plus/icons-vue";
 
 const router = useRouter();
 const role = sessionStorage.getItem("role") || "user";
@@ -162,8 +162,16 @@ const goToAd = () => {
       <div class="header-info">
         <el-upload class="avatar-uploader" action="http://localhost:8080/api/files/images" :show-file-list="false"
                    :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
-          <img v-if="avatar" class="user-avatar" :src="avatar" alt="avatar">
-          <el-avatar v-else class="user-avatar" :icon="UserFilled" :size="80"/>
+          <div class="avatar-container">
+            <img v-if="avatar" :src="avatar" alt="avatar" class="user-avatar">
+            <el-avatar v-else :icon="UserFilled" :size="80" class="user-avatar"/>
+            <div class="avatar-overlay">
+              <el-icon class="upload-icon">
+                <Camera/>
+              </el-icon>
+              <div class="upload-text">更换头像</div>
+            </div>
+          </div>
         </el-upload>
         <div class="welcome-name">
           <span class="welcome-text">欢迎回来,</span>
@@ -386,13 +394,59 @@ const goToAd = () => {
   margin-top: 10px;
 }
 
+.avatar-uploader {
+  position: relative;
+  cursor: pointer;
+}
+
+.avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
 .user-avatar {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  /* 使图片显示为圆形 */
   object-fit: cover;
-  /* 确保图片填充整个区域 */
+  transition: filter 0.3s ease;
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.avatar-container:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-container:hover .user-avatar {
+  filter: brightness(0.9);
+}
+
+.upload-icon {
+  font-size: 24px;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.upload-text {
+  font-size: 12px;
+  color: white;
+  text-align: center;
+  line-height: 1.2;
 }
 
 /* Responsive adjustments 保持一致 */

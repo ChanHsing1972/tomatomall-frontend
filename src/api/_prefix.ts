@@ -24,3 +24,6 @@ export const COMMENT_MODULE = `${API_MODULE}/comments`;
 
 //搜索历史模块
 export const SEARCH_HISTORY_MODULE = `${API_MODULE}/search_history`;
+
+//消息模块
+export const MESSAGE_MODULE = `${API_MODULE}/messages`;

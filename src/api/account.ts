@@ -63,3 +63,10 @@ export const accountInfoUpdate = (updateInfo: UpdateInfo) => {
             return res;
         });
 };
+
+// 获取所有用户列表（用于群发消息）
+export const getAllUsers = () => {
+    return axios.get(`${ACCOUNT_MODULE}`).then((res) => {
+        return res;
+    });
+};
