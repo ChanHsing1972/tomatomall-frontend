@@ -3,7 +3,7 @@ import {onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
-import {getProductDetail, getProductList, searchProductsByKeyword} from "../../api/product.ts";
+import {getProductList, searchProductsByKeyword} from "../../api/product.ts";
 import {addToCart} from "../../api/cart.ts";
 import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
 
@@ -134,28 +134,9 @@ const handleLike = async (comment: Comment) => {
   }
 };
 
-const openDetailDialog = async (product: Product) => {
-  try {
-    // 并行获取商品详情和评论
-    const [detailResponse, commentsResponse] = await Promise.all([
-      getProductDetail(product.id),
-      getAllCommentsByProductId(product.id).catch(e => {
-        console.error("获取评论失败:", e);
-        return {data: []}; // 确保返回数组结构
-      })
-    ]);
-
-    currentProduct.value = detailResponse.data.data;
-    comments.value = Array.isArray(commentsResponse.data) ? commentsResponse.data : [];
-
-    await checkCommentsLikeStatus();
-    detailDialogVisible.value = true;
-  } catch (error) {
-    console.error("打开商品详情失败:", error);
-    ElMessage.error("获取商品详情失败");
-    comments.value = [];
-    detailDialogVisible.value = false;
-  }
+// 修改打开详情的方法，改为导航到新页面
+const openDetailDialog = (product: Product) => {
+  router.push(`/bookdetail/${product.id}`);
 };
 
 const addToCartHandle = async (productId: string) => {
@@ -319,141 +300,7 @@ watch(
         <el-empty description="暂无数据"></el-empty>
       </div>
 
-      <!-- 优化后的详情对话框 -->
-      <el-dialog v-model="detailDialogVisible" width="80%" top="5vh" class="detail-dialog" destroy-on-close>
-        <div class="dialog-content">
-          <!-- 左侧大图区域 -->
-          <div class="dialog-image">
-            <el-image :src="currentProduct.cover" fit="cover" class="detail-cover"/>
-            <div class="product-actions">
-              <el-button class="action-button read-button" @click="goToReader(currentProduct.id)">
-                阅读
-              </el-button>
-              <el-button class="action-button cart-button" type="primary" @click="addToCartHandle(currentProduct.id)">
-                加入购物袋
-              </el-button>
-            </div>
-          </div>
-
-          <!-- 右侧信息区域 -->
-          <div class="dialog-info">
-            <div class="product-header">
-              <h1 class="product-title">{{ currentProduct.title }}</h1>
-              <div class="product-meta">
-                <div class="meta-price">RMB {{ currentProduct.price }}</div>
-                <div class="meta-rating">
-                  <el-rate v-model="currentProduct.rate" disabled allow-half/>
-                  <span>{{ currentProduct.rate.toFixed(1) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="product-specs">
-              <div class="spec-item" v-for="spec in currentProduct.specifications" :key="spec.id">
-                <div class="spec-label">{{ spec.item }}</div>
-                <div class="spec-value">{{ spec.value }}</div>
-              </div>
-              <div class="spec-item">
-                <div class="spec-label">描述</div>
-                <div class="spec-value description">{{ currentProduct.description }}</div>
-              </div>
-            </div>
-
-            <div class="product-detail-content" v-html="currentProduct.detail"></div>
-
-            <!-- 评论部分 -->
-            <div class="comments-section">
-              <div class="section-header">
-                <h3>读者评论</h3>
-                <span class="comment-count">{{ comments.length }} 条评论</span>
-              </div>
-
-              <div v-if="Array.isArray(comments) && comments.length" class="comments-list">
-                <div class="comment-card" v-for="comment in comments.filter(c => !c.parentId)" :key="comment.commentId">
-                  <!-- 主评论 -->
-                  <div class="comment-main">
-                    <div class="comment-avatar">{{ comment.username.charAt(0).toUpperCase() }}</div>
-                    <div class="comment-body">
-                      <div class="comment-header">
-                        <span class="comment-user">{{ comment.username }}</span>
-                        <span class="comment-time">{{ new Date(comment.createTime).toLocaleString() }}</span>
-                      </div>
-
-                      <div class="comment-content">{{ comment.content }}</div>
-
-                      <div class="comment-actions">
-                        <div class="action-like" @click="handleLike(comment)" :class="{ active: comment.isLiked }">
-                          <span :class="comment.isLiked ? 'el-icon-star-filled' : 'el-icon-star'"></span>
-                          <span>{{ comment.likeCount }}</span>
-                        </div>
-                        <div class="action-reply" @click="setReply(comment)">
-                          <span class="el-icon-chat-line-round"></span> 回复
-                        </div>
-                        <div v-if="comment.username === username || isUserAdmin" class="action-delete"
-                             @click="deleteCommentById(comment.commentId)">
-                          <span class="el-icon-delete"></span> 删除
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- 子评论列表 -->
-                  <div class="child-comments" v-if="comments.some(c => c.parentId === comment.commentId)">
-                    <div class="child-comment"
-                         v-for="childComment in comments.filter(c => c.parentId === comment.commentId)"
-                         :key="childComment.commentId">
-                      <div class="comment-avatar small">{{ childComment.username.charAt(0).toUpperCase() }}</div>
-                      <div class="comment-body">
-                        <div class="comment-header">
-                          <span class="comment-user">{{ childComment.username }}</span>
-                          <span class="comment-time">{{ new Date(childComment.createTime).toLocaleString() }}</span>
-                        </div>
-
-                        <div class="comment-content">{{ childComment.content }}</div>
-
-                        <div class="comment-actions">
-                          <div class="action-like" @click="handleLike(childComment)"
-                               :class="{ active: childComment.isLiked }">
-                            <span :class="childComment.isLiked ? 'el-icon-star-filled' : 'el-icon-star'"></span>
-                            <span>{{ childComment.likeCount }}</span>
-                          </div>
-                          <div class="action-reply" @click="setReply(childComment)">
-                            <span class="el-icon-chat-line-round"></span> 回复
-                          </div>
-                          <div v-if="childComment.username === username || isUserAdmin" class="action-delete"
-                               @click="deleteCommentById(childComment.commentId)">
-                            <span class="el-icon-delete"></span> 删除
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div v-else class="no-comments">
-                <i class="el-icon-chat-dot-round"></i>
-                <p>还没有评论，快来发表第一条吧！</p>
-              </div>
-
-              <!-- 添加评论 -->
-              <div class="add-comment-section">
-                <div v-if="replyingTo" class="replying-to">
-                  <span>回复给：{{ replyingTo }}</span>
-                  <el-button type="text" @click="cancelReply" class="cancel-reply">取消回复</el-button>
-                </div>
-                <el-input v-model="newCommentContent" type="textarea"
-                          :placeholder="replyingTo ? `回复 ${replyingTo}...` : '发表你的想法...'" rows="3"
-                          class="reply-input"
-                          resize="none"></el-input>
-                <el-button class="submit-comment" @click="addNewComment">
-                  <span class="el-icon-s-promotion"></span> 发布评论
-                </el-button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </el-dialog>
+      <!-- 移除原来的详情对话框 -->
     </el-main>
   </div>
 

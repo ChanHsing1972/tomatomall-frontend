@@ -79,6 +79,12 @@ const router = createRouter({
             path: "/:catchAll(.*)",
             redirect: "/404",
         },
+        {
+            path: "/bookdetail/:id",
+            name: "BookDetail",
+            component: () => import("../views/mall/BookDetail.vue"),
+            meta: {title: "书籍详情"},
+        },
     ],
 });
 
