@@ -4,16 +4,11 @@ import {useRoute, useRouter} from "vue-router";
 import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
 import {getProductList, searchProductsByKeyword} from "../../api/product.ts";
-import {addToCart} from "../../api/cart.ts";
-import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
 
 const route = useRoute();
 const router = useRouter();
 const searchKeyword = ref("");
 const isSearching = ref(false);
-const username = sessionStorage.getItem("username") || "";
-const isUserAdmin = sessionStorage.getItem("role") === 'admin'; // 假设有一个方法来判断用户是否是管理员
-
 // 搜索产品
 const searchProducts = async (keyword: string) => {
   try {
@@ -45,35 +40,6 @@ interface Spec {
 }
 
 const productList = ref<Product[]>([]);
-const currentProduct = ref<Product>({
-  id: "",
-  title: "",
-  description: "",
-  price: "",
-  rate: 0,
-  cover: "",
-  detail: "",
-  likeCount: "",
-  specifications: [],
-});
-const detailDialogVisible = ref(false);
-
-interface Comment {
-  commentId: string;
-  content: string;
-  userId: string;
-  username: string;
-  createTime: string;
-  parentId: string;
-  productId: string;
-  likeCount: string;
-  isLiked?: boolean;
-}
-
-const comments = ref<Comment[]>([]);
-const newCommentContent = ref(""); // 新评论内容
-const newCommentParentId = ref(""); // 新评论的父评论 ID
-const replyingTo = ref(""); // 正在回复的评论用户名
 
 onMounted(() => {
   fetchProducts();
@@ -90,171 +56,9 @@ const fetchProducts = async () => {
   }
 };
 
-const checkCommentsLikeStatus = async () => {
-  if (!username || !comments.value.length) return;
-  try {
-    const promises = comments.value.map(async (comment) => {
-      try {
-        const response = await isLikeComment(comment.commentId, username);
-        console.log("点赞响应", response);
-        comment.isLiked = response.data === true || response.data === 'true' || response.data === '已经点过赞了！';
-      } catch (error) {
-        console.error(`检查评论点赞状态失败:`, error);
-        comment.isLiked = false;
-      }
-    });
-    await Promise.all(promises);
-  } catch (error) {
-    console.error('检查点赞状态总体失败:', error);
-  }
-};
-
-const handleLike = async (comment: Comment) => {
-  try {
-    if (!username) {
-      ElMessage.warning('请先登录');
-      return;
-    }
-
-    const response = await likeOrDislike({
-      commentId: comment.commentId,
-      username,
-      isLike: !comment.isLiked
-    });
-
-    if (response.code === '200') {
-      comment.isLiked = !comment.isLiked;
-      comment.likeCount = comment.isLiked
-          ? (parseInt(comment.likeCount) + 1).toString()
-          : (parseInt(comment.likeCount) - 1).toString();
-    }
-  } catch (error) {
-    ElMessage.error('操作失败');
-    console.error(error);
-  }
-};
-
 // 修改打开详情的方法，改为导航到新页面
 const openDetailDialog = (product: Product) => {
   router.push(`/bookdetail/${product.id}`);
-};
-
-const addToCartHandle = async (productId: string) => {
-  const response = await addToCart({productId: productId.toString(), quantity: 1});
-  console.log(response);
-  if (response.data.code == "200") {
-    ElMessage({
-      message: '已加入购物袋',
-      type: 'success',
-      duration: 1000,
-      grouping: true,
-    });
-  } else if (!username) {
-    ElMessage.warning('请先登录');
-    return;
-  } else {
-    ElMessage({
-      message: "加入购物袋失败：" + response.data.msg,
-      type: 'error',
-      duration: 1000
-    });
-  }
-};
-
-// 添加评论
-const addNewComment = async () => {
-  if (!username) {
-    ElMessage.warning('请先登录');
-    return;
-  }
-
-  if (!newCommentContent.value.trim()) {
-    ElMessage.warning('评论内容不能为空');
-    return;
-  }
-
-  try {
-    const response = await addComment({
-      productId: currentProduct.value.id,
-      username,
-      content: newCommentContent.value,
-      parentId: newCommentParentId.value
-    });
-
-    if (response.code === '200') {
-      ElMessage.success('评论成功');
-      newCommentContent.value = ""; // 清空输入框
-      newCommentParentId.value = ""; // 清空父评论 ID
-      replyingTo.value = ""; // 清空回复对象
-      await fetchComments(); // 刷新评论列表
-    } else {
-      ElMessage.error(response.msg || '评论失败');
-    }
-  } catch (error) {
-    ElMessage.error('评论失败' + error);
-    console.error(error);
-  }
-};
-
-// 删除评论
-const deleteCommentById = async (commentId: string) => {
-  if (!username) {
-    ElMessage.warning('请先登录');
-    return;
-  }
-
-  try {
-    const response = await deleteComment(commentId);
-
-    if (response.code === '200') {
-      ElMessage.success('删除成功');
-      await fetchComments(); // 刷新评论列表
-    } else {
-      ElMessage.error(response.msg || '删除失败');
-    }
-  } catch (error) {
-    ElMessage.error('删除失败');
-    console.error(error);
-  }
-};
-
-// 获取评论列表
-const fetchComments = async () => {
-  try {
-    const response = await getAllCommentsByProductId(currentProduct.value.id);
-    comments.value = Array.isArray(response.data) ? response.data : [];
-    await checkCommentsLikeStatus();
-  } catch (error) {
-    console.error("获取评论失败:", error);
-    comments.value = [];
-  }
-};
-
-const goToReader = (productId: string) => {
-  if (!username) {
-    ElMessage.warning('请先登录');
-    return;
-  }
-  console.log(productId);
-  router.push({path: '/reader', query: {productId: productId}});
-}
-
-// 设置回复
-const setReply = (comment: Comment) => {
-  newCommentParentId.value = comment.commentId;
-  replyingTo.value = comment.username;
-  // 自动聚焦到评论框
-  setTimeout(() => {
-    document.querySelector('.reply-input')?.scrollIntoView({behavior: 'smooth'});
-    const textarea = document.querySelector('.reply-input textarea') as HTMLTextAreaElement;
-    if (textarea) textarea.focus();
-  }, 100);
-};
-
-// 取消回复
-const cancelReply = () => {
-  newCommentParentId.value = "";
-  replyingTo.value = "";
 };
 
 // 监听路由参数变化

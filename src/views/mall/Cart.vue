@@ -1,17 +1,12 @@
 <script setup lang="ts">
-import {ref, onMounted, computed} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import Header from '../../components/Header.vue'
-import {
-  removeFromCart,
-  updateCartItem,
-  getCartList,
-  checkoutCart,
-  OrderInfo,
-} from '../../api/cart.ts'
+import {checkoutCart, getCartList, OrderInfo, removeFromCart, updateCartItem,} from '../../api/cart.ts'
 import {getProductDetail} from '../../api/product.ts'
-import {ElMessage, ElImage} from 'element-plus'
+import {ElImage, ElMessage} from 'element-plus'
 import {ArrowDownBold} from "@element-plus/icons-vue";
 import {useRouter} from 'vue-router'
+import Footer from "../../components/Footer.vue";
 
 const router = useRouter()
 const cartItems = ref<any[]>([])
@@ -310,6 +305,8 @@ onMounted(() => {
       </div>
     </el-dialog>
   </el-main>
+
+  <Footer/>
 </template>
 
 
@@ -319,7 +316,7 @@ onMounted(() => {
   width: 100%;
   max-width: 1000px;
   margin: 0 auto;
-  padding: 120px 0 40px;
+  padding: 120px 0;
 
   .cart-header {
     text-align: center;
