@@ -38,7 +38,15 @@ function logout() {
 async function fetchSearchHistory() {
   try {
     const response = await getSearchHistory();
-    searchHistory.value = response.data.data;
+    const history = response.data.data as SearchHistory[];
+    // 反转顺序，去重并限制为最近的 10 个
+    const uniqueHistory = Array.from(
+        new Set(history.reverse().map((item: SearchHistory) => item.query))
+    );
+    searchHistory.value = uniqueHistory.slice(0, 10).map(query => ({
+      id: history.find(item => item.query === query)?.id || 0,
+      query,
+    }));
     console.log(searchHistory.value);
   } catch (error) {
     console.error('获取搜索历史失败:', error);
