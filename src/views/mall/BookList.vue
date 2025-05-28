@@ -41,8 +41,20 @@ interface Spec {
 
 const productList = ref<Product[]>([]);
 
+// 添加变量来记录滚动位置
+const savedScrollPosition = ref(0);
+
 onMounted(() => {
   fetchProducts();
+
+  // 从 sessionStorage 中获取之前保存的滚动位置
+  const savedPosition = sessionStorage.getItem('booklistScrollPosition');
+  if (savedPosition) {
+    // 使用 setTimeout 确保 DOM 完全渲染后再滚动
+    setTimeout(() => {
+      window.scrollTo(0, parseInt(savedPosition));
+    }, 100);
+  }
 });
 
 const fetchProducts = async () => {
@@ -58,6 +70,11 @@ const fetchProducts = async () => {
 
 // 修改打开详情的方法，改为导航到新页面
 const openDetailDialog = (product: Product) => {
+  // 保存当前滚动位置
+  savedScrollPosition.value = window.scrollY;
+  // 将滚动位置保存到 sessionStorage
+  sessionStorage.setItem('booklistScrollPosition', savedScrollPosition.value.toString());
+
   router.push(`/bookdetail/${product.id}`);
 };
 
