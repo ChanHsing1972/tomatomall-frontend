@@ -124,8 +124,8 @@ const scrollToBottom = () => {
 const clearChatHistory = async () => {
   try {
     await ElMessageBox.confirm(
-        '确定要清空与该用户的所有聊天记录吗？此操作不可恢复。',
-        '确认清空聊天记录',
+        '确定清空双方聊天记录？对方的记录也将被删除。此操作不可逆。',
+        '清空聊天',
         {
           confirmButtonText: '确定',
           cancelButtonText: '取消',

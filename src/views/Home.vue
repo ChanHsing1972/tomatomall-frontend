@@ -97,7 +97,10 @@ const openDetailDialog = async (productId: string) => {
 };
 
 onMounted(async () => {
+  // 确保页面滚动到顶部
+  window.scrollTo(0, 0);
 });
+
 // 模拟推荐书籍数据
 const recommendedBooks = ref<
     { id: number; title: string; cover: string; desc: string; price: number }[]
@@ -330,9 +333,8 @@ const formatPrice = (price: number) => {
           </div>
         </div>
         <div class="hero-image">
-          <img
-              alt="Hero Image"
-              src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80">
+          <img alt="Hero Image"
+               src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80">
         </div>
       </div>
       <div class="hero-bg"></div>

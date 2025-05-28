@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import {onMounted, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
 import {getProductList, searchProductsByKeyword} from "../../api/product.ts";
+import Footer from "../../components/Footer.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -41,6 +42,25 @@ interface Spec {
 
 const productList = ref<Product[]>([]);
 
+// 添加分页相关变量
+const currentPage = ref(1);
+const pageSize = ref(16);
+const total = computed(() => productList.value.length);
+
+// 计算当前页显示的书籍
+const displayProducts = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize.value;
+  const endIndex = startIndex + pageSize.value;
+  return productList.value.slice(startIndex, endIndex);
+});
+
+// 处理页码变化
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val;
+  // 改变页码时滚动到顶部
+  window.scrollTo(0, 0);
+};
+
 // 添加变量来记录滚动位置
 const savedScrollPosition = ref(0);
 
@@ -53,6 +73,16 @@ onMounted(() => {
     // 使用 setTimeout 确保 DOM 完全渲染后再滚动
     setTimeout(() => {
       window.scrollTo(0, parseInt(savedPosition));
+
+      // 计算应该在哪一页
+      if (productList.value.length > 0) {
+        const itemHeight = 280 + 100; // 估计每个书籍卡片的高度加间距
+        const itemsPerRow = window.innerWidth > 768 ? 4 : 2;
+        const viewportPosition = parseInt(savedPosition);
+        const rowIndex = Math.floor(viewportPosition / itemHeight);
+        const estimatedIndex = rowIndex * itemsPerRow;
+        currentPage.value = Math.floor(estimatedIndex / pageSize.value) + 1 || 1;
+      }
     }, 100);
   }
 });
@@ -74,6 +104,8 @@ const openDetailDialog = (product: Product) => {
   savedScrollPosition.value = window.scrollY;
   // 将滚动位置保存到 sessionStorage
   sessionStorage.setItem('booklistScrollPosition', savedScrollPosition.value.toString());
+  // 保存当前页码到 sessionStorage
+  sessionStorage.setItem('booklistCurrentPage', currentPage.value.toString());
 
   router.push(`/bookdetail/${product.id}`);
 };
@@ -86,10 +118,19 @@ watch(
         searchKeyword.value = newKeyword as string;
         isSearching.value = true;
         searchProducts(searchKeyword.value);
+        currentPage.value = 1; // 搜索时重置页码
       } else {
         searchKeyword.value = "";
         isSearching.value = false;
         fetchProducts(); // 恢复显示所有产品
+
+        // 从 sessionStorage 恢复页码
+        const savedPage = sessionStorage.getItem('booklistCurrentPage');
+        if (savedPage) {
+          currentPage.value = parseInt(savedPage);
+        } else {
+          currentPage.value = 1;
+        }
       }
     },
     {immediate: true}
@@ -101,7 +142,7 @@ watch(
   <div class="booklist-container">
     <el-main class="main-container">
       <div v-if="productList.length" class="product-grid">
-        <el-card class="product-card" shadow="hover" v-for="product in productList" :key="product.id"
+        <el-card v-for="product in displayProducts" :key="product.id" class="product-card" shadow="hover"
                  @click="openDetailDialog(product)">
           <div class="card-image-wrapper">
             <img :src="product.cover" alt="封面" class="product-image"/>
@@ -121,8 +162,14 @@ watch(
         <el-empty description="暂无数据"></el-empty>
       </div>
 
-      <!-- 移除原来的详情对话框 -->
+      <!-- 添加分页组件 -->
+      <div v-if="total > pageSize" class="pagination-container">
+        <el-pagination v-model:current-page="currentPage" :page-size="pageSize" :total="total" background
+                       layout="prev, pager, next, jumper" @current-change="handleCurrentChange"/>
+      </div>
     </el-main>
+
+    <Footer/>
   </div>
 
   <el-backtop :bottom="50" :right="20"/>
@@ -721,6 +768,14 @@ watch(
     .dialog-content {
       min-height: auto;
     }
+  }
+
+  /* 添加分页容器样式 */
+
+  .pagination-container {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
   }
 }
 </style>

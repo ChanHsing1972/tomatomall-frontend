@@ -141,7 +141,9 @@ const submitCheckout = async () => {
 }
 
 onMounted(() => {
-  fetchCartList()
+  fetchCartList();
+  // 确保页面滚动到顶部
+  window.scrollTo(0, 0);
 })
 </script>
 
@@ -154,11 +156,7 @@ onMounted(() => {
           totalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
         }}</h1>
       <p>所有订单均可享受免费送货和退货服务。</p>
-      <el-button
-          type="primary"
-          class="full-width-btn"
-          @click="checkout"
-      >结账
+      <el-button class="full-width-btn" type="primary" @click="checkout">结账
       </el-button>
     </div>
     <div class="cart-header" v-else>
@@ -168,17 +166,9 @@ onMounted(() => {
 
     <!-- 商品列表区域 -->
     <div v-if="cartItems.length > 0" class="product-list">
-      <div
-          v-for="(item) in cartItems"
-          :key="item.id"
-          class="product-section"
-      >
+      <div v-for="(item) in cartItems" :key="item.id" class="product-section">
         <div class="product-image">
-          <el-image
-              :src="item.cover"
-              fit="cover"
-              class="rounded-image"
-          />
+          <el-image :src="item.cover" class="rounded-image" fit="cover"/>
         </div>
         <div class="product-details">
           <div class="info-left">
@@ -195,13 +185,9 @@ onMounted(() => {
                 })
               }}
             </span>
-            <el-input
-                v-model="item.quantity"
-                @change="updateQuantity(item.cartItemId, parseInt($event))"
-                class="quantity-select"
-                placeholder="请选择数量"
-                size="default"
-            ></el-input>
+            <el-input v-model="item.quantity" class="quantity-select"
+                      placeholder="请选择数量" size="default"
+                      @change="updateQuantity(item.cartItemId, parseInt($event))"></el-input>
           </div>
           <div class="action-right">
             <p class="product-subtotal">
@@ -212,13 +198,8 @@ onMounted(() => {
                 })
               }}
             </p>
-            <el-button
-                plain
-                type="text"
-                size="default"
-                style="color: rgb(0, 113, 227)"
-                @click="removeItem(item.cartItemId)"
-            >
+            <el-button plain size="default" style="color: rgb(0, 113, 227)" type="text"
+                       @click="removeItem(item.cartItemId)">
               移除
             </el-button>
           </div>
@@ -232,10 +213,7 @@ onMounted(() => {
     </div>
 
     <!-- 底部结算区域 -->
-    <div
-        class="cart-footer"
-        v-if="cartItems.length > 0"
-    >
+    <div v-if="cartItems.length > 0" class="cart-footer">
       <div class="summary">
         <span>共 {{ totalItems.toLocaleString('en-US') }} 件商品</span>
         <span class="total-amount">
@@ -246,29 +224,17 @@ onMounted(() => {
             })
           }}
         </span>
-        <el-button
-            class="bottom-check-btn"
-            @click="checkout"
-        >
+        <el-button class="bottom-check-btn" @click="checkout">
           结账
         </el-button>
       </div>
     </div>
 
     <!-- 详情对话框 -->
-    <el-dialog
-        v-model="detailDialogVisible"
-        width="60%"
-        top="10vh"
-        class="detail-dialog"
-    >
+    <el-dialog v-model="detailDialogVisible" class="detail-dialog" top="10vh" width="60%">
       <div class="dialog-content">
         <div class="dialog-image">
-          <el-image
-              :src="currentProduct.cover"
-              fit="cover"
-              class="detail-cover"
-          />
+          <el-image :src="currentProduct.cover" class="detail-cover" fit="cover"/>
         </div>
         <div class="dialog-info">
           <div class="info-section">
@@ -288,19 +254,12 @@ onMounted(() => {
               <div class="info-label">描述</div>
               <div class="info-value">{{ currentProduct.description }}</div>
             </div>
-            <div
-                class="info-row"
-                v-for="spec in currentProduct.specifications"
-                :key="spec.id"
-            >
+            <div v-for="spec in currentProduct.specifications" :key="spec.id" class="info-row">
               <div class="info-label">{{ spec.item }}</div>
               <div class="info-value">{{ spec.value }}</div>
             </div>
           </div>
-          <div
-              class="product-detail"
-              v-html="currentProduct.detail"
-          ></div>
+          <div class="product-detail" v-html="currentProduct.detail"></div>
         </div>
       </div>
     </el-dialog>

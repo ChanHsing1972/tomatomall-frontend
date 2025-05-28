@@ -467,6 +467,8 @@ onMounted(() => {
   </div>
 
   <el-backtop :bottom="50" :right="20"/>
+
+  <Footer/>
 </template>
 
 <style>
