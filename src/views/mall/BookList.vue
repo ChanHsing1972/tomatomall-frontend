@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import {onMounted, ref, watch} from "vue";
+import {onMounted, computed, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
 import {getProductDetail, getProductList, searchProductsByKeyword} from "../../api/product.ts";
+import {type OrderVO, getOrders } from "../../api/order.ts";
 import {addToCart} from "../../api/cart.ts";
 import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
 
@@ -13,7 +14,8 @@ const searchKeyword = ref("");
 const isSearching = ref(false);
 const username = sessionStorage.getItem("username") || "";
 const isUserAdmin = sessionStorage.getItem("role") === 'admin'; // 假设有一个方法来判断用户是否是管理员
-
+const showPurchasedOnly = ref(false); // 勾选框状态
+const purchasedBooks = ref<string[]>([]); // 已购买书籍的书名列表
 // 搜索产品
 const searchProducts = async (keyword: string) => {
   try {
@@ -44,7 +46,6 @@ interface Spec {
   productId: string;
 }
 
-const productList = ref<Product[]>([]);
 const currentProduct = ref<Product>({
   id: "",
   title: "",
@@ -78,7 +79,20 @@ const replyingTo = ref(""); // 正在回复的评论用户名
 onMounted(() => {
   fetchProducts();
 });
-
+// 获取已完成订单的书籍数据
+const fetchPurchasedBooks = async () => {
+  try {
+    const response = await getOrders();
+    if (response.code === "200" && response.data) {
+      const completedOrders = response.data.filter((order: OrderVO) => order.status === "TRADE_SUCCESS");
+      purchasedBooks.value = completedOrders.flatMap((order: OrderVO) =>
+          order.orderItems.map((item: any) => item.title)
+      );
+    }
+  } catch (error) {
+    console.error("获取已购买书籍失败:", error);
+  }
+};
 const fetchProducts = async () => {
   try {
     const response = await getProductList();
@@ -89,6 +103,30 @@ const fetchProducts = async () => {
     console.error(error);
   }
 };
+interface Product {
+  id: string;
+  title: string;
+  price: string;
+  rate: number;
+  description: string;
+  cover: string;
+}
+
+const productList = ref<Product[]>([]);
+
+// 根据勾选框状态过滤书籍列表
+const filteredProductList = computed<Product[]>(() => {
+  if (showPurchasedOnly.value) {
+    return productList.value.filter((product: Product) => purchasedBooks.value.includes(product.title));
+  }
+  return productList.value;
+});
+
+// 初始化数据
+onMounted(() => {
+  fetchProducts();
+  fetchPurchasedBooks();
+});
 
 const checkCommentsLikeStatus = async () => {
   if (!username || !comments.value.length) return;
@@ -298,18 +336,29 @@ watch(
   <Header/>
   <div class="booklist-container">
     <el-main class="main-container">
-      <div v-if="productList.length" class="product-grid">
-        <el-card class="product-card" shadow="hover" v-for="product in productList" :key="product.id"
-                 @click="openDetailDialog(product)">
+      <!-- 勾选框 -->
+      <div class="filter-bar">
+        <el-checkbox v-model="showPurchasedOnly">已购买</el-checkbox>
+      </div>
+
+      <!-- 书籍列表 -->
+      <div v-if="filteredProductList.length" class="product-grid">
+        <el-card
+            class="product-card"
+            shadow="hover"
+            v-for="product in filteredProductList"
+            :key="product.id"
+            @click="openDetailDialog(product)"
+        >
           <div class="card-image-wrapper">
-            <img :src="product.cover" alt="封面" class="product-image"/>
+            <img :src="product.cover" alt="封面" class="product-image" />
           </div>
           <div class="card-info">
             <h2 class="product-title" :title="product.title">{{ product.title }}</h2>
             <p class="product-description">{{ product.description }}</p>
             <div class="price-rate">
               <span class="product-price">RMB {{ product.price }}</span>
-              <el-rate class="product-rate" v-model="product.rate" allow-half disabled/>
+              <el-rate class="product-rate" v-model="product.rate" allow-half disabled />
               <span class="product-score">{{ product.rate.toFixed(1) }}</span>
             </div>
           </div>
