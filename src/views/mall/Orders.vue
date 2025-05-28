@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import {onMounted, ref, computed} from "vue";
+import {computed, onMounted, ref} from "vue";
 import Header from "../../components/Header.vue";
 import {deleteOrder, getOrders, type OrderItem, type OrderStatus, type OrderVO, payOrder} from "../../api/order";
 import {ElMessage, ElNotification} from "element-plus";
-import {Search, Calendar, Location, Document, ShoppingCart} from '@element-plus/icons-vue';
+import {Calendar, Document, Location, Search, ShoppingCart} from '@element-plus/icons-vue';
+import Footer from "../../components/Footer.vue";
 
 interface EnhancedOrderVO extends OrderVO {
   unformattedDate: string; // 原始时间戳
@@ -225,6 +226,8 @@ onMounted(() => {
     });
   }, 1000);
 });
+// 确保页面滚动到顶部
+window.scrollTo(0, 0);
 </script>
 
 <template>
@@ -382,6 +385,8 @@ onMounted(() => {
       </template>
     </el-skeleton>
   </el-main>
+
+  <Footer/>
 </template>
 
 <style>

@@ -3,17 +3,14 @@ import {onMounted, computed, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
-import {getProductDetail, getProductList, searchProductsByKeyword} from "../../api/product.ts";
 import {type OrderVO, getOrders } from "../../api/order.ts";
-import {addToCart} from "../../api/cart.ts";
-import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
+import {getProductList, searchProductsByKeyword} from "../../api/product.ts";
+import Footer from "../../components/Footer.vue";
 
 const route = useRoute();
 const router = useRouter();
 const searchKeyword = ref("");
 const isSearching = ref(false);
-const username = sessionStorage.getItem("username") || "";
-const isUserAdmin = sessionStorage.getItem("role") === 'admin'; // 假设有一个方法来判断用户是否是管理员
 const showPurchasedOnly = ref(false); // 勾选框状态
 const purchasedBooks = ref<string[]>([]); // 已购买书籍的书名列表
 // 搜索产品
@@ -46,38 +43,51 @@ interface Spec {
   productId: string;
 }
 
-const currentProduct = ref<Product>({
-  id: "",
-  title: "",
-  description: "",
-  price: "",
-  rate: 0,
-  cover: "",
-  detail: "",
-  likeCount: "",
-  specifications: [],
+const productList = ref<Product[]>([]);
+
+// 添加分页相关变量
+const currentPage = ref(1);
+const pageSize = ref(16);
+const total = computed(() => productList.value.length);
+
+// 计算当前页显示的书籍
+const displayProducts = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize.value;
+  const endIndex = startIndex + pageSize.value;
+  return productList.value.slice(startIndex, endIndex);
 });
-const detailDialogVisible = ref(false);
 
-interface Comment {
-  commentId: string;
-  content: string;
-  userId: string;
-  username: string;
-  createTime: string;
-  parentId: string;
-  productId: string;
-  likeCount: string;
-  isLiked?: boolean;
-}
+// 处理页码变化
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val;
+  // 改变页码时滚动到顶部
+  window.scrollTo(0, 0);
+};
 
-const comments = ref<Comment[]>([]);
-const newCommentContent = ref(""); // 新评论内容
-const newCommentParentId = ref(""); // 新评论的父评论 ID
-const replyingTo = ref(""); // 正在回复的评论用户名
 
+// 添加变量来记录滚动位置
+const savedScrollPosition = ref(0);
 onMounted(() => {
   fetchProducts();
+
+  // 从 sessionStorage 中获取之前保存的滚动位置
+  const savedPosition = sessionStorage.getItem('booklistScrollPosition');
+  if (savedPosition) {
+    // 使用 setTimeout 确保 DOM 完全渲染后再滚动
+    setTimeout(() => {
+      window.scrollTo(0, parseInt(savedPosition));
+
+      // 计算应该在哪一页
+      if (productList.value.length > 0) {
+        const itemHeight = 280 + 100; // 估计每个书籍卡片的高度加间距
+        const itemsPerRow = window.innerWidth > 768 ? 4 : 2;
+        const viewportPosition = parseInt(savedPosition);
+        const rowIndex = Math.floor(viewportPosition / itemHeight);
+        const estimatedIndex = rowIndex * itemsPerRow;
+        currentPage.value = Math.floor(estimatedIndex / pageSize.value) + 1 || 1;
+      }
+    }, 100);
+  }
 });
 // 获取已完成订单的书籍数据
 const fetchPurchasedBooks = async () => {
@@ -112,8 +122,6 @@ interface Product {
   cover: string;
 }
 
-const productList = ref<Product[]>([]);
-
 // 根据勾选框状态过滤书籍列表
 const filteredProductList = computed<Product[]>(() => {
   if (showPurchasedOnly.value) {
@@ -128,190 +136,16 @@ onMounted(() => {
   fetchPurchasedBooks();
 });
 
-const checkCommentsLikeStatus = async () => {
-  if (!username || !comments.value.length) return;
-  try {
-    const promises = comments.value.map(async (comment) => {
-      try {
-        const response = await isLikeComment(comment.commentId, username);
-        console.log("点赞响应", response);
-        comment.isLiked = response.data === true || response.data === 'true' || response.data === '已经点过赞了！';
-      } catch (error) {
-        console.error(`检查评论点赞状态失败:`, error);
-        comment.isLiked = false;
-      }
-    });
-    await Promise.all(promises);
-  } catch (error) {
-    console.error('检查点赞状态总体失败:', error);
-  }
-};
+// 修改打开详情的方法，改为导航到新页面
+const openDetailDialog = (product: Product) => {
+  // 保存当前滚动位置
+  savedScrollPosition.value = window.scrollY;
+  // 将滚动位置保存到 sessionStorage
+  sessionStorage.setItem('booklistScrollPosition', savedScrollPosition.value.toString());
+  // 保存当前页码到 sessionStorage
+  sessionStorage.setItem('booklistCurrentPage', currentPage.value.toString());
 
-const handleLike = async (comment: Comment) => {
-  try {
-    if (!username) {
-      ElMessage.warning('请先登录');
-      return;
-    }
-
-    const response = await likeOrDislike({
-      commentId: comment.commentId,
-      username,
-      isLike: !comment.isLiked
-    });
-
-    if (response.code === '200') {
-      comment.isLiked = !comment.isLiked;
-      comment.likeCount = comment.isLiked
-          ? (parseInt(comment.likeCount) + 1).toString()
-          : (parseInt(comment.likeCount) - 1).toString();
-    }
-  } catch (error) {
-    ElMessage.error('操作失败');
-    console.error(error);
-  }
-};
-
-const openDetailDialog = async (product: Product) => {
-  try {
-    // 并行获取商品详情和评论
-    const [detailResponse, commentsResponse] = await Promise.all([
-      getProductDetail(product.id),
-      getAllCommentsByProductId(product.id).catch(e => {
-        console.error("获取评论失败:", e);
-        return {data: []}; // 确保返回数组结构
-      })
-    ]);
-
-    currentProduct.value = detailResponse.data.data;
-    comments.value = Array.isArray(commentsResponse.data) ? commentsResponse.data : [];
-
-    await checkCommentsLikeStatus();
-    detailDialogVisible.value = true;
-  } catch (error) {
-    console.error("打开商品详情失败:", error);
-    ElMessage.error("获取商品详情失败");
-    comments.value = [];
-    detailDialogVisible.value = false;
-  }
-};
-
-const addToCartHandle = async (productId: string) => {
-  const response = await addToCart({productId: productId.toString(), quantity: 1});
-  console.log(response);
-  if (response.data.code == "200") {
-    ElMessage({
-      message: '已加入购物袋',
-      type: 'success',
-      duration: 1000,
-      grouping: true,
-    });
-  } else if (!username) {
-    ElMessage.warning('请先登录');
-    return;
-  } else {
-    ElMessage({
-      message: "加入购物袋失败：" + response.data.msg,
-      type: 'error',
-      duration: 1000
-    });
-  }
-};
-
-// 添加评论
-const addNewComment = async () => {
-  if (!username) {
-    ElMessage.warning('请先登录');
-    return;
-  }
-
-  if (!newCommentContent.value.trim()) {
-    ElMessage.warning('评论内容不能为空');
-    return;
-  }
-
-  try {
-    const response = await addComment({
-      productId: currentProduct.value.id,
-      username,
-      content: newCommentContent.value,
-      parentId: newCommentParentId.value
-    });
-
-    if (response.code === '200') {
-      ElMessage.success('评论成功');
-      newCommentContent.value = ""; // 清空输入框
-      newCommentParentId.value = ""; // 清空父评论 ID
-      replyingTo.value = ""; // 清空回复对象
-      await fetchComments(); // 刷新评论列表
-    } else {
-      ElMessage.error(response.msg || '评论失败');
-    }
-  } catch (error) {
-    ElMessage.error('评论失败' + error);
-    console.error(error);
-  }
-};
-
-// 删除评论
-const deleteCommentById = async (commentId: string) => {
-  if (!username) {
-    ElMessage.warning('请先登录');
-    return;
-  }
-
-  try {
-    const response = await deleteComment(commentId);
-
-    if (response.code === '200') {
-      ElMessage.success('删除成功');
-      await fetchComments(); // 刷新评论列表
-    } else {
-      ElMessage.error(response.msg || '删除失败');
-    }
-  } catch (error) {
-    ElMessage.error('删除失败');
-    console.error(error);
-  }
-};
-
-// 获取评论列表
-const fetchComments = async () => {
-  try {
-    const response = await getAllCommentsByProductId(currentProduct.value.id);
-    comments.value = Array.isArray(response.data) ? response.data : [];
-    await checkCommentsLikeStatus();
-  } catch (error) {
-    console.error("获取评论失败:", error);
-    comments.value = [];
-  }
-};
-
-const goToReader = (productId: string) => {
-  if (!username) {
-    ElMessage.warning('请先登录');
-    return;
-  }
-  console.log(productId);
-  router.push({path: '/reader', query: {productId: productId}});
-}
-
-// 设置回复
-const setReply = (comment: Comment) => {
-  newCommentParentId.value = comment.commentId;
-  replyingTo.value = comment.username;
-  // 自动聚焦到评论框
-  setTimeout(() => {
-    document.querySelector('.reply-input')?.scrollIntoView({behavior: 'smooth'});
-    const textarea = document.querySelector('.reply-input textarea') as HTMLTextAreaElement;
-    if (textarea) textarea.focus();
-  }, 100);
-};
-
-// 取消回复
-const cancelReply = () => {
-  newCommentParentId.value = "";
-  replyingTo.value = "";
+  router.push(`/bookdetail/${product.id}`);
 };
 
 // 监听路由参数变化
@@ -322,10 +156,19 @@ watch(
         searchKeyword.value = newKeyword as string;
         isSearching.value = true;
         searchProducts(searchKeyword.value);
+        currentPage.value = 1; // 搜索时重置页码
       } else {
         searchKeyword.value = "";
         isSearching.value = false;
         fetchProducts(); // 恢复显示所有产品
+
+        // 从 sessionStorage 恢复页码
+        const savedPage = sessionStorage.getItem('booklistCurrentPage');
+        if (savedPage) {
+          currentPage.value = parseInt(savedPage);
+        } else {
+          currentPage.value = 1;
+        }
       }
     },
     {immediate: true}
@@ -368,142 +211,14 @@ watch(
         <el-empty description="暂无数据"></el-empty>
       </div>
 
-      <!-- 优化后的详情对话框 -->
-      <el-dialog v-model="detailDialogVisible" width="80%" top="5vh" class="detail-dialog" destroy-on-close>
-        <div class="dialog-content">
-          <!-- 左侧大图区域 -->
-          <div class="dialog-image">
-            <el-image :src="currentProduct.cover" fit="cover" class="detail-cover"/>
-            <div class="product-actions">
-              <el-button class="action-button read-button" @click="goToReader(currentProduct.id)">
-                阅读
-              </el-button>
-              <el-button class="action-button cart-button" type="primary" @click="addToCartHandle(currentProduct.id)">
-                加入购物袋
-              </el-button>
-            </div>
-          </div>
-
-          <!-- 右侧信息区域 -->
-          <div class="dialog-info">
-            <div class="product-header">
-              <h1 class="product-title">{{ currentProduct.title }}</h1>
-              <div class="product-meta">
-                <div class="meta-price">RMB {{ currentProduct.price }}</div>
-                <div class="meta-rating">
-                  <el-rate v-model="currentProduct.rate" disabled allow-half/>
-                  <span>{{ currentProduct.rate.toFixed(1) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="product-specs">
-              <div class="spec-item" v-for="spec in currentProduct.specifications" :key="spec.id">
-                <div class="spec-label">{{ spec.item }}</div>
-                <div class="spec-value">{{ spec.value }}</div>
-              </div>
-              <div class="spec-item">
-                <div class="spec-label">描述</div>
-                <div class="spec-value description">{{ currentProduct.description }}</div>
-              </div>
-            </div>
-
-            <div class="product-detail-content" v-html="currentProduct.detail"></div>
-
-            <!-- 评论部分 -->
-            <div class="comments-section">
-              <div class="section-header">
-                <h3>读者评论</h3>
-                <span class="comment-count">{{ comments.length }} 条评论</span>
-              </div>
-
-              <div v-if="Array.isArray(comments) && comments.length" class="comments-list">
-                <div class="comment-card" v-for="comment in comments.filter(c => !c.parentId)" :key="comment.commentId">
-                  <!-- 主评论 -->
-                  <div class="comment-main">
-                    <div class="comment-avatar">{{ comment.username.charAt(0).toUpperCase() }}</div>
-                    <div class="comment-body">
-                      <div class="comment-header">
-                        <span class="comment-user">{{ comment.username }}</span>
-                        <span class="comment-time">{{ new Date(comment.createTime).toLocaleString() }}</span>
-                      </div>
-
-                      <div class="comment-content">{{ comment.content }}</div>
-
-                      <div class="comment-actions">
-                        <div class="action-like" @click="handleLike(comment)" :class="{ active: comment.isLiked }">
-                          <span :class="comment.isLiked ? 'el-icon-star-filled' : 'el-icon-star'"></span>
-                          <span>{{ comment.likeCount }}</span>
-                        </div>
-                        <div class="action-reply" @click="setReply(comment)">
-                          <span class="el-icon-chat-line-round"></span> 回复
-                        </div>
-                        <div v-if="comment.username === username || isUserAdmin" class="action-delete"
-                             @click="deleteCommentById(comment.commentId)">
-                          <span class="el-icon-delete"></span> 删除
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- 子评论列表 -->
-                  <div class="child-comments" v-if="comments.some(c => c.parentId === comment.commentId)">
-                    <div class="child-comment"
-                         v-for="childComment in comments.filter(c => c.parentId === comment.commentId)"
-                         :key="childComment.commentId">
-                      <div class="comment-avatar small">{{ childComment.username.charAt(0).toUpperCase() }}</div>
-                      <div class="comment-body">
-                        <div class="comment-header">
-                          <span class="comment-user">{{ childComment.username }}</span>
-                          <span class="comment-time">{{ new Date(childComment.createTime).toLocaleString() }}</span>
-                        </div>
-
-                        <div class="comment-content">{{ childComment.content }}</div>
-
-                        <div class="comment-actions">
-                          <div class="action-like" @click="handleLike(childComment)"
-                               :class="{ active: childComment.isLiked }">
-                            <span :class="childComment.isLiked ? 'el-icon-star-filled' : 'el-icon-star'"></span>
-                            <span>{{ childComment.likeCount }}</span>
-                          </div>
-                          <div class="action-reply" @click="setReply(childComment)">
-                            <span class="el-icon-chat-line-round"></span> 回复
-                          </div>
-                          <div v-if="childComment.username === username || isUserAdmin" class="action-delete"
-                               @click="deleteCommentById(childComment.commentId)">
-                            <span class="el-icon-delete"></span> 删除
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div v-else class="no-comments">
-                <i class="el-icon-chat-dot-round"></i>
-                <p>还没有评论，快来发表第一条吧！</p>
-              </div>
-
-              <!-- 添加评论 -->
-              <div class="add-comment-section">
-                <div v-if="replyingTo" class="replying-to">
-                  <span>回复给：{{ replyingTo }}</span>
-                  <el-button type="text" @click="cancelReply" class="cancel-reply">取消回复</el-button>
-                </div>
-                <el-input v-model="newCommentContent" type="textarea"
-                          :placeholder="replyingTo ? `回复 ${replyingTo}...` : '发表你的想法...'" rows="3"
-                          class="reply-input"
-                          resize="none"></el-input>
-                <el-button class="submit-comment" @click="addNewComment">
-                  <span class="el-icon-s-promotion"></span> 发布评论
-                </el-button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </el-dialog>
+      <!-- 添加分页组件 -->
+      <div v-if="total > pageSize" class="pagination-container">
+        <el-pagination v-model:current-page="currentPage" :page-size="pageSize" :total="total" background
+                       layout="prev, pager, next, jumper" @current-change="handleCurrentChange"/>
+      </div>
     </el-main>
+
+    <Footer/>
   </div>
 
   <el-backtop :bottom="50" :right="20"/>
@@ -1102,6 +817,14 @@ watch(
     .dialog-content {
       min-height: auto;
     }
+  }
+
+  /* 添加分页容器样式 */
+
+  .pagination-container {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
   }
 }
 </style>

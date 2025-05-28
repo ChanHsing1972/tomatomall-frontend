@@ -5,7 +5,7 @@ import {parseRole, parseTime} from "../../utils";
 import {useRouter} from "vue-router";
 import Header from "../../components/Header.vue";
 import {ElMessage, ElMessageBox, UploadProps} from "element-plus";
-import {Camera, UserFilled} from "@element-plus/icons-vue";
+import {UserFilled} from "@element-plus/icons-vue";
 
 const router = useRouter();
 const role = sessionStorage.getItem("role") || "user";
@@ -166,10 +166,7 @@ const goToAd = () => {
             <img v-if="avatar" :src="avatar" alt="avatar" class="user-avatar">
             <el-avatar v-else :icon="UserFilled" :size="80" class="user-avatar"/>
             <div class="avatar-overlay">
-              <el-icon class="upload-icon">
-                <Camera/>
-              </el-icon>
-              <div class="upload-text">更换头像</div>
+              <div class="upload-icon">📷</div>
             </div>
           </div>
         </el-upload>
@@ -433,7 +430,7 @@ const goToAd = () => {
 }
 
 .avatar-container:hover .user-avatar {
-  filter: brightness(0.9);
+  filter: brightness(0.7);
 }
 
 .upload-icon {
