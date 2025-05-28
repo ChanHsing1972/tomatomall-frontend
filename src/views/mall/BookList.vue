@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {onMounted, computed, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
-import {type OrderVO, getOrders } from "../../api/order.ts";
+import {getOrders, type OrderVO} from "../../api/order.ts";
 import {getProductList, searchProductsByKeyword} from "../../api/product.ts";
 import Footer from "../../components/Footer.vue";
 
@@ -49,13 +49,6 @@ const productList = ref<Product[]>([]);
 const currentPage = ref(1);
 const pageSize = ref(16);
 const total = computed(() => productList.value.length);
-
-// 计算当前页显示的书籍
-const displayProducts = computed(() => {
-  const startIndex = (currentPage.value - 1) * pageSize.value;
-  const endIndex = startIndex + pageSize.value;
-  return productList.value.slice(startIndex, endIndex);
-});
 
 // 处理页码变化
 const handleCurrentChange = (val: number) => {
@@ -113,6 +106,7 @@ const fetchProducts = async () => {
     console.error(error);
   }
 };
+
 interface Product {
   id: string;
   title: string;
@@ -189,19 +183,19 @@ watch(
         <el-card
             class="product-card"
             shadow="hover"
-            v-for="product in displayProducts"
+            v-for="product in filteredProductList"
             :key="product.id"
             @click="openDetailDialog(product)"
         >
           <div class="card-image-wrapper">
-            <img :src="product.cover" alt="封面" class="product-image" />
+            <img :src="product.cover" alt="封面" class="product-image"/>
           </div>
           <div class="card-info">
             <h2 class="product-title" :title="product.title">{{ product.title }}</h2>
             <p class="product-description">{{ product.description }}</p>
             <div class="price-rate">
               <span class="product-price">RMB {{ product.price }}</span>
-              <el-rate class="product-rate" v-model="product.rate" allow-half disabled />
+              <el-rate v-model="product.rate" allow-half class="product-rate" disabled/>
               <span class="product-score">{{ product.rate.toFixed(1) }}</span>
             </div>
           </div>
