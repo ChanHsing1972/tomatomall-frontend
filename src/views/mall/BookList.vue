@@ -189,7 +189,7 @@ watch(
         <el-card
             class="product-card"
             shadow="hover"
-            v-for="product in filteredProductList"
+            v-for="product in displayProducts"
             :key="product.id"
             @click="openDetailDialog(product)"
         >
