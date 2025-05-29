@@ -88,14 +88,16 @@ const fetchPurchasedBooks = async () => {
     const response = await getOrders();
     if (response.code === "200" && response.data) {
       const completedOrders = response.data.filter((order: OrderVO) => order.status === "TRADE_SUCCESS");
-      purchasedBooks.value = completedOrders.flatMap((order: OrderVO) =>
+      const bookTitles = completedOrders.flatMap((order: OrderVO) =>
           order.orderItems.map((item: any) => item.title)
       );
+      purchasedBooks.value = Array.from(new Set(bookTitles)); // 去重
     }
   } catch (error) {
     console.error("获取已购买书籍失败:", error);
   }
 };
+
 const fetchProducts = async () => {
   try {
     const response = await getProductList();
