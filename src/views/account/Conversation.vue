@@ -297,10 +297,6 @@ onUnmounted(() => {
   align-items: flex-start;
 }
 
-.sent {
-  flex-direction: row-reverse;
-}
-
 .message-avatar {
   margin: 0 10px;
 }

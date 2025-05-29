@@ -70,8 +70,15 @@ interface Product {
   rate: 0,
   cover: "",
   detail: "",
-  specifications: [],
+  specifications: Spec[],
 }
+
+interface Spec {
+  id: string;
+  item: string;
+  value: string;
+}
+
 
 const currentProduct = ref<Product>({
   id: "",

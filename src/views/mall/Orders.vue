@@ -3,7 +3,7 @@ import {computed, onMounted, ref} from "vue";
 import Header from "../../components/Header.vue";
 import {deleteOrder, getOrders, type OrderItem, type OrderStatus, type OrderVO, payOrder} from "../../api/order";
 import {ElMessage, ElNotification} from "element-plus";
-import {Calendar, Document, Location, Search, ShoppingCart} from '@element-plus/icons-vue';
+import {Calendar, Document, Location, Picture, Search, ShoppingCart} from '@element-plus/icons-vue';
 import Footer from "../../components/Footer.vue";
 
 interface EnhancedOrderVO extends OrderVO {

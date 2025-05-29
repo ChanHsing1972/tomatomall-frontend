@@ -1,13 +1,7 @@
 <script setup lang="ts">
-import {ref, onMounted} from "vue";
+import {onMounted, ref} from "vue";
 import {ElMessage, ElMessageBox} from "element-plus";
-import {Delete} from "@element-plus/icons-vue";
-import {
-  getAllAds,
-  updateAd,
-  addAd,
-  deleteAd
-} from "../../api/ad.ts";
+import {addAd, deleteAd, getAllAds, updateAd} from "../../api/ad.ts";
 
 // 广告信息类型
 interface Advertisement {
@@ -183,7 +177,7 @@ const handleDeleteAd = async (adId: string) => {
         <el-table-column prop="title" label="标题" width="180"/>
         <el-table-column label="图片" width="120">
           <template #default="{ row }">
-            <img :src="row.imgUrl" style="width: 100px; height: auto"/>
+            <img :src="row.imgUrl" alt="ad picture" style="width: 100px; height: auto"/>
           </template>
         </el-table-column>
         <el-table-column prop="content" label="内容" width="200"/>
