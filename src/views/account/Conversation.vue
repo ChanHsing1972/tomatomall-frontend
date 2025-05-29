@@ -47,11 +47,15 @@ const fetchConversation = async () => {
 
       // 设置对方用户名
       if (messages.value.length > 0) {
-        if (messages.value[0].senderId === currentUserId) {
+        const otherUser = messages.value.find(msg => msg.senderId !== currentUserId);
+        if (otherUser) {
+          otherUserName.value = otherUser.senderName;
+        } else if (messages.value[0]) {
           otherUserName.value = messages.value[0].receiverName;
-        } else {
-          otherUserName.value = messages.value[0].senderName;
         }
+      } else {
+        // 如果没有消息，尝试从路由参数中解析用户名，或者显示用户ID
+        otherUserName.value = '用户' + otherUserId.value;
       }
 
       // 标记消息为已读
@@ -77,11 +81,6 @@ const markUnreadMessages = () => {
       markAsRead(Number(msg.id));
     }
   });
-};
-
-// 获取消息发送者的名称
-const getSenderName = (msg: any) => {
-  return msg.senderId === currentUserId ? msg.senderName : msg.receiverName;
 };
 
 // 发送新消息
@@ -217,16 +216,27 @@ onUnmounted(() => {
           </div>
 
           <div v-for="msg in messages" :key="msg.id"
-               :class="['message-item', { 'sent': msg.senderId === currentUserId, 'received': msg.senderId !== currentUserId }]">
-            <div class="message-avatar">
-              <!-- 优先显示头像，如果没有头像则使用 el-avatar -->
-              <img v-if="msg.senderAvatar" :alt="getSenderName(msg)" :src="msg.senderAvatar" class="avatar-image"/>
-              <el-avatar v-else :size="36">{{ getSenderName(msg).charAt(0) }}</el-avatar>
-            </div>
-            <div class="message-content">
-              <div class="message-bubble">{{ msg.content }}</div>
-              <div class="message-time">{{ new Date(msg.createTime).toLocaleString() }}</div>
-            </div>
+               :class="['message-item', msg.senderId === currentUserId ? 'sent' : 'received']">
+            <template v-if="msg.senderId !== currentUserId">
+              <div class="message-avatar">
+                <img v-if="msg.senderAvatar" :alt="msg.senderName" :src="msg.senderAvatar" class="avatar-image"/>
+                <el-avatar v-else :size="36">{{ msg.senderName.charAt(0) }}</el-avatar>
+              </div>
+              <div class="message-content">
+                <div class="message-bubble">{{ msg.content }}</div>
+                <div class="message-time">{{ new Date(msg.createTime).toLocaleString() }}</div>
+              </div>
+            </template>
+            <template v-else>
+              <div class="message-content">
+                <div class="message-bubble">{{ msg.content }}</div>
+                <div class="message-time">{{ new Date(msg.createTime).toLocaleString() }}</div>
+              </div>
+              <div class="message-avatar">
+                <img v-if="msg.senderAvatar" :alt="msg.senderName" :src="msg.senderAvatar" class="avatar-image"/>
+                <el-avatar v-else :size="36">{{ msg.senderName.charAt(0) }}</el-avatar>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -298,18 +308,34 @@ onUnmounted(() => {
   display: flex;
   margin-bottom: 15px;
   align-items: flex-start;
+  width: 100%;
+}
+
+.sent {
+  justify-content: flex-end;
+}
+
+.received {
+  justify-content: flex-start;
 }
 
 .message-avatar {
   margin: 0 10px;
+  flex-shrink: 0;
 }
 
 .message-content {
   max-width: 70%;
+  display: flex;
+  flex-direction: column;
 }
 
 .sent .message-content {
   align-items: flex-end;
+}
+
+.received .message-content {
+  align-items: flex-start;
 }
 
 .message-bubble {
@@ -334,6 +360,9 @@ onUnmounted(() => {
   font-size: 12px;
   color: #909399;
   margin-top: 5px;
+}
+
+.sent .message-time {
   text-align: right;
 }
 
