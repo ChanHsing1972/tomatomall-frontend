@@ -1,16 +1,49 @@
 image: node:16
 
 stages:
+  - build
   - deploy
+
+variables:
+  # 避免npm安装警告
+  NO_COLOR: "1"
+
+# 缓存node_modules以加速构建
+cache:
+  paths:
+    - node_modules/
+
+build:
+  stage: build
+  script:
+    - npm ci  # 使用ci而非install，更快更可靠
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 12 hour
 
 deploy:
   stage: deploy
-  script:
-    - apt-get update -qq && apt-get install -y -qq ssh
+  needs: 
+    - build
+  before_script:
+    # 安装SSH客户端
+    - apt-get update -qq && apt-get install -y -qq ssh git
+    # 设置SSH
     - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
-    - chmod 600 ~/.ssh/id_ed25519
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    # 添加服务器到已知主机
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
     - ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
-    - ssh -i ~/.ssh/id_ed25519 root@$SERVER_IP "cd $DEPLOY_PATH_FRONTEND && git pull && npm install && npm run build"
+  script:
+    # 部署过程
+    - echo "正在部署前端应用到服务器..."
+    - ssh -i ~/.ssh/id_rsa root@$SERVER_IP "mkdir -p $DEPLOY_PATH_FRONTEND/dist-new"
+    - scp -i ~/.ssh/id_rsa -r dist/* root@$SERVER_IP:$DEPLOY_PATH_FRONTEND/dist-new/
+    - ssh -i ~/.ssh/id_rsa root@$SERVER_IP "cd $DEPLOY_PATH_FRONTEND && rm -rf dist-old && [ -d dist ] && mv dist dist-old || true && mv dist-new dist"
+    - echo "前端应用部署完成！"
   only:
     - main
