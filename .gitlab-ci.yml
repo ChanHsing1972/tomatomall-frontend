@@ -1,0 +1,36 @@
+image: node:16
+
+stages:
+  - build
+  - deploy
+
+variables:
+  GIT_DEPTH: 3
+
+cache:
+  paths:
+    - node_modules/
+
+build:
+  stage: build
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 hour
+
+deploy_production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk update && apk add openssh-client rsync
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+  script:
+    - rsync -avz --delete ./dist/ $SERVER_USER@$SERVER_IP:$SERVER_PATH_FRONTEND/
+  only:
+    - main  # 只在main分支推送时部署
