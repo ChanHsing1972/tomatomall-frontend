@@ -23,7 +23,7 @@ const activeTab = ref('all');
 const searchQuery = ref('');
 
 // 状态映射
-const statusMap: Record<OrderStatus, { text: string; type: string }> = {
+const statusMap: Record<OrderStatus, { text: string; type: "" | "success" | "warning" | "info" | "danger" }> = {
   PENDING: {text: "待支付", type: "warning"},
   TRADE_SUCCESS: {text: "已完成", type: "success"},
   EXPIRED: {text: "已过期", type: "info"}

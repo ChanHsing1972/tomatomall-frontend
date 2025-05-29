@@ -159,10 +159,13 @@ watch(() => route.params.userId, (newId) => {
 });
 
 // 处理Enter键发送
-const handleKeyDown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendNewMessage();
+const handleKeyDown = (e: Event | KeyboardEvent) => {
+  // 确保是 KeyboardEvent 类型
+  if (e instanceof KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendNewMessage();
+    }
   }
 };
 
