@@ -160,7 +160,7 @@ const goToAd = () => {
     <!-- 左侧：完整用户信息展示卡片 -->
     <div class="user-summary">
       <div class="header-info">
-        <el-upload :show-file-list="false" action="http://68.183.236.32:8080/api/files/images" class="avatar-uploader"
+        <el-upload :show-file-list="false" action="http://68.183.236.32/api/files/images" class="avatar-uploader"
                    :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
           <div class="avatar-container">
             <img v-if="avatar" :src="avatar" alt="avatar" class="user-avatar">
