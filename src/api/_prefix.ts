@@ -27,3 +27,6 @@ export const SEARCH_HISTORY_MODULE = `${API_MODULE}/search_history`;
 
 //消息模块
 export const MESSAGE_MODULE = `${API_MODULE}/messages`;
+
+//收藏模块
+export const PRODUCTLIKE_MODULE = `${API_MODULE}/productlike`;

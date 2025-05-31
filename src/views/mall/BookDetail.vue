@@ -6,6 +6,7 @@ import Header from "../../components/Header.vue";
 import {getProductDetail} from "../../api/product.ts";
 import {addToCart} from "../../api/cart.ts";
 import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
+import {cancelLike,addLike,getLikeCount,getLikeList} from "../../api/product_like.ts";
 
 const route = useRoute();
 const router = useRouter();
@@ -44,7 +45,11 @@ interface Comment {
   likeCount: string;
   isLiked?: boolean;
 }
-
+interface LikedProduct {
+  id: number; // 收藏记录的唯一标识符
+  userId: number; // 收藏用户的 ID
+  product: Product; // 关联的产品对象
+}
 const currentProduct = ref<Product>({
   id: "",
   title: "",
@@ -62,6 +67,51 @@ const newCommentContent = ref("");
 const newCommentParentId = ref("");
 const replyingTo = ref("");
 
+const isLiked = ref(false); // 是否已收藏
+const likeCount = ref(0); // 收藏人数
+
+const checkLikeStatus = async () => {
+  if (!username) return;
+
+  try {
+    const response = (await getLikeList()).data;
+    // 根据你的后端结构，正确的数据在 response.data 中
+    if (response?.code === '200') { // 假设你的 ResultVO 使用 '200' 表示成功
+      const likedProducts = response.data || []; // 实际数据在 data 字段
+      isLiked.value = likedProducts.some(
+          (item: Product) => item.id.toString() === productId.value
+      );
+    } else {
+      console.error('获取收藏列表失败:', response?.msg);
+    }
+  } catch (error) {
+    console.error('检查收藏状态失败:', error);
+    ElMessage.error('获取收藏信息失败，请稍后再试');
+  }
+};
+
+// 收藏
+const handleProductLike = async () => {
+  if (!username) {
+    ElMessage.warning('请先登录');
+    return;
+  }
+  try {
+    if (isLiked.value) {
+      // 取消收藏
+      await cancelLike(productId.value);
+      likeCount.value--;
+    } else {
+      // 添加收藏
+      await addLike(productId.value);
+      likeCount.value++;
+    }
+    isLiked.value = !isLiked.value;
+  } catch (error) {
+    ElMessage.error('操作失败');
+    console.error(error);
+  }
+};
 // 添加描述展开/收起状态
 const isDescriptionExpanded = ref(false);
 
@@ -85,6 +135,8 @@ const fetchProductDetail = async () => {
     const detailResponse = await getProductDetail(productId.value);
     currentProduct.value = detailResponse.data.data;
     document.title = `${currentProduct.value.title} - 番茄书城`;
+    const likeResponse = await getLikeCount(productId.value);
+    likeCount.value = likeResponse.data.data;
     await fetchComments();
   } catch (error) {
     console.error("获取书籍详情失败:", error);
@@ -270,7 +322,7 @@ onMounted(() => {
     return;
   }
   fetchProductDetail();
-
+  checkLikeStatus();
   // 确保页面滚动到顶部
   window.scrollTo(0, 0);
 });
@@ -303,6 +355,14 @@ onMounted(() => {
               <div class="dialog-info">
                 <div class="product-header">
                   <h1 class="product-title">{{ currentProduct.title }}</h1>
+                  <div class="like-section">
+                    <div class="like-button" @click="handleProductLike">
+                      <span :class="isLiked ? 'el-icon-star-filled' : 'el-icon-star'"></span>
+                    </div>
+                    <div class="like-count">
+                      <span>{{ likeCount }}人收藏</span>
+                    </div>
+                  </div>
                   <div class="product-meta">
                     <div class="meta-price">RMB {{ currentProduct.price }}</div>
                     <div class="meta-rating">
@@ -341,6 +401,7 @@ onMounted(() => {
                     {{ isDetailExpanded ? '收起' : '查看更多' }}
                   </div>
                 </div>
+
 
                 <!-- 评论部分 -->
                 <div class="section-header">
@@ -472,6 +533,98 @@ onMounted(() => {
 </template>
 
 <style>
+/* 标题区域样式 */
+.book-detail-page-container {
+  .book-detail-page {
+    font-family: "sf pro display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin-top: 60px;
+    padding: 40px;
+    background-color: white;
+    min-height: calc(100vh - 60px);
+  }
+
+  .detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 20px;
+  }
+
+  .product-main-content {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+
+  .dialog-image {
+    flex: 0 0 30%;
+    background-color: #f5f5f7;
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+    padding: 30px;
+    position: sticky;
+    top: 80px;
+    align-self: flex-start;
+    max-height: 600px;
+    height: fit-content;
+  }
+
+  .dialog-info {
+    flex: 0 0 55%;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+  }
+
+  .like-section {
+    display: flex;
+    justify-content: flex-end; /* 将内容对齐到右边 */
+    gap: 10px;
+  }
+
+  .like-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+
+  .like-count {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+}
+.title-like-section .like-icon {
+  font-size: 18px;
+  color: #ff9500;
+}
+
+.title-like-section .el-icon-star-filled {
+  color: #ff9500;
+}
+
+.title-like-section .like-text {
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .title-section {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .title-like-section {
+    align-self: flex-end;
+    margin-top: 0;
+  }
+}
 .book-detail-page-container {
   .book-detail-page {
     font-family: "sf pro display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;

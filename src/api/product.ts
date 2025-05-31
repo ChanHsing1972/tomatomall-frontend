@@ -1,5 +1,5 @@
-import {axios} from "../utils/request"; // 确保已经创建了 request.ts 文件并配置了 axios 实例
-import {PRODUCT_MODULE} from "./_prefix"; // 假设您已经定义了产品模块的基础路径
+import {axios} from "../utils/request";
+import {PRODUCT_MODULE} from "./_prefix";
 
 // 商品信息类型定义
 export type CreateProductInfo = {
