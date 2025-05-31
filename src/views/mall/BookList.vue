@@ -48,7 +48,8 @@ const productList = ref<Product[]>([]);
 // 添加分页相关变量
 const currentPage = ref(1);
 const pageSize = ref(16);
-const total = computed(() => productList.value.length);
+// 更新总数计算，使用过滤后的列表长度
+const total = computed(() => filteredProductList.value.length);
 
 // 处理页码变化
 const handleCurrentChange = (val: number) => {
@@ -126,6 +127,13 @@ const filteredProductList = computed<Product[]>(() => {
   return productList.value;
 });
 
+// 添加一个新的计算属性，根据当前页码裁剪商品列表
+const paginatedProductList = computed<Product[]>(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredProductList.value.slice(start, end);
+});
+
 // 初始化数据
 onMounted(() => {
   fetchProducts();
@@ -180,15 +188,10 @@ watch(
         <el-checkbox v-model="showPurchasedOnly">已购买</el-checkbox>
       </div>
 
-      <!-- 书籍列表 -->
+      <!-- 书籍列表 - 修改这里，使用paginatedProductList替代filteredProductList -->
       <div v-if="filteredProductList.length" class="product-grid">
-        <el-card
-            class="product-card"
-            shadow="hover"
-            v-for="product in filteredProductList"
-            :key="product.id"
-            @click="openDetailDialog(product)"
-        >
+        <el-card v-for="product in paginatedProductList" :key="product.id" class="product-card" shadow="hover"
+                 @click="openDetailDialog(product)">
           <div class="card-image-wrapper">
             <img :src="product.cover" alt="封面" class="product-image"/>
           </div>
@@ -207,7 +210,7 @@ watch(
         <el-empty description="暂无数据"></el-empty>
       </div>
 
-      <!-- 添加分页组件 -->
+      <!-- 分页组件 -->
       <div v-if="total > pageSize" class="pagination-container">
         <el-pagination v-model:current-page="currentPage" :page-size="pageSize" :total="total" background
                        layout="prev, pager, next, jumper" @current-change="handleCurrentChange"/>
