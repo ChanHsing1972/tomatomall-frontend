@@ -6,7 +6,8 @@ import Header from "../../components/Header.vue";
 import {getProductDetail} from "../../api/product.ts";
 import {addToCart} from "../../api/cart.ts";
 import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
-import {cancelLike,addLike,getLikeCount,getLikeList} from "../../api/product_like.ts";
+import {addLike, cancelLike, getLikeCount, getLikeList} from "../../api/product_like.ts";
+import Footer from "../../components/Footer.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -45,11 +46,13 @@ interface Comment {
   likeCount: string;
   isLiked?: boolean;
 }
+
 interface LikedProduct {
   id: number; // 收藏记录的唯一标识符
   userId: number; // 收藏用户的 ID
   product: Product; // 关联的产品对象
 }
+
 const currentProduct = ref<Product>({
   id: "",
   title: "",
@@ -75,11 +78,10 @@ const checkLikeStatus = async () => {
 
   try {
     const response = (await getLikeList()).data;
-    // 根据你的后端结构，正确的数据在 response.data 中
-    if (response?.code === '200') { // 假设你的 ResultVO 使用 '200' 表示成功
-      const likedProducts = response.data || []; // 实际数据在 data 字段
+    if (response?.code === '200') {
+      const likedProducts = response.data || [];
       isLiked.value = likedProducts.some(
-          (item: Product) => item.id.toString() === productId.value
+          (item: LikedProduct) => item.product && item.product.id?.toString() === productId.value
       );
     } else {
       console.error('获取收藏列表失败:', response?.msg);
@@ -354,15 +356,14 @@ onMounted(() => {
               <!-- 右侧信息区域 -->
               <div class="dialog-info">
                 <div class="product-header">
-                  <h1 class="product-title">{{ currentProduct.title }}</h1>
-                  <div class="like-section">
+                  <div class="title-like-wrapper">
+                    <h1 class="product-title">{{ currentProduct.title }}</h1>
                     <div class="like-button" @click="handleProductLike">
-                      <span :class="isLiked ? 'el-icon-star-filled' : 'el-icon-star'"></span>
-                    </div>
-                    <div class="like-count">
-                      <span>{{ likeCount }}人收藏</span>
+                      <span :class="isLiked ? 'el-icon-heart-filled' : 'el-icon-heart-empty'"></span>
+                      <span class="like-text">{{ likeCount }} 人收藏</span>
                     </div>
                   </div>
+
                   <div class="product-meta">
                     <div class="meta-price">RMB {{ currentProduct.price }}</div>
                     <div class="meta-rating">
@@ -581,23 +582,41 @@ onMounted(() => {
 
   .like-section {
     display: flex;
-    justify-content: flex-end; /* 将内容对齐到右边 */
+    justify-content: flex-start;
     gap: 10px;
+    margin-top: 5px;
+  }
+
+  .title-like-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: -10px;
   }
 
   .like-button {
     display: flex;
     align-items: center;
-    gap: 5px;
     cursor: pointer;
+    margin-left: 10px;
+    font-size: 24px;
+    gap: 5px;
+  }
+
+  .like-button .like-text {
+    font-size: 12px;
+    color: #ff5a5f;
   }
 
   .like-count {
     display: flex;
     align-items: center;
-    gap: 5px;
+    font-size: 14px;
+    color: #86868b;
+    margin-bottom: 15px;
   }
 }
+
 .title-like-section .like-icon {
   font-size: 18px;
   color: #ff9500;
@@ -625,6 +644,7 @@ onMounted(() => {
     margin-top: 0;
   }
 }
+
 .book-detail-page-container {
   .book-detail-page {
     font-family: "sf pro display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -829,7 +849,6 @@ onMounted(() => {
   .product-detail-content.collapsed {
     max-height: 150px;
     mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
   }
 
   .toggle-detail {
@@ -1116,6 +1135,16 @@ onMounted(() => {
   }
 
   /* 添加图标样式 */
+
+  .el-icon-heart-empty:before {
+    content: "♡";
+    color: #ff5a5f;
+  }
+
+  .el-icon-heart-filled:before {
+    content: "❤";
+    color: #ff5a5f;
+  }
 
   .el-icon-star:before {
     content: "☆";
