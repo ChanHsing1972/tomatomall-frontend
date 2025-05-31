@@ -85,6 +85,30 @@ const router = createRouter({
             component: () => import("../views/mall/BookDetail.vue"),
             meta: {title: "书籍详情"},
         },
+        {
+            path: "/about/aboutus",
+            name: "AboutUs",
+            component: () => import("../views/about/AboutUs.vue"),
+            meta: {requiresAuth: false},
+        },
+        {
+            path: "/about/join-us",
+            name: "JoinUs",
+            component: () => import("../views/about/JoinUs.vue"),
+            meta: {requiresAuth: false},
+        },
+        {
+            path: "/about/contact",
+            name: "ContactUs",
+            component: () => import("../views/about/ContactUs.vue"),
+            meta: {requiresAuth: false},
+        },
+        {
+            path: "/about/help",
+            name: "HelpCenter",
+            component: () => import("../views/about/HelpCenter.vue"),
+            meta: {requiresAuth: false},
+        },
     ],
 });
 

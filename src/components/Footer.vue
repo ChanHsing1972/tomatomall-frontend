@@ -9,17 +9,29 @@
         <div class="footer-column">
           <h3>关于我们</h3>
           <ul>
-            <li><a href="#">公司简介</a></li>
-            <li><a href="#">加入我们</a></li>
-            <li><a href="#">联系方式</a></li>
+            <li>
+              <router-link to="/about/aboutus">书城简介</router-link>
+            </li>
+            <li>
+              <router-link to="/about/join-us">加入我们</router-link>
+            </li>
+            <li>
+              <router-link to="/about/contact">联系方式</router-link>
+            </li>
           </ul>
         </div>
         <div class="footer-column">
-          <h3>客户服务</h3>
+          <h3>帮助中心</h3>
           <ul>
-            <li><a href="#">帮助中心</a></li>
-            <li><a href="#">配送说明</a></li>
-            <li><a href="#">退换政策</a></li>
+            <li>
+              <router-link to="/about/help">常见问题</router-link>
+            </li>
+            <li>
+              <router-link to="/about/help">购买指南</router-link>
+            </li>
+            <li>
+              <router-link to="/about/help">售后服务</router-link>
+            </li>
           </ul>
         </div>
         <div class="footer-column">
@@ -113,6 +125,7 @@
   text-decoration: underline;
 }
 
+
 .social-icons {
   display: flex;
   gap: 16px;
@@ -143,3 +156,5 @@
   padding-top: 20px;
 }
 </style>
+<script lang="ts" setup>
+</script>
