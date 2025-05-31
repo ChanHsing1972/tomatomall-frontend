@@ -2,7 +2,6 @@
 import Header from "../../components/Header.vue";
 import Footer from "../../components/Footer.vue";
 import {onMounted, reactive, ref} from "vue";
-import {ElMessage} from 'element-plus';
 
 // 当页面挂载时，滚动到顶部
 onMounted(() => {
@@ -216,39 +215,6 @@ const toggleFaq = (index: number) => {
     expandedFaq.value = -1;
   } else {
     expandedFaq.value = index;
-  }
-};
-
-// 搜索功能
-const handleSearch = () => {
-  if (!searchQuery.value.trim()) {
-    isSearching.value = false;
-    searchResults.value = [];
-    return;
-  }
-
-  isSearching.value = true;
-  const results: { category: string; question: string; answer: string; }[] = [];
-
-  // 遍历所有FAQ数据进行搜索
-  Object.entries(faqData).forEach(([category, questions]) => {
-    questions.forEach(item => {
-      if (
-          item.question.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-          item.answer.toLowerCase().includes(searchQuery.value.toLowerCase())
-      ) {
-        results.push({
-          ...item,
-          category
-        });
-      }
-    });
-  });
-
-  searchResults.value = results;
-
-  if (results.length === 0) {
-    ElMessage.info('未找到相关结果，请尝试其他关键词');
   }
 };
 
@@ -574,15 +540,6 @@ const formatTime = (date: string | number | Date) => {
   font-size: 24px;
   font-weight: 400;
   margin: 0 0 30px;
-}
-
-.search-container {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.search-input {
-  width: 100%;
 }
 
 /* 容器 */
