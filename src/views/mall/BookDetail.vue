@@ -48,9 +48,9 @@ interface Comment {
 }
 
 interface LikedProduct {
-  id: number; // 收藏记录的唯一标识符
-  userId: number; // 收藏用户的 ID
-  product: Product; // 关联的产品对象
+  productId: string; // 收藏记录的唯一标识符
+  userId: string; // 收藏用户的 ID
+  //product: Product; // 关联的产品对象
 }
 
 const currentProduct = ref<Product>({
@@ -70,7 +70,7 @@ const newCommentContent = ref("");
 const newCommentParentId = ref("");
 const replyingTo = ref("");
 
-const isLiked = ref(false); // 是否已收藏
+const isLiked = ref(true); // 是否已收藏
 const likeCount = ref(0); // 收藏人数
 
 const checkLikeStatus = async () => {
@@ -78,10 +78,11 @@ const checkLikeStatus = async () => {
 
   try {
     const response = (await getLikeList()).data;
+    console.log('收藏列表',response);
     if (response?.code === '200') {
       const likedProducts = response.data || [];
       isLiked.value = likedProducts.some(
-          (item: LikedProduct) => item.product && item.product.id?.toString() === productId.value
+          (item: LikedProduct) => item.productId?.toString() === productId.value
       );
     } else {
       console.error('获取收藏列表失败:', response?.msg);
@@ -98,6 +99,7 @@ const handleProductLike = async () => {
     ElMessage.warning('请先登录');
     return;
   }
+  await checkLikeStatus();
   try {
     if (isLiked.value) {
       // 取消收藏
