@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import {computed, onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElDrawer} from "element-plus";
 import Header from "../../components/Header.vue";
 import {getOrders, type OrderVO} from "../../api/order.ts";
 import {getProductList, searchProductsByKeyword} from "../../api/product.ts";
 import Footer from "../../components/Footer.vue";
-
+import { getLikeList } from "../../api/product_like.ts";
+const showLikedOnly = ref(false);
+const likedBookIds = ref<string[]>([]);
 const route = useRoute();
 const router = useRouter();
 const searchKeyword = ref("");
 const isSearching = ref(false);
 const showPurchasedOnly = ref(false); // 勾选框状态
 const purchasedBooks = ref<string[]>([]); // 已购买书籍的书名列表
+const drawerVisible = ref(false);
 // 搜索产品
 const searchProducts = async (keyword: string) => {
   try {
@@ -23,7 +26,19 @@ const searchProducts = async (keyword: string) => {
     console.error(error);
   }
 };
-
+const categories = [
+  "全部",
+  "文学小说",
+  "散文随笔",
+  "自传他传",
+  "诗歌戏剧",
+  "哲学心理",
+  "历史文化",
+  "生活健康",
+  "科技探索",
+  "经济管理",
+  "科普读物"
+];
 interface Product {
   id: string;
   title: string;
@@ -118,13 +133,48 @@ interface Product {
   description: string;
   cover: string;
 }
-
-// 根据勾选框状态过滤书籍列表
-const filteredProductList = computed<Product[]>(() => {
-  if (showPurchasedOnly.value) {
-    return productList.value.filter((product: Product) => purchasedBooks.value.includes(product.title));
+const fetchLikedBooks = async () => {
+  const username = sessionStorage.getItem("username") || "";
+  if (!username) return;
+  try {
+    const response = await getLikeList();
+    if (response?.data?.code === "200") {
+      likedBookIds.value = (response.data.data || []).map((item: any) => item.product?.id?.toString());
+    }
+  } catch (e) {
+    console.error("获取收藏书籍失败", e);
   }
-  return productList.value;
+};
+const filteredProductList = computed(() => {
+  let list = processedProductList.value;
+  if (showPurchasedOnly.value) {
+    list = list.filter(product => purchasedBooks.value.includes(product.title));
+  }
+  if (showLikedOnly.value) {
+    list = list.filter(product => likedBookIds.value.includes(product.id));
+  }
+  if (selectedCategory.value !== "全部") {
+    list = list.filter(product =>
+        product.categories && product.categories.includes(selectedCategory.value)
+    );
+  }
+  return list;
+});
+const selectedCategory = ref("全部");
+
+// 提取类别
+const processedProductList = computed(() => {
+  return productList.value.map(product => {
+    const categorySpec = product.specifications?.find(spec => spec.item === "类别");
+    // 拆分类别，去除空格
+    const categoriesArr = categorySpec && categorySpec.value
+        ? categorySpec.value.split('/').map(s => s.trim())
+        : [];
+    return {
+      ...product,
+      categories: categoriesArr // 用数组存储
+    };
+  });
 });
 
 // 添加一个新的计算属性，根据当前页码裁剪商品列表
@@ -138,6 +188,7 @@ const paginatedProductList = computed<Product[]>(() => {
 onMounted(() => {
   fetchProducts();
   fetchPurchasedBooks();
+  fetchLikedBooks();
 });
 
 // 修改打开详情的方法，改为导航到新页面
@@ -183,11 +234,36 @@ watch(
   <Header/>
   <div class="booklist-container">
     <el-main class="main-container">
-      <!-- 勾选框 -->
-      <div class="filter-bar">
-        <el-checkbox v-model="showPurchasedOnly">已购买</el-checkbox>
+      <div class="filter-bar" style="display: flex; justify-content: space-between; align-items: center;">
+        <!-- 左侧：分类按钮 -->
+        <div class="category-label-btn" style="display: flex; align-items: center; gap: 8px; margin-left: 20px;">
+          <span style="font-size: 16px; font-weight: 400; color: #333;">选择分类</span>
+          <el-button @click="drawerVisible = true">
+            <i class="el-icon-menu"></i> {{ selectedCategory }}
+          </el-button>
+        </div>
+        <!-- 右侧：勾选框 -->
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <el-checkbox v-model="showPurchasedOnly">已购买</el-checkbox>
+          <el-checkbox v-model="showLikedOnly">已收藏</el-checkbox>
+        </div>
       </div>
-
+      <!-- 分类抽屉 -->
+      <el-drawer
+          v-model="drawerVisible"
+          title="选择分类"
+          direction="ltr"
+          size="220px"
+          :with-header="true"
+      >
+        <el-radio-group
+            v-model="selectedCategory"
+            @change="drawerVisible = false"
+            style="display: flex; flex-direction: column; align-items: flex-start; gap: 16px;"
+        >
+          <el-radio v-for="cat in categories" :key="cat" :label="cat">{{ cat }}</el-radio>
+        </el-radio-group>
+      </el-drawer>
       <!-- 书籍列表 - 修改这里，使用paginatedProductList替代filteredProductList -->
       <div v-if="filteredProductList.length" class="product-grid">
         <el-card v-for="product in paginatedProductList" :key="product.id" class="product-card" shadow="hover"
