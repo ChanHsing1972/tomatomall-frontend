@@ -32,6 +32,14 @@ watch(() => props.visible, (newValue) => {
   if (!newValue) {
     // 当对话框关闭时，清空当前问题，但保留聊天历史
     question.value = '';
+  } else {
+    // 对话框打开时，如果没有历史，则添加欢迎语
+    if (chatHistory.value.length === 0) {
+      chatHistory.value.push({
+        role: 'ai',
+        content: '您好，我是番茄书城智能助手，有什么可以帮您？'
+      });
+    }
   }
 });
 
