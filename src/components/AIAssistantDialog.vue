@@ -106,10 +106,13 @@ const closeDialog = () => {
 };
 
 // 处理按下回车键发送
-const handleKeyDown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    submitQuestion();
+const handleKeyDown = (e: KeyboardEvent | Event) => {
+  // 兼容 Element Plus 的事件类型
+  if (e instanceof KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitQuestion();
+    }
   }
 };
 
@@ -358,5 +361,4 @@ const clearHistory = () => {
   border-color: #409EFF;
   transform: translateY(-1px);
 }
-
 </style>
