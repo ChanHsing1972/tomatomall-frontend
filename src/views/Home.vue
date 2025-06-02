@@ -1,10 +1,24 @@
 <script setup lang="ts">
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
+import AIAssistantDialog from "../components/AIAssistantDialog.vue";
 import {onMounted, ref} from "vue";
 import {getAllAds} from "../api/ad.ts";
 import {getProductDetail} from "../api/product.ts";
 import {ElMessage} from "element-plus";
+import {useRouter} from 'vue-router'; // 添加路由导入
+
+// 获取路由实例
+const router = useRouter();
+
+// 导航函数
+const navigateToLibrary = () => {
+  router.push('/booklist');
+};
+
+const navigateToBookDetail = (id: string | number) => {
+  router.push(`/bookdetail/${id}`);
+};
 
 type ad = {
   id: string,
@@ -125,11 +139,12 @@ const categories = ref<
 
 // 特色书籍
 const featuredBook = ref({
-  id: 101,
-  title: "设计的艺术",
-  author: "唐纳德·诺曼",
-  cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGJvb2t8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60",
-  desc: "这本经典著作探讨了日常物品的设计原则，以及它们如何影响我们的生活体验。作者深入浅出地解析了好的设计与糟糕设计之间的区别，提出了以人为本的设计理念，对当代产品设计、用户体验和界面设计产生了深远影响。",
+  id: 11,
+  title: "我与地坛",
+  author: "史铁生",
+  cover: "https://chanhsing.oss-cn-shanghai.aliyuncs.com/v2-53a8accd00d8f9923ff47a243d691d84_r.jpg",
+  desc: "史铁生是当代中国最令人敬佩的作家之一。他的写作与他的生命完全同构在了一起，在自己的“写作之夜”，史铁生用残缺的身体，说出了最为健全而丰满的思想。" +
+      "他体验到的是生命的苦难，表达出的却是存在的明朗和欢乐，他睿智的言辞，照亮的反而是我们日益幽暗的内心。 地坛只是一个载体，而文章的本质却是一个绝望的人寻求希望的过程，以及对母亲的思念。",
   price: 99.00
 });
 
@@ -169,31 +184,31 @@ onMounted(async () => {
     recommendedBooks.value = [
       {
         id: 1,
-        title: "番茄的世界",
-        cover: "https://tse4-mm.cn.bing.net/th/id/OIP-C.McBhzHbp8QPvU4tcNJOjXQHaHa?rs=1&pid=ImgDetMain",
-        desc: "探索番茄生长的奇妙世界",
-        price: 68.00
+        title: "长安的荔枝",
+        cover: "//images.weserv.nl/?url=https://img3.doubanio.com/view/subject/s/public/s34327482.jpg",
+        desc: "跟随小人物的视角穿越回唐朝",
+        price: 45.00
       },
       {
         id: 2,
-        title: "Vue 3 快速上手",
-        cover: "https://pic1.zhimg.com/v2-fba95424ef89a32125bba5daa2937795_720w.jpg?source=172ae18b",
-        desc: "极简前端开发的秘密武器",
-        price: 89.00
+        title: "太白金星有点烦",
+        cover: "//images.weserv.nl/?url=https://img9.doubanio.com/view/subject/s/public/s34544956.jpg",
+        desc: "幽默风趣的历史小说",
+        price: 45.00
       },
       {
         id: 3,
-        title: "全球摄影集锦",
-        cover: "https://n.sinaimg.cn/sinacn/w960h1440/20171223/d7cd-fypvuqf4642780.png",
+        title: "食南之徒",
+        cover: "//images.weserv.nl/?url=https://img3.doubanio.com/view/subject/s/public/s34823157.jpg",
         desc: "捕捉世界之美，每一瞬间都动人",
-        price: 128.00
+        price: 56.00
       },
       {
         id: 4,
-        title: "快速掌握 TypeScript",
-        cover: "https://www.idcspy.com/wp-content/uploads/2022/01/1-164.jpg",
-        desc: "现代开发必备的强大技能",
-        price: 78.00
+        title: "素食者",
+        cover: "//images.weserv.nl/?url=https://img3.doubanio.com/view/subject/s/public/s33956462.jpg",
+        desc: "亚洲首位国际布克文学奖得主获奖作",
+        price: 48.00
       },
     ];
 
@@ -212,32 +227,32 @@ onMounted(async () => {
 
     newArrivals.value = [
       {
-        id: 11,
-        title: "未来之路",
-        author: "刘慈欣",
-        cover: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60",
-        price: 59.00
+        id: 5,
+        title: "恶女的告白",
+        author: "[日] 叶真中显",
+        cover: "//images.weserv.nl/?url=https://img9.doubanio.com/view/subject/s/public/s34917944.jpg",
+        price: 55.00
       },
       {
-        id: 12,
-        title: "设计心理学",
-        author: "唐纳德·诺曼",
-        cover: "https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60",
-        price: 88.00
+        id: 6,
+        title: "明亮的夜晚",
+        author: "[韩] 崔恩荣",
+        cover: "//images.weserv.nl/?url=https://img3.doubanio.com/view/subject/s/public/s34577743.jpg",
+        price: 52.00
       },
       {
-        id: 13,
-        title: "思考，快与慢",
-        author: "丹尼尔·卡尼曼",
-        cover: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60",
-        price: 108.00
+        id: 7,
+        title: "猫鱼",
+        author: "陈冲",
+        cover: "//images.weserv.nl/?url=https://img9.doubanio.com/view/subject/s/public/s34867425.jpg",
+        price: 168.00
       },
       {
-        id: 14,
-        title: "设计心理学",
-        author: "唐纳德·诺曼",
-        cover: "https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60",
-        price: 88.00
+        id: 8,
+        title: "东京八平米",
+        author: "[日] 吉井忍",
+        cover: "//images.weserv.nl/?url=https://img1.doubanio.com/view/subject/s/public/s34361490.jpg",
+        price: 79.00
       }
     ];
 
@@ -248,6 +263,10 @@ onMounted(async () => {
 const formatPrice = (price: number) => {
   return `RMB ${price.toFixed(2)}`;
 };
+
+// AI助手对话框
+const aiAssistantVisible = ref(false);
+
 </script>
 
 <template>
@@ -306,7 +325,7 @@ const formatPrice = (price: number) => {
     <el-dialog v-model="detailDialogVisible" title="商品详情" width="50%">
       <div class="product-detail">
         <div class="detail-header">
-          <img :src="currentProduct.cover" class="product-cover"/>
+          <img :src="currentProduct.cover" alt="封面" class="product-cover"/>
           <div class="product-info">
             <h2>{{ currentProduct.title }}</h2>
             <div class="product-price">价格: {{ currentProduct.price }}</div>
@@ -335,8 +354,8 @@ const formatPrice = (price: number) => {
           <h1>纯粹阅读<br>非凡生活</h1>
           <p>在番茄书城，发现每一本书的灵魂。</p>
           <div class="hero-actions">
-            <button class="primary-btn">立即探索</button>
-            <button class="secondary-btn">了解更多</button>
+            <button class="primary-btn" @click="navigateToLibrary">立即探索</button>
+            <button class="secondary-btn" @click="navigateToLibrary">了解更多</button>
           </div>
         </div>
         <div class="hero-image">
@@ -354,10 +373,10 @@ const formatPrice = (price: number) => {
           <span class="subtitle">为您精选</span>
           <h2>探索分类</h2>
         </div>
-        <a href="#" class="view-all">查看全部</a>
+        <a class="view-all" href="javascript:void(0)" @click="navigateToLibrary">查看全部</a>
       </div>
       <div class="categories">
-        <div class="category-card" v-for="category in categories" :key="category.id">
+        <div v-for="category in categories" :key="category.id" class="category-card" @click="navigateToLibrary">
           <div class="category-icon">{{ category.icon }}</div>
           <h3>{{ category.name }}</h3>
           <p>{{ category.count }}+ 本书籍</p>
@@ -372,10 +391,11 @@ const formatPrice = (price: number) => {
           <span class="subtitle">专属推荐</span>
           <h2>今日热门</h2>
         </div>
-        <a href="#" class="view-all">查看全部</a>
+        <a class="view-all" href="javascript:void(0)" @click="navigateToLibrary">查看全部</a>
       </div>
       <div class="display-books">
-        <div class="recommended-book" v-for="book in recommendedBooks" :key="book.id">
+        <div v-for="book in recommendedBooks" :key="book.id" class="recommended-book"
+             @click="navigateToBookDetail(book.id)">
           <div class="display-book-cover">
             <img :src="book.cover" alt="书籍封面"/>
           </div>
@@ -395,10 +415,10 @@ const formatPrice = (price: number) => {
           <span class="subtitle">书库已更新</span>
           <h2>新书上架</h2>
         </div>
-        <a href="#" class="view-all">查看全部</a>
+        <a class="view-all" href="javascript:void(0)" @click="navigateToLibrary">查看全部</a>
       </div>
       <div class="display-books">
-        <div class="new-book" v-for="book in newArrivals" :key="book.id">
+        <div v-for="book in newArrivals" :key="book.id" class="new-book" @click="navigateToBookDetail(book.id)">
           <div class="display-book-cover">
             <img :src="book.cover" alt="书籍封面"/>
             <div class="new-tag">NEW</div>
@@ -423,11 +443,11 @@ const formatPrice = (price: number) => {
             <p class="featured-desc">{{ featuredBook.desc }}</p>
             <div class="featured-price">{{ formatPrice(featuredBook.price) }}</div>
             <div class="featured-actions">
-              <button class="primary-btn">立即购买</button>
-              <button class="secondary-btn">了解详情</button>
+              <button class="primary-btn" @click="navigateToBookDetail(featuredBook.id)">立即购买</button>
+              <button class="secondary-btn" @click="navigateToBookDetail(featuredBook.id)">了解详情</button>
             </div>
           </div>
-          <div class="featured-image">
+          <div class="featured-image" @click="navigateToBookDetail(featuredBook.id)">
             <img :src="featuredBook.cover" alt="特色书籍封面"/>
           </div>
         </div>
@@ -453,7 +473,7 @@ const formatPrice = (price: number) => {
           <span class="stat-label">读书小组</span>
         </div>
       </div>
-      <button class="community-btn">立即加入</button>
+      <button class="community-btn">敬请期待</button>
     </section>
 
     <!-- 订阅区域 -->
@@ -462,7 +482,7 @@ const formatPrice = (price: number) => {
         <h2>订阅获取更新</h2>
         <p>第一时间获取新书资讯和独家优惠</p>
         <div class="subscribe-form">
-          <input placeholder="输入您的邮箱地址" type="email"/>
+          <input placeholder="输入您的邮箱地址（功能预览，敬请期待）" type="email"/>
           <button>订阅</button>
         </div>
       </div>
@@ -470,9 +490,13 @@ const formatPrice = (price: number) => {
 
     <!-- 页脚 -->
     <Footer/>
-  </div>
 
-  <el-backtop :bottom="50" :right="20"/>
+    <!-- AI助手对话框 -->
+    <AIAssistantDialog v-model:visible="aiAssistantVisible"/>
+
+    <!-- 页面底部回顶部按钮 -->
+    <el-backtop :bottom="50" :right="30"/>
+  </div>
 </template>
 
 <style scoped>
@@ -550,13 +574,6 @@ const formatPrice = (price: number) => {
   border-radius: 12px;
 }
 
-.ad-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 10px;
-}
-
 .ad-item {
   border: 1px solid #eee;
   padding: 15px;
@@ -567,12 +584,6 @@ const formatPrice = (price: number) => {
   width: 100%;
   border-radius: 6px;
   margin-bottom: 10px;
-}
-
-.product-id {
-  font-size: 12px;
-  color: #888;
-  margin-top: 8px;
 }
 
 .section-title {
@@ -1226,19 +1237,6 @@ const formatPrice = (price: number) => {
   background: #f5f5f7;
 }
 
-/* 美化广告弹窗 */
-.ad-dialog :deep(.el-dialog) {
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-
-.ad-dialog :deep(.el-dialog__header) {
-  padding: 15px 20px;
-  border-bottom: 1px solid #f0f0f0;
-  margin-right: 0;
-}
-
 .ad-dialog-header {
   display: flex;
   justify-content: space-between;
@@ -1350,10 +1348,6 @@ const formatPrice = (price: number) => {
   transition: all 0.3s;
 }
 
-.ad-indicator.active {
-  background-color: #409EFF;
-  transform: scale(1.2);
-}
 
 .ad-dialog-footer {
   display: flex;
@@ -1367,22 +1361,8 @@ const formatPrice = (price: number) => {
   color: #909399;
 }
 
-/* 广告轮播动画 */
-.ad-fade-enter-active,
-.ad-fade-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.ad-fade-enter-from,
-.ad-fade-leave-to {
-  opacity: 0;
-}
-
 /* 响应式调整 */
 @media (max-width: 768px) {
-  .ad-dialog :deep(.el-dialog) {
-    width: 90% !important;
-  }
 
   .ad-item {
     flex-direction: column;
@@ -1459,14 +1439,6 @@ const formatPrice = (price: number) => {
   .category-card {
     width: calc(50% - 24px);
   }
-
-  .book-card {
-    width: calc(50% - 30px);
-  }
-
-  .footer-logo {
-    flex: 0 0 100%;
-  }
 }
 
 @media (max-width: 480px) {
@@ -1487,16 +1459,9 @@ const formatPrice = (price: number) => {
     width: 100%;
   }
 
-  .book-card {
-    width: 100%;
-  }
-
   .subscribe-form {
     flex-direction: column;
   }
 
-  .footer-column {
-    flex: 0 0 100%;
-  }
 }
 </style>

@@ -7,6 +7,7 @@ import {getProductDetail} from "../../api/product.ts";
 import {addToCart} from "../../api/cart.ts";
 import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
 import {addLike, cancelLike, getLikeCount, getLikeList} from "../../api/product_like.ts";
+import {getOrders, type OrderVO} from "../../api/order.ts";
 import Footer from "../../components/Footer.vue";
 
 const route = useRoute();
@@ -65,6 +66,10 @@ const currentProduct = ref<Product>({
   specifications: [],
 });
 
+// 添加已购买状态变量
+const hasPurchased = ref(false);
+const purchasedBooks = ref<string[]>([]); // 已购买书籍标题列表
+
 const comments = ref<Comment[]>([]);
 const newCommentContent = ref("");
 const newCommentParentId = ref("");
@@ -78,7 +83,7 @@ const checkLikeStatus = async () => {
 
   try {
     const response = (await getLikeList()).data;
-    console.log('收藏列表',response);
+    console.log('收藏列表', response);
     if (response?.code === '200') {
       const likedProducts = response.data || [];
       isLiked.value = likedProducts.some(
@@ -142,11 +147,34 @@ const fetchProductDetail = async () => {
     const likeResponse = await getLikeCount(productId.value);
     likeCount.value = likeResponse.data.data;
     await fetchComments();
+    await fetchPurchasedStatus(); // 获取书籍购买状态
   } catch (error) {
     console.error("获取书籍详情失败:", error);
     ElMessage.error("获取书籍详情失败");
   } finally {
     loading.value = false;
+  }
+};
+
+// 获取已购买书籍状态
+const fetchPurchasedStatus = async () => {
+  if (!username) return;
+
+  try {
+    const response = await getOrders();
+    if (response.code === "200" && response.data) {
+      const completedOrders = response.data.filter((order: OrderVO) => order.status === "TRADE_SUCCESS");
+      const bookTitles = completedOrders.flatMap((order: OrderVO) =>
+          order.orderItems.map((item: any) => item.title)
+      );
+      purchasedBooks.value = Array.from(new Set(bookTitles)); // 去重
+
+      // 检查当前书籍是否已购买
+      hasPurchased.value = purchasedBooks.value.includes(currentProduct.value.title);
+      console.log('当前书籍已购买状态:', hasPurchased.value, currentProduct.value.title);
+    }
+  } catch (error) {
+    console.error("获取已购买书籍失败:", error);
   }
 };
 
@@ -230,6 +258,12 @@ const goToReader = () => {
     ElMessage.warning('请先登录');
     return;
   }
+
+  if (!hasPurchased.value) {
+    ElMessage.warning('请先购买此书籍后再阅读');
+    return;
+  }
+
   router.push({path: '/reader', query: {productId: productId.value}});
 }
 
@@ -346,8 +380,8 @@ onMounted(() => {
               <div class="dialog-image">
                 <el-image :src="currentProduct.cover" class="detail-cover" fit="cover"/>
                 <div class="product-actions">
-                  <el-button class="action-button read-button" @click="goToReader">
-                    阅读
+                  <el-button :disabled="!hasPurchased" class="action-button read-button" @click="goToReader">
+                    {{ hasPurchased ? '阅读' : '阅读 - 请先购买' }}
                   </el-button>
                   <el-button class="action-button cart-button" type="primary" @click="addToCartHandle">
                     加入购物袋
@@ -530,7 +564,7 @@ onMounted(() => {
     </div>
   </div>
 
-  <el-backtop :bottom="50" :right="20"/>
+  <el-backtop :bottom="50" :right="30"/>
 
   <Footer/>
 </template>
@@ -724,12 +758,12 @@ onMounted(() => {
   }
 
   .cart-button {
-    background: linear-gradient(135deg, #06c, #0091ff);
+    background: rgb(0, 113, 227);
     color: white;
   }
 
   .cart-button:hover {
-    box-shadow: 0 5px 15px rgba(0, 102, 204, 0.3);
+    background: rgb(64, 158, 255);
   }
 
   /* 右侧信息区域 */
@@ -918,7 +952,7 @@ onMounted(() => {
   .comment-avatar {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #0091ff, #06c);
+    background: rgb(0, 113, 227);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -1078,7 +1112,7 @@ onMounted(() => {
     display: block;
     margin-left: auto;
     margin-top: 15px;
-    background: linear-gradient(135deg, #06c, #0091ff);
+    background: rgb(0, 113, 227);
     color: white;
     border: none;
     border-radius: 10px;
@@ -1089,7 +1123,7 @@ onMounted(() => {
   }
 
   .submit-comment:hover {
-    box-shadow: 0 5px 15px rgba(0, 102, 204, 0.3);
+    background: rgb(64, 158, 255);
   }
 
   /* 骨架屏样式 */
@@ -1214,5 +1248,12 @@ onMounted(() => {
       padding: 20px;
     }
   }
+}
+
+.action-button:disabled {
+  background-color: #f5f5f7;
+  color: #86868b;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 </style>

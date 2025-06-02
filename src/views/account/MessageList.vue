@@ -200,17 +200,19 @@ onMounted(() => {
       <el-card class="message-card" shadow="hover">
         <template #header>
           <div class="card-header">
-            <span>最近联系人</span>
+            <span class="header-title">最近联系人</span>
             <div class="header-actions">
               <el-button plain size="small" type="primary" @click="openSearchUserDialog">
-                新建对话
+                <i class="el-icon-plus"></i> 新建对话
               </el-button>
               <!-- 管理员群发功能 -->
               <el-button v-if="currentUserRole === 'admin'" plain size="small" type="warning"
                          @click="openBroadcastDialog">
-                群发消息
+                <i class="el-icon-chat-dot-round"></i> 群发消息
               </el-button>
-              <el-button :loading="loading" size="small" type="primary" @click="fetchRecentChats">刷新</el-button>
+              <el-button :loading="loading" size="small" type="primary" @click="fetchRecentChats">
+                <i class="el-icon-refresh"></i> 刷新
+              </el-button>
             </div>
           </div>
         </template>
@@ -220,6 +222,7 @@ onMounted(() => {
 
         <div v-else-if="chats.length === 0" class="empty-state">
           <el-empty description="暂无消息"/>
+          <p class="empty-hint">开始新的对话或等待他人联系您</p>
         </div>
 
         <div v-else class="chat-list">
@@ -259,16 +262,18 @@ onMounted(() => {
 
       <div v-if="user" class="user-list">
         <div class="user-item" @click="startConversation(user.id)">
-          <el-avatar :size="32">{{ user.name.charAt(0) }}</el-avatar>
+          <el-avatar :size="32" class="user-avatar">{{ user.name.charAt(0) }}</el-avatar>
           <div class="user-info">
             <div class="username">{{ user.name }}</div>
             <div class="user-id">@{{ user.username }}</div>
           </div>
+          <el-button class="start-chat-btn" plain size="small" type="primary">开始聊天</el-button>
         </div>
       </div>
 
       <div v-else-if="searchKeyword && !searchLoading" class="no-results">
-        未找到匹配的用户
+        <i class="el-icon-search no-results-icon"></i>
+        <p>未找到匹配的用户</p>
       </div>
     </div>
   </el-dialog>
@@ -278,6 +283,7 @@ onMounted(() => {
              @close="closeBroadcastDialog">
     <div class="broadcast-container">
       <div class="broadcast-info">
+        <i class="el-icon-info-filled info-icon"></i>
         <p>将向商城所有用户（除您之外）发送消息，共 {{ userList.length }} 位用户</p>
       </div>
 
@@ -288,10 +294,10 @@ onMounted(() => {
       <div v-if="userList.length > 0" class="user-preview">
         <h4>接收用户预览：</h4>
         <div class="user-tags">
-          <el-tag v-for="user in userList.slice(0, 10)" :key="user.id" size="small" style="margin: 2px;">
+          <el-tag v-for="user in userList.slice(0, 10)" :key="user.id" class="user-tag" effect="light" size="small">
             {{ user.name }}
           </el-tag>
-          <el-tag v-if="userList.length > 10" size="small" type="info">
+          <el-tag v-if="userList.length > 10" class="more-tag" effect="plain" size="small" type="info">
             还有 {{ userList.length - 10 }} 位用户...
           </el-tag>
         </div>
@@ -303,7 +309,7 @@ onMounted(() => {
         <el-button @click="closeBroadcastDialog">取消</el-button>
         <el-button :disabled="!broadcastMessage.trim()" :loading="broadcastLoading" type="primary"
                    @click="sendBroadcastMessage">
-          发送群发消息
+          <i class="el-icon-message"></i> 发送群发消息
         </el-button>
       </div>
     </template>
@@ -318,26 +324,44 @@ onMounted(() => {
 
 .message-container {
   max-width: 800px;
-  margin: 100px auto;
-  padding: 0 20px;
+  margin: 0 auto;
+  padding: 100px 20px 40px;
 }
 
 .page-title {
-  font-size: 24px;
-  color: #303133;
-  margin-bottom: 20px;
-  font-weight: 500;
+  font-size: 28px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 24px;
+  position: relative;
+  padding-bottom: 12px;
 }
 
 .message-card {
-  margin-bottom: 20px;
-  border-radius: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 400;
+  color: #1d1d1f;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .chat-list {
@@ -347,14 +371,30 @@ onMounted(() => {
 
 .chat-item {
   display: flex;
-  padding: 15px;
+  padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
+}
+
+.chat-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background-color: transparent;
+  transition: background-color 0.3s ease;
 }
 
 .chat-item:hover {
   background-color: #f9fafc;
+}
+
+.chat-item:hover::after {
+  background-color: rgb(0, 113, 227);
 }
 
 .chat-item:last-child {
@@ -363,17 +403,19 @@ onMounted(() => {
 
 .avatar-container {
   position: relative;
-  margin-right: 15px;
+  margin-right: 16px;
 }
 
 .unread-badge {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -2px;
+  right: -2px;
   width: 10px;
   height: 10px;
   background-color: #f56c6c;
   border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .avatar-image {
@@ -381,23 +423,27 @@ onMounted(() => {
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #e6e6e6;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .chat-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .chat-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 
 .username {
-  font-weight: 500;
-  color: #303133;
+  font-weight: 400;
+  color: #1d1d1f;
+  font-size: 15px;
 }
 
 .time {
@@ -411,6 +457,8 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.4;
+  max-width: 100%;
 }
 
 .unread-message {
@@ -419,8 +467,17 @@ onMounted(() => {
 }
 
 .empty-state {
-  padding: 30px 0;
+  padding: 40px 0;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-hint {
+  color: #909399;
+  margin-top: 10px;
+  font-size: 14px;
 }
 
 /* 搜索对话框样式 */
@@ -435,34 +492,62 @@ onMounted(() => {
 .user-item {
   display: flex;
   align-items: center;
-  padding: 10px;
-  border-radius: 4px;
+  padding: 14px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s;
+  background-color: #f5f7fa;
+  margin-bottom: 10px;
 }
 
 .user-item:hover {
-  background-color: #f5f7fa;
+  background-color: #ecf5ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.user-avatar {
+  background-color: rgb(0, 113, 227);
+  color: white;
 }
 
 .user-info {
-  margin-left: 12px;
+  margin-left: 14px;
+  flex: 1;
 }
 
 .user-item .username {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .user-id {
-  font-size: 12px;
+  font-size: 13px;
   color: #909399;
+}
+
+.start-chat-btn {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.user-item:hover .start-chat-btn {
+  opacity: 1;
 }
 
 .no-results {
   text-align: center;
   color: #909399;
-  padding: 20px 0;
+  padding: 30px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.no-results-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: #dcdfe6;
 }
 
 /* 群发消息对话框样式 */
@@ -473,31 +558,110 @@ onMounted(() => {
 }
 
 .broadcast-info {
+  display: flex;
+  align-items: center;
   background-color: #f0f9ff;
   border: 1px solid #bfdbfe;
-  border-radius: 4px;
-  padding: 12px;
-  color: #1e40af;
+  border-radius: 8px;
+  padding: 14px;
+  color: rgb(0, 113, 227);
+}
+
+.info-icon {
+  font-size: 20px;
+  margin-right: 10px;
+  color: rgb(0, 113, 227);
+}
+
+.broadcast-info p {
+  margin: 0;
 }
 
 .user-preview {
-  margin-top: 15px;
+  margin-top: 10px;
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
 }
 
 .user-preview h4 {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   font-size: 14px;
   color: #606266;
+  font-weight: 600;
 }
 
 .user-tags {
-  max-height: 100px;
-  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.user-tag {
+  transition: all 0.3s;
+}
+
+.user-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.more-tag {
+  font-style: italic;
 }
 
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  padding-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .message-container {
+    padding: 80px 15px 30px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+  }
+
+  .chat-item {
+    padding: 12px 15px;
+  }
+
+  .avatar-container {
+    margin-right: 12px;
+  }
+
+  .avatar-image {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (max-width: 576px) {
+  .message-container {
+    padding: 70px 10px 20px;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 </style>

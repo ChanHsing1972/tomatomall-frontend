@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import {computed, onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
-import {ElMessage, ElDrawer} from "element-plus";
+import {ElDrawer, ElMessage} from "element-plus";
 import Header from "../../components/Header.vue";
 import {getOrders, type OrderVO} from "../../api/order.ts";
 import {getProductList, searchProductsByKeyword} from "../../api/product.ts";
 import Footer from "../../components/Footer.vue";
-import { getLikeList } from "../../api/product_like.ts";
+import {getLikeList} from "../../api/product_like.ts";
+
 const showLikedOnly = ref(false);
 const likedBookIds = ref<string[]>([]);
 const route = useRoute();
@@ -39,6 +40,7 @@ const categories = [
   "经济管理",
   "科普读物"
 ];
+
 interface Product {
   id: string;
   title: string;
@@ -133,6 +135,7 @@ interface Product {
   description: string;
   cover: string;
 }
+
 const fetchLikedBooks = async () => {
   const username = sessionStorage.getItem("username") || "";
   if (!username) return;
@@ -234,37 +237,38 @@ watch(
   <Header/>
   <div class="booklist-container">
     <el-main class="main-container">
-      <div class="filter-bar" style="display: flex; justify-content: space-between; align-items: center;">
-        <!-- 左侧：分类按钮 -->
-        <div class="category-label-btn" style="display: flex; align-items: center; gap: 8px; margin-left: 20px;">
-          <span style="font-size: 16px; font-weight: 400; color: #333;">选择分类</span>
-          <el-button @click="drawerVisible = true">
-            <i class="el-icon-menu"></i> {{ selectedCategory }}
-          </el-button>
-        </div>
-        <!-- 右侧：勾选框 -->
-        <div style="display: flex; align-items: center; gap: 20px;">
-          <el-checkbox v-model="showPurchasedOnly">已购买</el-checkbox>
-          <el-checkbox v-model="showLikedOnly">已收藏</el-checkbox>
-        </div>
+      <div class="filter-button-container">
+        <el-button class="filter-button" @click="drawerVisible = true">
+          <i class="el-icon-menu"></i> 筛选
+        </el-button>
       </div>
-      <!-- 分类抽屉 -->
-      <el-drawer
-          v-model="drawerVisible"
-          title="选择分类"
-          direction="ltr"
-          size="220px"
-          :with-header="true"
-      >
-        <el-radio-group
-            v-model="selectedCategory"
-            @change="drawerVisible = false"
-            style="display: flex; flex-direction: column; align-items: flex-start; gap: 16px;"
-        >
-          <el-radio v-for="cat in categories" :key="cat" :label="cat">{{ cat }}</el-radio>
-        </el-radio-group>
+
+      <!-- 整合后的侧边栏 -->
+      <el-drawer v-model="drawerVisible" :with-header="true" direction="ltr" size="280px" title="筛选选项">
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">分类</h3>
+          <el-radio-group v-model="selectedCategory"
+                          style="display: flex; flex-direction: column; align-items: flex-start; gap: 16px;">
+            <el-radio v-for="cat in categories" :key="cat" :label="cat">{{ cat }}</el-radio>
+          </el-radio-group>
+        </div>
+
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">筛选条件</h3>
+          <div class="filter-option">
+            <el-checkbox v-model="showPurchasedOnly">已购买</el-checkbox>
+          </div>
+          <div class="filter-option">
+            <el-checkbox v-model="showLikedOnly">已收藏</el-checkbox>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <el-button type="primary" @click="drawerVisible = false">应用筛选</el-button>
+        </div>
       </el-drawer>
-      <!-- 书籍列表 - 修改这里，使用paginatedProductList替代filteredProductList -->
+
+      <!-- 书籍列表 -->
       <div v-if="filteredProductList.length" class="product-grid">
         <el-card v-for="product in paginatedProductList" :key="product.id" class="product-card" shadow="hover"
                  @click="openDetailDialog(product)">
@@ -296,7 +300,7 @@ watch(
     <Footer/>
   </div>
 
-  <el-backtop :bottom="50" :right="20"/>
+  <el-backtop :bottom="50" :right="30"/>
 </template>
 
 <style>
@@ -351,6 +355,7 @@ watch(
     height: 280px;
     overflow: hidden;
     border-radius: 14px;
+    position: relative;
   }
 
   .product-image {
@@ -900,6 +905,101 @@ watch(
     margin-top: 40px;
     display: flex;
     justify-content: center;
+  }
+
+  /* 添加侧边栏样式 */
+
+  .sidebar-section {
+    margin-bottom: 30px;
+    padding: 0 20px;
+  }
+
+  .sidebar-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #333;
+  }
+
+  .filter-option {
+    margin-bottom: 12px;
+  }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* 添加筛选按钮样式 */
+
+  .filter-button-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: -20px;
+    padding-right: 20px;
+  }
+
+  .filter-button {
+    background-color: #f5f5f7;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+  }
+
+  /* 阅读按钮和锁定状态的样式 */
+
+  .card-image-wrapper {
+    position: relative;
+  }
+
+  .read-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .card-image-wrapper:hover .read-overlay {
+    opacity: 1;
+  }
+
+  .read-now-button {
+    background: linear-gradient(135deg, #06c, #0091ff);
+    border: none;
+  }
+
+  .locked-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 16px;
+  }
+
+  .el-icon-lock:before {
+    content: "🔒";
   }
 }
 </style>

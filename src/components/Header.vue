@@ -5,12 +5,14 @@ import {onMounted, onUnmounted, ref} from 'vue';
 import {Message, Search, SwitchButton, User} from '@element-plus/icons-vue';
 import {clearSearchHistory, getSearchHistory, saveSearchHistory, SearchHistory} from '../api/search_history.ts';
 import {getUnreadCount} from '../api/message.ts';
+import AIAssistantDialog from './AIAssistantDialog.vue';
 
 const router = useRouter();
 const searchQuery = ref("");
 const searchHistory = ref<SearchHistory[]>([]);
 const token = ref(sessionStorage.getItem("token") || "");
 const unreadCount = ref(0);
+const aiAssistantVisible = ref(false);
 
 const fetchUnreadCount = async () => {
   try {
@@ -114,6 +116,10 @@ function clearHistory() {
 function goToLogin() {
   router.push('/login');
 }
+
+function openAIAssistant() {
+  aiAssistantVisible.value = true;
+}
 </script>
 
 <template>
@@ -134,6 +140,9 @@ function goToLogin() {
         <router-link to="/booklist" class="nav-item">书库</router-link>
         <router-link to="/cart" class="nav-item">购物袋</router-link>
         <router-link to="/orders" class="nav-item">订单</router-link>
+        <a class="nav-item ai-assistant-icon" @click="openAIAssistant">
+          <span>AI</span>
+        </a>
       </el-col>
 
       <!-- 右侧：搜索框及用户操作 -->
@@ -205,6 +214,9 @@ function goToLogin() {
       </el-col>
     </el-row>
   </el-header>
+
+  <!-- AI助手对话框 -->
+  <AIAssistantDialog v-model:visible="aiAssistantVisible"/>
 </template>
 
 <style>
@@ -270,6 +282,7 @@ function goToLogin() {
 
 .nav-item:hover {
   color: #000;
+  cursor: pointer;
 }
 
 .router-link-active {
@@ -343,6 +356,13 @@ function goToLogin() {
 .unread-badge {
   margin-left: -5px;
   margin-top: -15px;
+}
+
+.ai-assistant-icon {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
 }
 
 /* 响应式调整：浏览器窗口较小时减少间距 */

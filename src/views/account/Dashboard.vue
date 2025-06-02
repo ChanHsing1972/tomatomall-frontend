@@ -196,7 +196,7 @@ const goToAd = () => {
           <div class="info-value">{{ telephone }}</div>
         </div>
 
-        <div class="info-item" v-if="role === 'user'">
+        <div class="info-item">
           <div class="info-label">地址</div>
           <div class="info-value">{{ location }}</div>
         </div>
@@ -233,7 +233,7 @@ const goToAd = () => {
           <el-form-item label="邮箱">
             <el-input v-model="newEmail" placeholder="请输入邮箱"/>
           </el-form-item>
-          <el-form-item v-if="role === 'user'" label="收货地址">
+          <el-form-item label="收货地址">
             <el-input type="textarea" v-model="newLocation" placeholder="请输入地址"/>
           </el-form-item>
           <el-form-item>

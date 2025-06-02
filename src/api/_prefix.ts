@@ -30,3 +30,6 @@ export const MESSAGE_MODULE = `${API_MODULE}/messages`;
 
 //收藏模块
 export const PRODUCTLIKE_MODULE = `${API_MODULE}/productlike`;
+
+// AI助手模块
+export const AI_MODULE = `${API_MODULE}/ai`;

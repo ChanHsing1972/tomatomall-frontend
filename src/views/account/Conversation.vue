@@ -212,7 +212,9 @@ onUnmounted(() => {
 
         <div v-else ref="messageList" class="message-list">
           <div v-if="messages.length === 0" class="empty-state">
+            <div class="empty-icon">💬</div>
             <p>暂无消息，开始聊天吧！</p>
+            <p class="empty-hint">这是你与对方的私聊空间</p>
           </div>
 
           <div v-for="msg in messages" :key="msg.id"
@@ -260,19 +262,25 @@ onUnmounted(() => {
 }
 
 .conversation-container {
-  max-width: 800px;
-  margin: 100px auto;
-  padding: 0 20px;
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 100px 20px 40px;
 }
 
 .conversation-card {
-  border-radius: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: none;
+  transition: all 0.3s ease;
 }
 
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ebeef5;
 }
 
 .header-left {
@@ -281,12 +289,13 @@ onUnmounted(() => {
 }
 
 .back-button {
-  margin-right: 15px;
+  margin-right: 16px;
 }
 
 .chat-title {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #1d1d1f;
 }
 
 .header-actions {
@@ -296,19 +305,70 @@ onUnmounted(() => {
 }
 
 .message-list {
-  height: 400px;
+  height: 450px;
   overflow-y: auto;
-  padding: 20px;
-  margin-bottom: 20px;
-  background-color: #f9f9f9;
+  padding: 25px;
+  background-color: #f9fafb;
   border-radius: 4px;
+  scroll-behavior: smooth;
+}
+
+.message-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.message-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.message-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: #909399;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-hint {
+  font-size: 14px;
+  color: #c0c4cc;
+  margin-top: 5px;
 }
 
 .message-item {
   display: flex;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   align-items: flex-start;
-  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .sent {
@@ -320,8 +380,16 @@ onUnmounted(() => {
 }
 
 .message-avatar {
-  margin: 0 10px;
+  margin: 0 12px;
   flex-shrink: 0;
+}
+
+.avatar-image {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .message-content {
@@ -339,22 +407,27 @@ onUnmounted(() => {
 }
 
 .message-bubble {
-  padding: 10px 15px;
+  padding: 12px 16px;
   border-radius: 18px;
   word-break: break-word;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  line-height: 1.5;
+  position: relative;
 }
 
 .sent .message-bubble {
-  background-color: #409eff;
+  background-color: rgb(0, 113, 227);
   color: white;
   border-top-right-radius: 4px;
 }
 
+
 .received .message-bubble {
   background-color: white;
-  border: 1px solid #e6e6e6;
+  border: 1px solid #eaeaea;
   border-top-left-radius: 4px;
 }
+
 
 .message-time {
   font-size: 12px;
@@ -371,32 +444,75 @@ onUnmounted(() => {
 }
 
 .message-input {
-  padding-top: 10px;
+  padding: 20px;
+  background-color: #fff;
+  border-top: 1px solid #ebeef5;
 }
 
 .input-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .hint {
-  font-size: 12px;
+  font-size: 13px;
   color: #909399;
 }
 
-.empty-state {
-  text-align: center;
-  color: #909399;
-  padding: 40px 0;
+@media (max-width: 768px) {
+  .conversation-container {
+    padding: 80px 15px 30px;
+  }
+
+  .message-list {
+    height: 400px;
+    padding: 20px;
+  }
+
+  .message-content {
+    max-width: 80%;
+  }
 }
 
-.avatar-image {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #e6e6e6;
+@media (max-width: 576px) {
+  .conversation-container {
+    padding: 70px 10px 20px;
+  }
+
+  .card-header {
+    padding: 12px 15px;
+  }
+
+  .back-button {
+    margin-right: 10px;
+  }
+
+  .message-list {
+    height: 350px;
+    padding: 15px;
+  }
+
+  .message-avatar {
+    margin: 0 8px;
+  }
+
+  .avatar-image {
+    width: 30px;
+    height: 30px;
+  }
+
+  .message-bubble {
+    padding: 10px 12px;
+  }
+
+  .message-content {
+    max-width: 85%;
+  }
+
+  .message-input {
+    padding: 15px;
+  }
 }
 </style>
