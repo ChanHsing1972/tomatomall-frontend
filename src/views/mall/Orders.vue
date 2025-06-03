@@ -16,7 +16,7 @@ interface EnhancedOrderVO extends OrderVO {
   countdown: number; // 倒计时
   expireTime: string; // 过期时间
   timeline?: { icon: string, title: string, time: string }[]; // 订单时间线
-  selectedCoupon?: UserCouponVO; // 选中的优惠券
+  selectedCouponId?: number; // 选中的优惠券ID
   showCouponDialog?: boolean; // 是否显示优惠券选择对话框
   appliedDiscount?: number; // 应用的优惠金额
 }
@@ -103,9 +103,10 @@ const calcCountdown = (expireTime: string): number => {
 const fetchUserCoupons = async () => {
   loadingCoupons.value = true;
   try {
-    const response = await getUserCoupons("AVAILABLE"); // 只获取可用的优惠券
+    const response = await getUserCoupons("UNUSED"); // 只获取可用的优惠券
     if (response.code === "200") {
       userCoupons.value = response.data || [];
+      console.log(userCoupons.value);
     } else {
       ElMessage.error(response.message || "获取优惠券失败");
     }
@@ -117,31 +118,25 @@ const fetchUserCoupons = async () => {
   }
 };
 
-// 检查优惠券是否可用于该订单
-const isCouponValid = (coupon: UserCouponVO, orderAmount: number) => {
-  // 已使用或过期的优惠券不可用
-  if (coupon.status !== "AVAILABLE") return false;
-
-  const validUntil = new Date(coupon.expireTime);
-  const now = new Date();
-
-  // 检查优惠券是否过期和最低金额要求
-  return validUntil > now && orderAmount >= coupon.coupon.minAmount;
-};
-
 // 获取订单可用的优惠券
 const getAvailableCoupons = (orderAmount: number) => {
-  return userCoupons.value.filter(coupon => isCouponValid(coupon, orderAmount));
+  // 只返回满足最低消费金额的优惠券
+  return userCoupons.value.filter(coupon => orderAmount >= coupon.couponMinimumSpend);
+};
+
+// 根据ID获取优惠券信息
+const getCouponById = (id: number): UserCouponVO | undefined => {
+  return userCoupons.value.find(coupon => coupon.id === id);
 };
 
 // 应用优惠券到订单 - 与后端联通
-const applyCoupon = async (order: EnhancedOrderVO, coupon: UserCouponVO | null) => {
-  if (!coupon) {
+const applyCoupon = async (order: EnhancedOrderVO, couponId: number | null) => {
+  if (!couponId) {
     // 如果之前有选中的优惠券，需要从订单中移除
-    if (order.selectedCoupon) {
+    if (order.selectedCouponId) {
       try {
         await removeCouponFromOrder(Number(order.orderId));
-        order.selectedCoupon = undefined;
+        order.selectedCouponId = undefined;
         order.appliedDiscount = 0;
         ElMessage.success("优惠券已移除");
       } catch (error) {
@@ -153,10 +148,16 @@ const applyCoupon = async (order: EnhancedOrderVO, coupon: UserCouponVO | null) 
     return;
   }
 
+  const coupon = getCouponById(couponId);
+  if (!coupon) {
+    ElMessage.error("优惠券不存在");
+    return;
+  }
+
   try {
-    const result = await applyCouponToOrder(Number(order.orderId), Number(coupon.id));
+    const result = await applyCouponToOrder(Number(order.orderId), coupon.id);
     if (result.code === "200") {
-      order.selectedCoupon = coupon;
+      order.selectedCouponId = coupon.id;
       order.appliedDiscount = result.data; // 后端返回的实际优惠金额
       ElMessage.success("优惠券应用成功");
       order.showCouponDialog = false;
@@ -172,7 +173,7 @@ const applyCoupon = async (order: EnhancedOrderVO, coupon: UserCouponVO | null) 
 // 计算应用优惠券后的最终价格
 const calculateFinalPrice = (order: EnhancedOrderVO) => {
   const originalPrice = parseFloat(order.totalAmount);
-  if (!order.selectedCoupon || !order.appliedDiscount) return originalPrice.toFixed(2);
+  if (!order.selectedCouponId || !order.appliedDiscount) return originalPrice.toFixed(2);
 
   // 使用后端返回的实际优惠金额
   return Math.max(0, originalPrice - order.appliedDiscount).toFixed(2);
@@ -187,7 +188,7 @@ const showCouponSelector = (order: EnhancedOrderVO) => {
 const removeCoupon = async (order: EnhancedOrderVO) => {
   try {
     await removeCouponFromOrder(Number(order.orderId));
-    order.selectedCoupon = undefined;
+    order.selectedCouponId = undefined;
     order.appliedDiscount = 0;
     ElMessage.success("优惠券已移除");
   } catch (error) {
@@ -269,7 +270,7 @@ const fetchOrders = async () => {
               statusText: statusMap[order.status].text,
               items,
               timeline: generateTimeline(order),
-              selectedCoupon: undefined,
+              selectedCouponId: undefined,
               showCouponDialog: false
             };
           })
@@ -470,40 +471,40 @@ window.scrollTo(0, 0);
               <span>共 {{ order.orderItems.length }} 件商品</span>
 
               <!-- 添加优惠券信息展示 -->
-              <div v-if="order.status === 'PENDING' && order.selectedCoupon" class="coupon-applied">
+              <div v-if="order.status === 'PENDING' && order.selectedCouponId" class="coupon-applied">
                 <el-tag closable size="small" type="success" @close="removeCoupon(order)">
                   <el-icon>
                     <Ticket/>
                   </el-icon>
-                  已使用优惠券: {{ order.selectedCoupon.coupon.description }} (-￥{{
+                  已使用优惠券: {{ getCouponById(order.selectedCouponId)?.coupon.description }} (-￥{{
                     order.appliedDiscount ||
-                    order.selectedCoupon.coupon.discount
+                    getCouponById(order.selectedCouponId)?.coupon.value
                   }})
                 </el-tag>
               </div>
 
               <!-- 总价显示 -->
               <span class="total-price">总计&nbsp;&nbsp;<strong>RMB {{
-                  order.selectedCoupon
+                  order.selectedCouponId
                       ? calculateFinalPrice(order)
                       : Number(order.totalAmount).toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                       })
                 }}</strong>
-                <span v-if="order.selectedCoupon" class="original-price">
+                <span v-if="order.selectedCouponId" class="original-price">
                   <s>￥{{ Number(order.totalAmount).toFixed(2) }}</s>
                 </span>
               </span>
             </div>
             <div class="button-footer">
               <!-- 添加优惠券按钮 -->
-              <el-button v-if="order.status === 'PENDING'" class="coupon-btn" plain size="default"
-                         type="info" @click="showCouponSelector(order)">
+              <el-button v-if="order.status === 'PENDING'" class="coupon-btn" plain size="default" type="info"
+                         @click="showCouponSelector(order)">
                 <el-icon>
                   <Ticket/>
                 </el-icon>
-                {{ order.selectedCoupon ? '更换优惠券' : '使用优惠券' }}
+                {{ order.selectedCouponId ? '更换优惠券' : '使用优惠券' }}
               </el-button>
 
               <el-button v-if="order.status === 'PENDING'" type="primary" size="default" class="pay-btn"
@@ -525,20 +526,23 @@ window.scrollTo(0, 0);
             <el-skeleton v-if="loadingCoupons" :rows="3" animated/>
 
             <div v-else class="coupon-list">
-              <el-radio-group v-model="order.selectedCoupon">
+              <el-radio-group v-model="order.selectedCouponId">
                 <div v-for="coupon in getAvailableCoupons(parseFloat(order.totalAmount))" :key="coupon.id"
                      class="coupon-item">
-                  <el-radio :label="coupon" class="coupon-radio">
+                  <el-radio :label="coupon.id" class="coupon-radio">
                     <div class="coupon-card">
                       <div class="coupon-left">
-                        <div class="coupon-amount">￥{{ coupon.coupon.discount }}</div>
-                        <div class="coupon-condition">满{{ coupon.coupon.minAmount }}元可用</div>
+                        <div class="coupon-amount">
+                          <template v-if="coupon.couponType === 'DISCOUNT'">{{ coupon.couponValue }}折</template>
+                          <template v-else>￥{{ coupon.couponValue }}</template>
+                        </div>
+                        <div class="coupon-condition">满{{ coupon.couponMinimumSpend }}元可用</div>
                       </div>
                       <div class="coupon-right">
-                        <div class="coupon-name">{{ coupon.coupon.name || coupon.coupon.code }}</div>
-                        <div class="coupon-desc">{{ coupon.coupon.description }}</div>
+                        <div class="coupon-name">{{ coupon.couponName }}</div>
+                        <div class="coupon-desc">{{ coupon.description }}</div>
                         <div class="coupon-validity">有效期至: {{
-                            new Date(coupon.expireTime).toLocaleDateString()
+                            new Date(coupon.endDate).toLocaleDateString()
                           }}
                         </div>
                       </div>
@@ -552,7 +556,8 @@ window.scrollTo(0, 0);
               <span class="dialog-footer">
                 <el-button @click="order.showCouponDialog = false">取消</el-button>
                 <el-button type="danger" @click="applyCoupon(order, null)">不使用优惠券</el-button>
-                <el-button type="primary" @click="applyCoupon(order, order.selectedCoupon ?? null)">确认使用</el-button>
+                <el-button type="primary"
+                           @click="applyCoupon(order, order.selectedCouponId ?? null)">确认使用</el-button>
               </span>
             </template>
           </el-dialog>

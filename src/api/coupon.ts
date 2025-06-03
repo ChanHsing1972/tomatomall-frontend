@@ -3,32 +3,34 @@ import {COUPON_MODULE} from "./_prefix";
 
 // 优惠券VO
 export interface CouponVO {
-    id?: string;
-    code: string;
-    name?: string;
-    discount: number;
-    minAmount: number;
-    startTime?: string;
-    endTime?: string;
-    validDays?: number;
-    validUntil?: string;
-    quantity?: number;
+    id?: number;
+    name: string;
+    type: string; // DISCOUNT(折扣), FIXED(满减), DIRECT(直减)
+    value: number; // 折扣值或金额
+    minimumSpend: number; // 最低消费金额
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    maxQuantity?: number; // 最大发放数量
     description: string;
-    status?: string;
 }
 
 // 用户优惠券VO
 export interface UserCouponVO {
-    id: string;
-    userId?: string;
-    couponId: string;
+    id: number;
+    userId?: number;
+    couponId: number;
     coupon: CouponVO;
-    claimTime?: string;
+    receiveTime: string;
     useTime?: string;
-    expireTime: string;
-    status: string; // AVAILABLE, USED, EXPIRED
-    orderId?: string;
-    isUsed: boolean;
+    status: string; // UNUSED(未使用), USED(已使用), EXPIRED(已过期)
+    orderId?: number;
+    couponType: string; // DISCOUNT(折扣), FIXED(满减), DIRECT(直减)
+    couponValue: number; // 折扣值或金额
+    couponMinimumSpend: number; // 最低消费金额
+    couponName: string; // 优惠券名称
+    description: string; // 优惠券描述
+    endDate: string; // 优惠券结束时间
 }
 
 // 获取当前可领取的优惠券
@@ -55,7 +57,7 @@ export const createCoupon = (couponVO: CouponVO) => {
 };
 
 // 管理员接口 - 更新优惠券
-export const updateCoupon = (id: string, couponVO: CouponVO) => {
+export const updateCoupon = (id: number, couponVO: CouponVO) => {
     return axios
         .put(`${COUPON_MODULE}/admin/${id}`, couponVO)
         .then((res) => res.data);
