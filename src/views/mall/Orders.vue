@@ -3,9 +3,11 @@ import {computed, onMounted, ref} from "vue";
 import Header from "../../components/Header.vue";
 import {deleteOrder, getOrders, type OrderItem, type OrderStatus, type OrderVO, payOrder} from "../../api/order";
 import {ElMessage, ElNotification} from "element-plus";
-import {Calendar, Document, Location, Picture, Search, ShoppingCart} from '@element-plus/icons-vue';
+import {Calendar, Document, Location, Picture, Search, ShoppingCart, Ticket} from '@element-plus/icons-vue';
 import Footer from "../../components/Footer.vue";
+import {applyCouponToOrder, getUserCoupons, removeCouponFromOrder, type UserCouponVO} from "../../api/coupon";
 
+// 添加优惠券接口定义，替换之前的模拟接口
 interface EnhancedOrderVO extends OrderVO {
   unformattedDate: string; // 原始时间戳
   formattedDate: string;
@@ -14,6 +16,9 @@ interface EnhancedOrderVO extends OrderVO {
   countdown: number; // 倒计时
   expireTime: string; // 过期时间
   timeline?: { icon: string, title: string, time: string }[]; // 订单时间线
+  selectedCoupon?: UserCouponVO; // 选中的优惠券
+  showCouponDialog?: boolean; // 是否显示优惠券选择对话框
+  appliedDiscount?: number; // 应用的优惠金额
 }
 
 const orders = ref<EnhancedOrderVO[]>([]);
@@ -21,6 +26,10 @@ const loading = ref(false);
 const payingOrderIds = ref<Set<string>>(new Set());
 const activeTab = ref('all');
 const searchQuery = ref('');
+
+// 添加优惠券相关状态
+const userCoupons = ref<UserCouponVO[]>([]);
+const loadingCoupons = ref(false);
 
 // 状态映射
 const statusMap: Record<OrderStatus, { text: string; type: "" | "success" | "warning" | "info" | "danger" }> = {
@@ -90,6 +99,158 @@ const calcCountdown = (expireTime: string): number => {
   return diff > 0 ? diff : 0;
 };
 
+// 获取用户优惠券列表 - 改为使用真实API
+const fetchUserCoupons = async () => {
+  loadingCoupons.value = true;
+  try {
+    const response = await getUserCoupons("AVAILABLE"); // 只获取可用的优惠券
+    if (response.code === "200") {
+      userCoupons.value = response.data || [];
+    } else {
+      ElMessage.error(response.message || "获取优惠券失败");
+    }
+  } catch (error) {
+    console.error("获取优惠券失败:", error);
+    ElMessage.error("获取优惠券数据失败");
+  } finally {
+    loadingCoupons.value = false;
+  }
+};
+
+// 检查优惠券是否可用于该订单
+const isCouponValid = (coupon: UserCouponVO, orderAmount: number) => {
+  // 已使用或过期的优惠券不可用
+  if (coupon.status !== "AVAILABLE") return false;
+
+  const validUntil = new Date(coupon.expireTime);
+  const now = new Date();
+
+  // 检查优惠券是否过期和最低金额要求
+  return validUntil > now && orderAmount >= coupon.coupon.minAmount;
+};
+
+// 获取订单可用的优惠券
+const getAvailableCoupons = (orderAmount: number) => {
+  return userCoupons.value.filter(coupon => isCouponValid(coupon, orderAmount));
+};
+
+// 应用优惠券到订单 - 与后端联通
+const applyCoupon = async (order: EnhancedOrderVO, coupon: UserCouponVO | null) => {
+  if (!coupon) {
+    // 如果之前有选中的优惠券，需要从订单中移除
+    if (order.selectedCoupon) {
+      try {
+        await removeCouponFromOrder(Number(order.orderId));
+        order.selectedCoupon = undefined;
+        order.appliedDiscount = 0;
+        ElMessage.success("优惠券已移除");
+      } catch (error) {
+        console.error("移除优惠券失败:", error);
+        ElMessage.error("移除优惠券失败");
+      }
+    }
+    order.showCouponDialog = false;
+    return;
+  }
+
+  try {
+    const result = await applyCouponToOrder(Number(order.orderId), Number(coupon.id));
+    if (result.code === "200") {
+      order.selectedCoupon = coupon;
+      order.appliedDiscount = result.data; // 后端返回的实际优惠金额
+      ElMessage.success("优惠券应用成功");
+      order.showCouponDialog = false;
+    } else {
+      ElMessage.error(result.message || "应用优惠券失败");
+    }
+  } catch (error) {
+    console.error("应用优惠券失败:", error);
+    ElMessage.error("应用优惠券失败");
+  }
+};
+
+// 计算应用优惠券后的最终价格
+const calculateFinalPrice = (order: EnhancedOrderVO) => {
+  const originalPrice = parseFloat(order.totalAmount);
+  if (!order.selectedCoupon || !order.appliedDiscount) return originalPrice.toFixed(2);
+
+  // 使用后端返回的实际优惠金额
+  return Math.max(0, originalPrice - order.appliedDiscount).toFixed(2);
+};
+
+// 显示优惠券选择对话框
+const showCouponSelector = (order: EnhancedOrderVO) => {
+  order.showCouponDialog = true;
+};
+
+// 移除已选择的优惠券
+const removeCoupon = async (order: EnhancedOrderVO) => {
+  try {
+    await removeCouponFromOrder(Number(order.orderId));
+    order.selectedCoupon = undefined;
+    order.appliedDiscount = 0;
+    ElMessage.success("优惠券已移除");
+  } catch (error) {
+    console.error("移除优惠券失败:", error);
+    ElMessage.error("移除优惠券失败");
+  }
+};
+
+// 处理支付订单
+const handlePayOrder = async (orderId: string) => {
+  try {
+    payingOrderIds.value.add(orderId);
+
+    const {code, data, message} = await payOrder(Number(orderId));
+
+    if (code.toString() === "200") {
+      // 处理支付返回结果
+      if (data.paymentForm) {
+        // 直接跳转到支付URL
+        window.location.href = data.paymentForm.trim();
+        return;
+      }
+
+      ElNotification.success({
+        title: "支付发起成功",
+        message: `订单 ${orderId} 支付处理中`,
+        duration: 3000
+      });
+
+      // 3秒后刷新订单状态
+      setTimeout(fetchOrders, 3000);
+    } else {
+      ElMessage.error(message || "支付请求失败");
+    }
+  } catch (error) {
+    console.error("支付失败:", error);
+    ElMessage.error("支付过程中发生错误");
+  } finally {
+    payingOrderIds.value.delete(orderId);
+  }
+};
+
+const handleDeleteOrder = async (orderId: string) => {
+  try {
+    const {code, message} = await deleteOrder(orderId);
+    if (code.toString() === "200") {
+      ElMessage({
+        message: "订单已删除",
+        type: "success",
+        duration: 1000,
+        grouping: true,
+      })
+      await fetchOrders();
+    } else {
+      ElMessage.error(message || "删除订单失败");
+    }
+  } catch (error) {
+    console.error("删除订单失败:", error);
+    ElMessage.error("取消订单过程中发生错误");
+  }
+}
+
+
 // 获取订单数据
 const fetchOrders = async () => {
   loading.value = true;
@@ -107,7 +268,9 @@ const fetchOrders = async () => {
               formattedDate: formatDate(order.createTime),
               statusText: statusMap[order.status].text,
               items,
-              timeline: generateTimeline(order)
+              timeline: generateTimeline(order),
+              selectedCoupon: undefined,
+              showCouponDialog: false
             };
           })
       );
@@ -164,62 +327,10 @@ const orderStats = computed(() => {
   return {total, pending, completed, cancelled, totalSpent};
 });
 
-// 处理支付订单
-const handlePayOrder = async (orderId: string) => {
-  try {
-    payingOrderIds.value.add(orderId);
-    const {code, data, message} = await payOrder(Number(orderId));
-
-    if (code.toString() === "200") {
-      // 处理支付返回结果
-      if (data.paymentForm) {
-        // 直接跳转到支付URL
-        window.location.href = data.paymentForm.trim();
-        return;
-      }
-
-      ElNotification.success({
-        title: "支付发起成功",
-        message: `订单 ${orderId} 支付处理中`,
-        duration: 3000
-      });
-
-      // 3秒后刷新订单状态
-      setTimeout(fetchOrders, 3000);
-    } else {
-      ElMessage.error(message || "支付请求失败");
-    }
-  } catch (error) {
-    console.error("支付失败:", error);
-    ElMessage.error("支付过程中发生错误");
-  } finally {
-    payingOrderIds.value.delete(orderId);
-  }
-};
-
-const handleDeleteOrder = async (orderId: string) => {
-  try {
-    const {code, message} = await deleteOrder(orderId);
-    if (code.toString() === "200") {
-      ElMessage({
-        message: "订单已删除",
-        type: "success",
-        duration: 1000,
-        grouping: true,
-      })
-      await fetchOrders();
-    } else {
-      ElMessage.error(message || "删除订单失败");
-    }
-  } catch (error) {
-    console.error("删除订单失败:", error);
-    ElMessage.error("取消订单过程中发生错误");
-  }
-}
-
 // 组件挂载时获取订单数据
 onMounted(() => {
   fetchOrders();
+  fetchUserCoupons(); // 获取用户优惠券列表
   window.setInterval(() => {
     orders.value.forEach(order => {
       order.countdown = calcCountdown(order.expireTime);
@@ -357,14 +468,44 @@ window.scrollTo(0, 0);
           <div class="order-footer">
             <div class="detail-footer">
               <span>共 {{ order.orderItems.length }} 件商品</span>
+
+              <!-- 添加优惠券信息展示 -->
+              <div v-if="order.status === 'PENDING' && order.selectedCoupon" class="coupon-applied">
+                <el-tag closable size="small" type="success" @close="removeCoupon(order)">
+                  <el-icon>
+                    <Ticket/>
+                  </el-icon>
+                  已使用优惠券: {{ order.selectedCoupon.coupon.description }} (-￥{{
+                    order.appliedDiscount ||
+                    order.selectedCoupon.coupon.discount
+                  }})
+                </el-tag>
+              </div>
+
+              <!-- 总价显示 -->
               <span class="total-price">总计&nbsp;&nbsp;<strong>RMB {{
-                  Number(order.totalAmount).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })
-                }}</strong></span>
+                  order.selectedCoupon
+                      ? calculateFinalPrice(order)
+                      : Number(order.totalAmount).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })
+                }}</strong>
+                <span v-if="order.selectedCoupon" class="original-price">
+                  <s>￥{{ Number(order.totalAmount).toFixed(2) }}</s>
+                </span>
+              </span>
             </div>
             <div class="button-footer">
+              <!-- 添加优惠券按钮 -->
+              <el-button v-if="order.status === 'PENDING'" class="coupon-btn" plain size="default"
+                         type="info" @click="showCouponSelector(order)">
+                <el-icon>
+                  <Ticket/>
+                </el-icon>
+                {{ order.selectedCoupon ? '更换优惠券' : '使用优惠券' }}
+              </el-button>
+
               <el-button v-if="order.status === 'PENDING'" type="primary" size="default" class="pay-btn"
                          :loading="payingOrderIds.has(order.orderId)" @click="handlePayOrder(order.orderId)">
                 立即支付
@@ -375,6 +516,46 @@ window.scrollTo(0, 0);
               </el-button>
             </div>
           </div>
+
+          <!-- 添加优惠券选择对话框 -->
+          <el-dialog v-model="order.showCouponDialog" center destroy-on-close title="选择优惠券" width="500px">
+            <el-empty v-if="getAvailableCoupons(parseFloat(order.totalAmount)).length === 0"
+                      description="暂无可用优惠券"/>
+
+            <el-skeleton v-if="loadingCoupons" :rows="3" animated/>
+
+            <div v-else class="coupon-list">
+              <el-radio-group v-model="order.selectedCoupon">
+                <div v-for="coupon in getAvailableCoupons(parseFloat(order.totalAmount))" :key="coupon.id"
+                     class="coupon-item">
+                  <el-radio :label="coupon" class="coupon-radio">
+                    <div class="coupon-card">
+                      <div class="coupon-left">
+                        <div class="coupon-amount">￥{{ coupon.coupon.discount }}</div>
+                        <div class="coupon-condition">满{{ coupon.coupon.minAmount }}元可用</div>
+                      </div>
+                      <div class="coupon-right">
+                        <div class="coupon-name">{{ coupon.coupon.name || coupon.coupon.code }}</div>
+                        <div class="coupon-desc">{{ coupon.coupon.description }}</div>
+                        <div class="coupon-validity">有效期至: {{
+                            new Date(coupon.expireTime).toLocaleDateString()
+                          }}
+                        </div>
+                      </div>
+                    </div>
+                  </el-radio>
+                </div>
+              </el-radio-group>
+            </div>
+
+            <template #footer>
+              <span class="dialog-footer">
+                <el-button @click="order.showCouponDialog = false">取消</el-button>
+                <el-button type="danger" @click="applyCoupon(order, null)">不使用优惠券</el-button>
+                <el-button type="primary" @click="applyCoupon(order, order.selectedCoupon ?? null)">确认使用</el-button>
+              </span>
+            </template>
+          </el-dialog>
         </el-card>
 
         <el-empty v-if="!loading && filteredOrders.length === 0" description="暂无订单" class="empty-state">
@@ -740,15 +921,132 @@ window.scrollTo(0, 0);
   font-weight: 600;
 }
 
-/* 空状态样式 */
-.empty-state {
-  padding: 40px 0;
+/* 优惠券样式 */
+.coupon-applied {
+  margin: 8px 0;
 }
 
-.empty-description {
+.coupon-applied .el-tag {
+  display: inline-flex;
+  align-items: center;
+}
+
+.coupon-applied .el-icon {
+  margin-right: 4px;
+}
+
+.original-price {
+  margin-left: 8px;
   font-size: 14px;
-  color: #888;
-  margin: 10px 0 20px;
+  color: #999;
+}
+
+.coupon-list {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+
+.coupon-item {
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+.coupon-radio {
+  width: 100%;
+  height: auto;
+  margin-right: 0;
+}
+
+.coupon-card {
+  display: flex;
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 10px 0;
+  transition: all 0.3s;
+}
+
+.coupon-card:hover {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  border-color: #ff9500;
+}
+
+.coupon-left {
+  width: 120px;
+  background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.coupon-left::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: repeating-linear-gradient(0deg,
+  #fff,
+  #fff 5px,
+  transparent 5px,
+  transparent 10px);
+}
+
+.coupon-amount {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.coupon-condition {
+  font-size: 12px;
+  color: #fff;
+  margin-top: 5px;
+}
+
+.coupon-right {
+  flex: 1;
+  padding: 15px;
+  background-color: #fff;
+}
+
+.coupon-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.coupon-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.coupon-validity {
+  font-size: 12px;
+  color: #999;
+}
+
+.el-radio-group {
+  width: 100%;
+}
+
+.coupon-radio {
+  width: 100%;
+  margin-right: 0;
+  margin-bottom: 10px;
+}
+
+.coupon-radio .el-radio__input {
+  align-self: flex-start;
+  margin-top: 20px;
 }
 
 /* 响应式调整 */
