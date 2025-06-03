@@ -172,15 +172,10 @@ onMounted(async () => {
   displayedAds.value = selectedAds;
 
   setTimeout(() => {
-    if (adList.value.length > 0 && !hideAds.value) {
-      adsDialogVisible.value = true;
-      // 如果有多个广告，启动自动轮播
-      if (displayedAds.value.length > 1) {
-        startAutoPlay();
-      }
-    }
+    // 首先立即显示页面内容
     heroVisible.value = true;
 
+    // 加载其他初始内容
     recommendedBooks.value = [
       {
         id: 1,
@@ -256,7 +251,18 @@ onMounted(async () => {
       }
     ];
 
-  }, 3000);
+    // 延迟3秒后再显示广告弹窗
+    setTimeout(() => {
+      if (adList.value.length > 0 && !hideAds.value) {
+        adsDialogVisible.value = true;
+        // 如果有多个广告，启动自动轮播
+        if (displayedAds.value.length > 1) {
+          startAutoPlay();
+        }
+      }
+    }, 3000); // 3秒延迟
+
+  }, 0);
 });
 
 // 格式化价格
