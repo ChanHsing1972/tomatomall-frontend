@@ -49,7 +49,6 @@ async function fetchSearchHistory() {
       id: history.find(item => item.query === query)?.id || 0,
       query,
     }));
-    console.log(searchHistory.value);
   } catch (error) {
     console.error('获取搜索历史失败:', error);
   }
