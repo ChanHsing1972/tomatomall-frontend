@@ -142,7 +142,7 @@ const fetchLikedBooks = async () => {
   try {
     const response = await getLikeList();
     if (response?.data?.code === "200") {
-      likedBookIds.value = (response.data.data || []).map((item: any) => item.product?.id?.toString());
+      likedBookIds.value = (response.data.data || []).map((item: any) => item.productId?.toString());
     }
   } catch (e) {
     console.error("获取收藏书籍失败", e);
