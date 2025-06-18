@@ -37,7 +37,6 @@ const adList = ref<ad[]>([]);
 const displayedAds = ref<ad[]>([]);
 
 const handleClose = () => {
-  console.log('广告弹窗已关闭');
   stopAutoPlay();
   if (hideAds.value) {
     localStorage.setItem('hideAds', 'true');
@@ -69,7 +68,6 @@ const fetchAds = async () => {
   try {
     const response = await getAllAds();
     adList.value = response.data.data;
-    console.log("广告列表:", adList.value);
   } catch (error) {
     ElMessage.error("获取广告列表失败");
     console.error(error);

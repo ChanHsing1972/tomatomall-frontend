@@ -120,7 +120,6 @@ const fetchProducts = async () => {
   try {
     const response = await getProductList();
     productList.value = response.data.data;
-    console.log("商品列表:", productList.value);
   } catch (error) {
     ElMessage.error("获取商品列表失败");
     console.error(error);
@@ -142,7 +141,7 @@ const fetchLikedBooks = async () => {
   try {
     const response = await getLikeList();
     if (response?.data?.code === "200") {
-      likedBookIds.value = (response.data.data || []).map((item: any) => item.product?.id?.toString());
+      likedBookIds.value = (response.data.data || []).map((item: any) => item.productId?.toString());
     }
   } catch (e) {
     console.error("获取收藏书籍失败", e);

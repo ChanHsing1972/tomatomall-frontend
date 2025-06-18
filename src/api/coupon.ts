@@ -19,16 +19,15 @@ export interface CouponVO {
 export interface UserCouponVO {
     id: number;
     userId?: number;
-    couponId: number;
+    orderId?: number;
+    name: string; // 优惠券名称
     coupon: CouponVO;
     receiveTime: string;
     useTime?: string;
     status: string; // UNUSED(未使用), USED(已使用), EXPIRED(已过期)
-    orderId?: number;
-    couponType: string; // DISCOUNT(折扣), FIXED(满减), DIRECT(直减)
-    couponValue: number; // 折扣值或金额
-    couponMinimumSpend: number; // 最低消费金额
-    couponName: string; // 优惠券名称
+    type: string; // DISCOUNT(折扣), FIXED(满减), DIRECT(直减)
+    value: number; // 折扣值或金额
+    minimumSpend: number; // 最低消费金额
     description: string; // 优惠券描述
     endDate: string; // 优惠券结束时间
 }
@@ -57,7 +56,7 @@ export const createCoupon = (couponVO: CouponVO) => {
 };
 
 // 管理员接口 - 更新优惠券
-export const updateCoupon = (id: number, couponVO: CouponVO) => {
+export const updateCoupon = (id: number | string, couponVO: CouponVO) => {
     return axios
         .put(`${COUPON_MODULE}/admin/${id}`, couponVO)
         .then((res) => res.data);

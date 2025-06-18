@@ -34,7 +34,6 @@ export type UpdateStockpileInfo = {
 
 // 创建商品
 export const createProduct = (createProductInfo: CreateProductInfo) => {
-    console.log(createProductInfo);
     return axios
         .post(`${PRODUCT_MODULE}`, createProductInfo, {
             headers: {"Content-Type": "application/json"},

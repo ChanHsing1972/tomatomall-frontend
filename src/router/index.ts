@@ -109,6 +109,12 @@ const router = createRouter({
             component: () => import("../views/about/HelpCenter.vue"),
             meta: {requiresAuth: false},
         },
+        {
+            path: "/couponManagement",
+            name: "CouponManagement",
+            component: () => import("../views/admin/CouponManagement.vue"),
+            meta: {requiresAuth: false},
+        },
     ],
 });
 

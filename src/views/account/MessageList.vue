@@ -38,7 +38,6 @@ const fetchRecentChats = async () => {
     const res = await getRecentChats();
     if (res.code === '200') {
       chats.value = res.data;
-      console.log('最近聊天列表:', chats.value);
     } else {
       ElMessage.error('获取聊天列表失败');
     }
@@ -95,10 +94,8 @@ const searchUsers = async () => {
   searchLoading.value = true;
   try {
     const res = await accountInfo(searchKeyword.value);
-    console.log('搜索结果:', res);
     if (res.data.code === '200') {
       user.value = res.data.data;
-      console.log(user.value)
     } else {
       ElMessage.error('未找到匹配的用户');
     }
@@ -350,7 +347,6 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #ebeef5;
 }
 
 .header-title {

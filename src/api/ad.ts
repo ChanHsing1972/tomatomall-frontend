@@ -30,7 +30,6 @@ export const updateAd = (advertisementInfo: advertisementInfo) => {
 };
 
 export const addAd = (createAdvertisementInfo: createAdvertisementInfo) => {
-    console.log(createAdvertisementInfo);
     return axios
         .post(`${AD_MODULE}`, createAdvertisementInfo, {
             headers: {"Content-Type": "application/json"},

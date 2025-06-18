@@ -31,7 +31,6 @@ function handleLogin() {
       sessionStorage.setItem('token', token);
       sessionStorage.setItem('username', username.value);
       accountInfo(username.value.trim()).then(res => {
-        console.log("用户信息:", res.data.data);
         sessionStorage.setItem('name', res.data.data.name);
         sessionStorage.setItem('role', res.data.data.role);
         sessionStorage.setItem('telephone', res.data.data.telephone);

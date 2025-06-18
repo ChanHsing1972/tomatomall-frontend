@@ -37,7 +37,6 @@ export const addToCart = async (addToCartInfo: AddToCartInfo) => {
 
 // 从购物车删除商品
 export const removeFromCart = async (cartItemId: string) => {
-    console.log(cartItemId);
     return axios.delete(`${CART_MODULE}/${cartItemId}`).then((res) => {
         return res;
     });
@@ -45,7 +44,6 @@ export const removeFromCart = async (cartItemId: string) => {
 
 // 更新购物车商品数量
 export const updateCartItem = async (cartItemId: string, quantity: number) => {
-    console.log(cartItemId, quantity);
     return axios
         .patch(
             `${CART_MODULE}/${cartItemId}`,
@@ -61,7 +59,7 @@ export const updateCartItem = async (cartItemId: string, quantity: number) => {
 
 // 获取购物车列表
 export const getCartList = async () => {
-    return axios.get(`${CART_MODULE}`).then(res=> res.data) ;
+    return axios.get(`${CART_MODULE}`).then(res => res.data);
 
 };
 

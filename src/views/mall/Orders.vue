@@ -121,11 +121,13 @@ const fetchUserCoupons = async () => {
 // 获取订单可用的优惠券
 const getAvailableCoupons = (orderAmount: number) => {
   // 只返回满足最低消费金额的优惠券
-  return userCoupons.value.filter(coupon => orderAmount >= coupon.couponMinimumSpend);
+  console.log(userCoupons.value);
+  return userCoupons.value.filter(coupon => orderAmount >= coupon.minimumSpend);
 };
 
 // 根据ID获取优惠券信息
 const getCouponById = (id: number): UserCouponVO | undefined => {
+  console.log("usercoupon=", userCoupons.value.find(coupon => coupon.id === id));
   return userCoupons.value.find(coupon => coupon.id === id);
 };
 
@@ -476,9 +478,9 @@ window.scrollTo(0, 0);
                   <el-icon>
                     <Ticket/>
                   </el-icon>
-                  已使用优惠券: {{ getCouponById(order.selectedCouponId)?.coupon.description }} (-￥{{
+                  已使用优惠券: {{ getCouponById(order.selectedCouponId)?.description }} (-￥{{
                     order.appliedDiscount ||
-                    getCouponById(order.selectedCouponId)?.coupon.value
+                    getCouponById(order.selectedCouponId)?.value
                   }})
                 </el-tag>
               </div>
@@ -533,13 +535,13 @@ window.scrollTo(0, 0);
                     <div class="coupon-card">
                       <div class="coupon-left">
                         <div class="coupon-amount">
-                          <template v-if="coupon.couponType === 'DISCOUNT'">{{ coupon.couponValue }}折</template>
-                          <template v-else>￥{{ coupon.couponValue }}</template>
+                          <template v-if="coupon.type === 'DISCOUNT'">{{ coupon.value }}折</template>
+                          <template v-else>￥{{ coupon.value }}</template>
                         </div>
-                        <div class="coupon-condition">满{{ coupon.couponMinimumSpend }}元可用</div>
+                        <div class="coupon-condition">满{{ coupon.minimumSpend }}元可用</div>
                       </div>
                       <div class="coupon-right">
-                        <div class="coupon-name">{{ coupon.couponName }}</div>
+                        <div class="coupon-name">{{ coupon.name }}</div>
                         <div class="coupon-desc">{{ coupon.description }}</div>
                         <div class="coupon-validity">有效期至: {{
                             new Date(coupon.endDate).toLocaleDateString()

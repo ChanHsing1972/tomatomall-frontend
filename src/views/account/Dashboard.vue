@@ -152,6 +152,10 @@ const goToManagement = () => {
 const goToAd = () => {
   router.push({path: "/ad"});
 };
+
+const goToCouponManagement = () => {
+  router.push({path: "/admin/coupons"});
+};
 </script>
 
 <template>
@@ -209,6 +213,7 @@ const goToAd = () => {
         <div v-if="role === 'admin'" class="management-btn">
           <el-button class="button" type="primary" @click="goToManagement">管理商场</el-button>
           <el-button class="button" type="primary" @click="goToAd">管理广告</el-button>
+          <el-button class="button" type="primary" @click="goToCouponManagement">优惠券管理</el-button>
         </div>
       </div>
     </div>

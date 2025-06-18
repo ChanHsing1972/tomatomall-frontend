@@ -162,7 +162,6 @@ const handleFileChange = (e: Event) => {
 // 提交申请
 const submitApplication = () => {
   // 在实际应用中，这里会调用API提交表单数据
-  console.log("提交申请:", applicationForm.value);
   ElMessage({
     message: '您的申请已成功提交，我们会尽快与您联系！',
     type: 'success'

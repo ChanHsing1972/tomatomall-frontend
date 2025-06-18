@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import {ref, onMounted} from "vue";
+import {onMounted, ref} from "vue";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {Delete} from "@element-plus/icons-vue";
 import {
   createProduct,
-  getProductList,
-  updateProduct,
   deleteProduct,
-  updateStockpile,
+  getProductList,
   getStockpile,
+  updateProduct,
+  updateStockpile,
 } from "../../api/product.ts";
 
 // 完整匹配API中的specification类型
@@ -187,10 +187,6 @@ const handleCreateProduct = async () => {
           productId: spec.productId ?? "", // 创建后关联
         }));
 
-    console.log("创建商品数据:", {
-      ...newProduct.value,
-      specifications: apiSpecifications,
-    });
     // 类型断言，因为我们知道createProduct会处理缺失的id和productId
     await createProduct(({
       ...newProduct.value,

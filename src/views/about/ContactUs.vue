@@ -83,8 +83,6 @@ const submitForm = () => {
     return;
   }
 
-  // 在实际应用中，这里会调用API发送表单数据
-  console.log("提交表单:", contactForm);
   ElMessage.success("您的消息已成功发送，我们将尽快与您联系！");
 
   // 重置表单

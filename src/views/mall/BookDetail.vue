@@ -83,7 +83,6 @@ const checkLikeStatus = async () => {
 
   try {
     const response = (await getLikeList()).data;
-    console.log('收藏列表', response);
     if (response?.code === '200') {
       const likedProducts = response.data || [];
       isLiked.value = likedProducts.some(
@@ -171,7 +170,6 @@ const fetchPurchasedStatus = async () => {
 
       // 检查当前书籍是否已购买
       hasPurchased.value = purchasedBooks.value.includes(currentProduct.value.title);
-      console.log('当前书籍已购买状态:', hasPurchased.value, currentProduct.value.title);
     }
   } catch (error) {
     console.error("获取已购买书籍失败:", error);

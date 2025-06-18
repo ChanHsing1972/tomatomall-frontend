@@ -27,10 +27,6 @@ const fetchCartList = async () => {
     // 确保 items 是数组
     cartItems.value = Array.isArray(res.data.items) ? res.data.items : [];
 
-    // 如果需要，可以在这里处理总金额等信息
-    console.log('购物车总数:', res.data.total);
-    console.log('总金额:', res.data.totalAmount);
-
   } catch (error: unknown) {
     console.error('获取购物车列表失败:', error);
 
@@ -124,7 +120,6 @@ const submitCheckout = async () => {
       },
       paymentMethod: "ALIPAY"
     }
-    console.log(orderInfo)
     await checkoutCart(orderInfo)
     ElMessage({
       message: '结算成功',
