@@ -3,9 +3,6 @@ import {onMounted, reactive, ref} from 'vue';
 import {ElMessage, FormInstance} from 'element-plus';
 import {type CouponVO, createCoupon, getAllCoupons, updateCoupon} from '../../api/coupon';
 import {Edit, Plus} from '@element-plus/icons-vue';
-import {useRouter} from 'vue-router';
-
-const router = useRouter();
 
 // 优惠券列表
 const coupons = ref<CouponVO[]>([]);
@@ -33,27 +30,22 @@ const isEdit = ref(false);
 const rules = reactive({
   name: [
     {required: true, message: '请输入优惠券名称', trigger: 'blur'},
-    {min: 2, max: 50, message: '长度应为2到50个字符', trigger: 'blur'}
+    {min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur'}
   ],
   type: [
     {required: true, message: '请选择优惠券类型', trigger: 'change'}
   ],
-  value: [
-    {required: true, message: '请输入优惠券值', trigger: 'blur'},
-    {type: 'number', min: 0, message: '值必须大于0', trigger: 'blur'}
+  amount: [
+    {required: true, message: '请输入金额', trigger: 'blur'}
   ],
-  minimumSpend: [
-    {required: true, message: '请输入最低消费金额', trigger: 'blur'},
-    {type: 'number', min: 0, message: '金额必须大于等于0', trigger: 'blur'}
+  threshold: [
+    {required: true, message: '请输入使用门槛', trigger: 'blur'}
   ],
-  startDate: [
-    {required: true, message: '请选择开始日期', trigger: 'change'}
-  ],
-  endDate: [
-    {required: true, message: '请选择结束日期', trigger: 'change'}
+  count: [
+    {required: true, message: '请输入发行数量', trigger: 'blur'}
   ],
   description: [
-    {max: 255, message: '长度不能超过255个字符', trigger: 'blur'}
+    {required: false, message: '请输入描述信息', trigger: 'blur'}
   ]
 });
 
@@ -118,7 +110,7 @@ const submitForm = async () => {
           if (response && response.code === '200') {
             ElMessage.success('优惠券更新成功');
             dialogVisible.value = false;
-            fetchCoupons(); // 刷新列表
+            await fetchCoupons(); // 刷新列表
           } else {
             ElMessage.error(response?.message || '更新优惠券失败');
           }
@@ -128,7 +120,7 @@ const submitForm = async () => {
           if (response && response.code === '200') {
             ElMessage.success('优惠券创建成功');
             dialogVisible.value = false;
-            fetchCoupons(); // 刷新列表
+            await fetchCoupons(); // 刷新列表
           } else {
             ElMessage.error(response?.message || '创建优惠券失败');
           }
@@ -159,17 +151,6 @@ const formatCouponValue = (value: number, type: string) => {
     return `${value}%`;
   } else {
     return `¥${value.toFixed(2)}`;
-  }
-};
-
-// 验证日期选择
-const validateDateRange = (rule: any, value: any, callback: any) => {
-  if (!currentCoupon.value.startDate || !currentCoupon.value.endDate) {
-    callback(new Error('请选择有效期'));
-  } else if (new Date(currentCoupon.value.startDate) >= new Date(currentCoupon.value.endDate)) {
-    callback(new Error('结束日期必须晚于开始日期'));
-  } else {
-    callback();
   }
 };
 
@@ -319,10 +300,5 @@ onMounted(() => {
   font-size: 24px;
   color: #333;
   margin: 0;
-}
-
-:deep(.el-input-number__suffix) {
-  color: #909399;
-  margin-left: 5px;
 }
 </style>
