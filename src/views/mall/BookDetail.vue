@@ -75,7 +75,7 @@ const newCommentContent = ref("");
 const newCommentParentId = ref("");
 const replyingTo = ref("");
 
-const isLiked = ref(true); // 是否已收藏
+const isLiked = ref(false); // 是否已收藏
 const likeCount = ref(0); // 收藏人数
 
 const checkLikeStatus = async () => {
