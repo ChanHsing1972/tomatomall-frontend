@@ -17,6 +17,26 @@ const currentUserId = sessionStorage.getItem('id');
 const otherUserId = ref<string>('');
 const otherUserName = ref('');
 
+const formatDateTime = (dateTimeStr: string | number | Date) => {
+  try {
+    // 解析ISO格式的时间
+    const date = new Date(dateTimeStr);
+
+    // 使用明确的格式和区域设置
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false // 使用24小时制
+    });
+  } catch (e) {
+    console.error('日期格式化错误:', e);
+    return dateTimeStr;
+  }
+};
+
 // 从对话ID中解析出对方用户ID
 const parseOtherUserId = (convId: string) => {
   try {
@@ -173,10 +193,10 @@ let intervalId: number;
 
 onMounted(() => {
   fetchConversation();
-
   // 每10秒更新一次消息
   intervalId = window.setInterval(() => {
     fetchConversation();
+    console.log('conversationContent', messages.value);
   }, 10000);
 });
 
@@ -226,13 +246,13 @@ onUnmounted(() => {
               </div>
               <div class="message-content">
                 <div class="message-bubble">{{ msg.content }}</div>
-                <div class="message-time">{{ new Date(msg.createTime).toLocaleString() }}</div>
+                <div class="message-time">{{ formatDateTime(msg.createTime) }}</div>
               </div>
             </template>
             <template v-else>
               <div class="message-content">
                 <div class="message-bubble">{{ msg.content }}</div>
-                <div class="message-time">{{ new Date(msg.createTime).toLocaleString() }}</div>
+                <div class="message-time">{{ formatDateTime(msg.createTime) }}</div>
               </div>
               <div class="message-avatar">
                 <img v-if="msg.senderAvatar" :alt="msg.senderName" :src="msg.senderAvatar" class="avatar-image"/>

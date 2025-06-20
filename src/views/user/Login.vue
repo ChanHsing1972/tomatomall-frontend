@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {computed, ref} from 'vue';
-import {ElButton, ElInput, ElMessage} from "element-plus";
+import {ElButton, ElMessage} from "element-plus";
 import {accountInfo, accountLogin} from "../../api/account.ts";
 import {useRouter} from 'vue-router'
 
@@ -58,12 +58,15 @@ function handleLogin() {
       <div class="login-form-box" @keyup.enter="handleLogin">
         <div class="login-input-group">
           <label for="username" class="login-input-label">用户名</label>
-          <el-input id="username" v-model="username" placeholder="请输入用户名" class="input-field"/>
+          <div class="form-group">
+            <input id="username" v-model="username" class="input-field" placeholder="请输入用户名" type="text"/>
+          </div>
         </div>
         <div class="login-input-group">
           <label for="password" class="login-input-label">密码</label>
-          <el-input id="password" v-model="password" class="input-field" placeholder="••••••••" show-password
-                    type="password"/>
+          <div class="form-group">
+            <input id="password" v-model="password" class="input-field" placeholder="••••••••" type="password"/>
+          </div>
         </div>
         <div class="login-button-group">
           <el-button type="primary" @click.prevent="handleLogin" :disabled="loginDisabled" class="login-button">
@@ -128,6 +131,26 @@ function handleLogin() {
   margin-bottom: 8px;
   font-size: 14px;
   color: #444;
+}
+
+.form-group {
+  width: 92%;
+}
+
+.input-field {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.input-field:focus {
+  border-color: #06c;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.15);
 }
 
 .login-button-group {

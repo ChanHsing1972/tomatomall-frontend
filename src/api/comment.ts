@@ -1,5 +1,5 @@
-import { axios } from "../utils/request";
-import { COMMENT_MODULE } from "./_prefix";
+import {axios} from "../utils/request";
+import {COMMENT_MODULE} from "./_prefix";
 
 type AddCommentInfo = {
     productId: string;
@@ -29,17 +29,7 @@ export const addComment = (addCommentInfo: AddCommentInfo) => {
  */
 export const getAllCommentsByProductId = (productId: string) => {
     return axios.get(`${COMMENT_MODULE}`, {
-        params: { productId }
-    }).then(res => res.data);
-};
-
-/**
- * 根据用户ID获取评论
- * @param username 用户名
- */
-export const getAllCommentsByUserName = (username: string) => {
-    return axios.get(`${COMMENT_MODULE}/user`, {
-        params: { username }
+        params: {productId}
     }).then(res => res.data);
 };
 
@@ -73,6 +63,6 @@ export const deleteComment = (commentId: string) => {
  */
 export const isLikeComment = (commentId: string, username: string) => {
     return axios.get(`${COMMENT_MODULE}/islike`, {
-        params: { commentId, username }
+        params: {commentId, username}
     }).then(res => res.data);
 };

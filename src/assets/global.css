@@ -1,20 +1,4 @@
 @font-face {
-    font-family: 'PingFang SC Regular';
-    src: url('./fonts/PingFangSC-Regular.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'PingFang SC Semibold';
-    src: url('./fonts/PingFangSC-Semibold.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'sf pro display medium';
     src: url('./fonts/sf-pro-display_medium.woff2') format('woff2');
     font-weight: normal;

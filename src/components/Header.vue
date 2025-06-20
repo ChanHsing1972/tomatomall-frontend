@@ -284,20 +284,6 @@ function openAIAssistant() {
   cursor: pointer;
 }
 
-.router-link-active {
-  font-weight: bold;
-  color: #000;
-  border-bottom: 2px solid #000;
-}
-
-.user-link.router-link-active {
-  border-bottom: none;
-}
-
-.logo-link.router-link-active {
-  border-bottom: none;
-}
-
 /* 右侧区域 */
 .right-section {
   display: flex;

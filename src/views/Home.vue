@@ -8,6 +8,50 @@ import {getProductDetail} from "../api/product.ts";
 import {ElMessage} from "element-plus";
 import {useRouter} from 'vue-router'; // 添加路由导入
 
+type ad = {
+  id: string,
+  title: string,
+  content: string,
+  imgUrl: string,
+  productId: string,
+};
+
+interface Product {
+  id: "",
+  title: "",
+  description: "",
+  price: "",
+  rate: 0,
+  cover: "",
+  detail: "",
+  specifications: Spec[],
+}
+
+interface Spec {
+  id: string;
+  item: string;
+  value: string;
+}
+
+const currentProduct = ref<Product>({
+  id: "",
+  title: "",
+  description: "",
+  price: "",
+  rate: 0,
+  cover: "",
+  detail: "",
+  specifications: [],
+});
+const detailDialogVisible = ref(false);
+const adsDialogVisible = ref(false);
+const hideAds = ref(false);
+const currentAdIndex = ref(0);
+const autoPlayTimer = ref<number | null>(null);
+const autoPlayInterval = 5000;
+const adList = ref<ad[]>([]);
+const displayedAds = ref<ad[]>([]);
+
 // 获取路由实例
 const router = useRouter();
 
@@ -19,22 +63,6 @@ const navigateToLibrary = () => {
 const navigateToBookDetail = (id: string | number) => {
   router.push(`/bookdetail/${id}`);
 };
-
-type ad = {
-  id: string,
-  title: string,
-  content: string,
-  imgUrl: string,
-  productId: string,
-};
-const adsDialogVisible = ref(false);
-const hideAds = ref(false);
-const currentAdIndex = ref(0);
-const autoPlayTimer = ref<number | null>(null);
-const autoPlayInterval = 5000;
-
-const adList = ref<ad[]>([]);
-const displayedAds = ref<ad[]>([]);
 
 const handleClose = () => {
   stopAutoPlay();
@@ -74,35 +102,6 @@ const fetchAds = async () => {
   }
 };
 
-interface Product {
-  id: "",
-  title: "",
-  description: "",
-  price: "",
-  rate: 0,
-  cover: "",
-  detail: "",
-  specifications: Spec[],
-}
-
-interface Spec {
-  id: string;
-  item: string;
-  value: string;
-}
-
-
-const currentProduct = ref<Product>({
-  id: "",
-  title: "",
-  description: "",
-  price: "",
-  rate: 0,
-  cover: "",
-  detail: "",
-  specifications: [],
-});
-const detailDialogVisible = ref(false);
 
 const openDetailDialog = async (productId: string) => {
   try {

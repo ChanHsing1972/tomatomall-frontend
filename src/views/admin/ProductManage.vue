@@ -10,8 +10,8 @@ import {
   updateProduct,
   updateStockpile,
 } from "../../api/product.ts";
+import Header from "../../components/Header.vue";
 
-// 完整匹配API中的specification类型
 interface Spec {
   id: string;
   item: string;
@@ -19,7 +19,6 @@ interface Spec {
   productId: string;
 }
 
-// 用于表单输入的规格类型（创建时）
 interface FormSpec {
   id: string;
   item: string;
@@ -39,7 +38,6 @@ interface Product {
   specifications: Spec[];
 }
 
-// 用于创建商品的表单数据
 interface CreateProductForm {
   id: string;
   title: string;
@@ -52,7 +50,6 @@ interface CreateProductForm {
 }
 
 const productList = ref<Product[]>([]);
-
 const newProduct = ref<CreateProductForm>({
   id: "",
   title: "",
@@ -74,21 +71,15 @@ const currentProduct = ref<Product>({
   stock: 0,
   specifications: [],
 });
-
 const stockForm = ref({
   productId: "",
   currentStock: 0,
   amount: 0,
   operation: "add" as "add" | "set",
 });
-
 const displayCreateCard = ref(false);
 const editDialogVisible = ref(false);
 const stockDialogVisible = ref(false);
-
-onMounted(() => {
-  fetchProducts();
-});
 
 const fetchProducts = async () => {
   try {
@@ -199,7 +190,7 @@ const handleCreateProduct = async () => {
       duration: 1000
     })
 
-    fetchProducts();
+    await fetchProducts();
     displayCreateCard.value = false;
     resetNewProduct();
   } catch (error) {
@@ -321,51 +312,62 @@ const handleUpdateStock = async () => {
     })
   }
 };
+
+onMounted(() => {
+  fetchProducts();
+});
 </script>
 
 <template>
   <Header/>
 
   <el-main class="main-container">
-    <el-card class="aside-card">
+    <div class="management-header">
+      <h1>商品管理</h1>
       <el-button type="primary" @click="toggleCreateCard">
         <span>添加商品</span>
       </el-button>
+    </div>
 
+    <el-card class="data-card">
       <el-table :data="productList" style="width: 100%" border>
-        <el-table-column prop="id" label="商品ID" width="100"/>
-        <el-table-column prop="title" label="商品名称" width="180"/>
-        <el-table-column label="封面" width="120">
+        <el-table-column label="商品ID" prop="id" width="80"/>
+        <el-table-column label="商品名称" min-width="150" prop="title" show-overflow-tooltip/>
+        <el-table-column label="封面" width="100">
           <template #default="{ row }">
-            <img :src="row.cover" style="width: 100px; height: auto"/>
+            <img :src="row.cover" class="product-image"/>
           </template>
         </el-table-column>
-        <el-table-column prop="price" label="价格" width="100"/>
-        <el-table-column prop="rate" label="评分" width="80"/>
-        <el-table-column label="规格" width="150">
+        <el-table-column label="价格" prop="price" width="80"/>
+        <el-table-column label="评分" prop="rate" width="60"/>
+        <el-table-column label="规格" min-width="120" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-tag v-for="spec in row.specifications" :key="spec.id" style="margin: 2px">
-              {{ spec.item }}: {{ spec.value }}
-            </el-tag>
+            <div class="spec-container">
+              <el-tag v-for="spec in row.specifications" :key="spec.id" class="spec-tag" effect="light">
+                {{ spec.item }}: {{ spec.value }}
+              </el-tag>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="stock" label="库存" width="80">
+        <el-table-column label="库存" prop="stock" width="60">
           <template #default="{ row }">
             <span>{{ row.stock || 0 }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220">
+        <el-table-column fixed="right" label="操作" width="180">
           <template #default="{ row }">
-            <el-button size="small" @click="openEditDialog(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDeleteProduct(row.id)">删除</el-button>
-            <el-button size="small" type="warning" @click="openStockDialog(row)">库存</el-button>
+            <div class="action-buttons">
+              <el-button plain size="small" type="primary" @click="openEditDialog(row)">编辑</el-button>
+              <el-button plain size="small" type="danger" @click="handleDeleteProduct(row.id)">删除</el-button>
+              <el-button plain size="small" type="warning" @click="openStockDialog(row)">库存</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
-    <el-dialog v-model="displayCreateCard" title="添加商品" width="60%">
-      <el-form :model="newProduct" label-width="80px">
+    <el-dialog v-model="displayCreateCard" class="custom-dialog" title="添加商品" width="60%">
+      <el-form :model="newProduct" class="form-with-shadow" label-width="100px">
         <el-form-item label="名称" required>
           <el-input v-model="newProduct.title"/>
         </el-form-item>
@@ -400,14 +402,16 @@ const handleUpdateStock = async () => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="displayCreateCard = false">取消</el-button>
-        <el-button type="primary" @click="handleCreateProduct">添加</el-button>
+        <div class="dialog-footer">
+          <el-button @click="displayCreateCard = false">取消</el-button>
+          <el-button type="primary" @click="handleCreateProduct">添加</el-button>
+        </div>
       </template>
     </el-dialog>
 
     <!-- 编辑商品对话框 -->
-    <el-dialog v-model="editDialogVisible" title="编辑商品信息" width="60%">
-      <el-form :model="currentProduct" label-width="80px">
+    <el-dialog v-model="editDialogVisible" class="custom-dialog" title="编辑商品信息" width="60%">
+      <el-form :model="currentProduct" class="form-with-shadow" label-width="100px">
         <el-form-item label="标题" required>
           <el-input v-model="currentProduct.title"/>
         </el-form-item>
@@ -441,14 +445,16 @@ const handleUpdateStock = async () => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleUpdateProduct">保存</el-button>
+        <div class="dialog-footer">
+          <el-button @click="editDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleUpdateProduct">保存</el-button>
+        </div>
       </template>
     </el-dialog>
 
     <!-- 库存管理对话框 -->
-    <el-dialog v-model="stockDialogVisible" title="库存管理" width="30%">
-      <el-form :model="stockForm" label-width="80px">
+    <el-dialog v-model="stockDialogVisible" class="custom-dialog" title="库存管理" width="30%">
+      <el-form :model="stockForm" class="form-with-shadow" label-width="100px">
         <el-form-item label="当前库存">
           <span>{{ stockForm.currentStock }}</span>
         </el-form-item>
@@ -457,8 +463,10 @@ const handleUpdateStock = async () => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="stockDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleUpdateStock">确认</el-button>
+        <div class="dialog-footer">
+          <el-button @click="stockDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleUpdateStock">确认</el-button>
+        </div>
       </template>
     </el-dialog>
   </el-main>
@@ -474,89 +482,125 @@ const handleUpdateStock = async () => {
   align-items: center;
 }
 
-/* 商品列表卡片 */
-.aside-card {
+.management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
-  background-color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  padding: 40px;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
 }
 
-/* 页面标题 */
-h2 {
+.management-header h1 {
   font-size: 28px;
   font-weight: 600;
-  margin-bottom: 20px;
   color: #333;
-  text-align: center;
+  margin: 0;
 }
 
-/* 按钮样式 */
-.el-button {
+/* 数据卡片 */
+.data-card {
+  width: 100%;
+  background-color: #fff;
   border-radius: 12px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: background-color 0.3s ease;
-}
-
-.el-button[type="primary"] {
-  background-color: #0071e3;
-  border-color: #0071e3;
-  color: #fff;
-}
-
-.el-button:hover {
-  filter: brightness(0.95);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  margin-bottom: 30px;
 }
 
 /* 表格样式 */
 .el-table {
-  font-size: 16px;
+  font-size: 14px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.el-table th {
+  background-color: #f5f7fa;
+  font-weight: 600;
+  color: #333;
 }
 
 .el-table th,
 .el-table td {
   text-align: center;
-  padding: 16px 12px;
-  border-bottom: none;
+  padding: 12px;
 }
 
-.el-table th {
-  background-color: #f9f9f9;
-  font-weight: 600;
-}
-
-/* 图片与标签 */
-.el-table img {
+/* 商品图片 */
+.product-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.el-tag {
-  background-color: #f0f0f5;
-  color: #555;
+/* 规格容器 */
+.spec-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  max-width: 120px;
+}
+
+/* 规格标签 */
+.spec-tag {
+  margin: 1px;
+  font-size: 11px;
+  padding: 2px 6px;
   border-radius: 8px;
-  font-size: 14px;
-  padding: 4px 8px;
+  background-color: #f2f6fc;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 添加/编辑弹出卡片 */
-.change-card,
-.el-dialog {
-  background-color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+/* 按钮组优化 */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
 }
 
-/* 表单样式 */
-.el-form {
-  font-size: 16px;
+/* 按钮组 */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 
-.el-form-item {
-  margin-bottom: 24px;
+/* 按钮样式 */
+.el-button {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+/* 对话框样式 */
+.custom-dialog :deep(.el-dialog__header) {
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.custom-dialog :deep(.el-dialog__body) {
+  padding: 30px 20px;
+}
+
+.custom-dialog :deep(.el-dialog__footer) {
+  padding: 15px 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.form-with-shadow {
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

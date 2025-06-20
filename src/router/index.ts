@@ -9,12 +9,12 @@ const router = createRouter({
         },
         {
             path: "/login",
-            component: () => import("../views/account/Login.vue"),
+            component: () => import("../views/user/Login.vue"),
             meta: {title: "登录"},
         },
         {
             path: "/register",
-            component: () => import("../views/account/Register.vue"),
+            component: () => import("../views/user/Register.vue"),
             meta: {title: "注册"},
         },
         {
@@ -24,7 +24,7 @@ const router = createRouter({
         },
         {
             path: "/dashboard",
-            component: () => import("../views/account/Dashboard.vue"),
+            component: () => import("../views/user/Dashboard.vue"),
             meta: {title: "个人信息"},
         },
         {
@@ -38,13 +38,13 @@ const router = createRouter({
             meta: {title: "订单"},
         },
         {
-            path: "/management",
-            component: () => import("../views/product/Management.vue"),
+            path: "/manage/products",
+            component: () => import("../views/admin/ProductManage.vue"),
             meta: {title: "商品管理"},
         },
         {
-            path: "/ad",
-            component: () => import("../views/product/Ad.vue"),
+            path: "/manage/ads",
+            component: () => import("../views/admin/AdManage.vue"),
             meta: {title: "广告管理"},
         },
         {
@@ -60,13 +60,13 @@ const router = createRouter({
         {
             path: "/messages",
             name: "Messages",
-            component: () => import("../views/account/MessageList.vue"),
+            component: () => import("../views/user/MessageList.vue"),
             meta: {requiresAuth: true},
         },
         {
             path: "/messages/conversation/:userId",
             name: "Conversation",
-            component: () => import("../views/account/Conversation.vue"),
+            component: () => import("../views/user/Conversation.vue"),
             meta: {requiresAuth: true},
         },
         {
@@ -110,9 +110,9 @@ const router = createRouter({
             meta: {requiresAuth: false},
         },
         {
-            path: "/couponManagement",
+            path: "/manage/coupons",
             name: "CouponManagement",
-            component: () => import("../views/admin/CouponManagement.vue"),
+            component: () => import("../views/admin/CouponManage.vue"),
             meta: {requiresAuth: false},
         },
     ],

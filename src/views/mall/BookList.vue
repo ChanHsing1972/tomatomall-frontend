@@ -8,39 +8,6 @@ import {getProductList, searchProductsByKeyword} from "../../api/product.ts";
 import Footer from "../../components/Footer.vue";
 import {getLikeList} from "../../api/product_like.ts";
 
-const showLikedOnly = ref(false);
-const likedBookIds = ref<string[]>([]);
-const route = useRoute();
-const router = useRouter();
-const searchKeyword = ref("");
-const isSearching = ref(false);
-const showPurchasedOnly = ref(false); // 勾选框状态
-const purchasedBooks = ref<string[]>([]); // 已购买书籍的书名列表
-const drawerVisible = ref(false);
-// 搜索产品
-const searchProducts = async (keyword: string) => {
-  try {
-    const response = await searchProductsByKeyword(keyword);
-    productList.value = response.data.data;
-  } catch (error) {
-    ElMessage.error("搜索书籍失败");
-    console.error(error);
-  }
-};
-const categories = [
-  "全部",
-  "文学小说",
-  "散文随笔",
-  "自传他传",
-  "诗歌戏剧",
-  "哲学心理",
-  "历史文化",
-  "生活健康",
-  "科技探索",
-  "经济管理",
-  "科普读物"
-];
-
 interface Product {
   id: string;
   title: string;
@@ -60,13 +27,97 @@ interface Spec {
   productId: string;
 }
 
-const productList = ref<Product[]>([]);
+interface Product {
+  id: string;
+  title: string;
+  price: string;
+  rate: number;
+  description: string;
+  cover: string;
+}
 
-// 添加分页相关变量
-const currentPage = ref(1);
+const categories = [
+  "全部",
+  "文学小说",
+  "散文随笔",
+  "自传他传",
+  "诗歌戏剧",
+  "哲学心理",
+  "历史文化",
+  "生活健康",
+  "科技探索",
+  "经济管理",
+  "科普读物"
+];
+const loading = ref(true);
+const showLikedOnly = ref(false);
+const likedBookIds = ref<string[]>([]);
+const searchKeyword = ref("");
+const isSearching = ref(false);
+const showPurchasedOnly = ref(false); // 勾选框状态
+const purchasedBooks = ref<string[]>([]); // 已购买书籍的书名列表
+const drawerVisible = ref(false);
+const productList = ref<Product[]>([]);
+const currentPage = ref(1); // 添加分页相关变量
 const pageSize = ref(16);
-// 更新总数计算，使用过滤后的列表长度
+const selectedCategory = ref("全部");
+const savedScrollPosition = ref(0);
+
 const total = computed(() => filteredProductList.value.length);
+
+const paginatedProductList = computed<Product[]>(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredProductList.value.slice(start, end);
+});
+
+const filteredProductList = computed(() => {
+  let list = processedProductList.value;
+  if (showPurchasedOnly.value) {
+    list = list.filter(product => purchasedBooks.value.includes(product.title));
+  }
+  if (showLikedOnly.value) {
+    list = list.filter(product => likedBookIds.value.includes(product.id));
+  }
+  if (selectedCategory.value !== "全部") {
+    list = list.filter(product =>
+        product.categories && product.categories.includes(selectedCategory.value)
+    );
+  }
+  return list;
+});
+
+const processedProductList = computed(() => {
+  return productList.value.map(product => {
+    const categorySpec = product.specifications?.find(spec => spec.item === "类别");
+    // 拆分类别，去除空格
+    const categoriesArr = categorySpec && categorySpec.value
+        ? categorySpec.value.split('/').map(s => s.trim())
+        : [];
+    return {
+      ...product,
+      categories: categoriesArr // 用数组存储
+    };
+  });
+});
+
+const route = useRoute();
+
+const router = useRouter();
+
+// 搜索产品
+const searchProducts = async (keyword: string) => {
+  loading.value = true; // 开始搜索时设置loading为true
+  try {
+    const response = await searchProductsByKeyword(keyword);
+    productList.value = response.data.data;
+  } catch (error) {
+    ElMessage.error("搜索书籍失败");
+    console.error(error);
+  } finally {
+    loading.value = false; // 搜索结束后设置loading为false
+  }
+};
 
 // 处理页码变化
 const handleCurrentChange = (val: number) => {
@@ -75,31 +126,6 @@ const handleCurrentChange = (val: number) => {
   window.scrollTo(0, 0);
 };
 
-
-// 添加变量来记录滚动位置
-const savedScrollPosition = ref(0);
-onMounted(() => {
-  fetchProducts();
-
-  // 从 sessionStorage 中获取之前保存的滚动位置
-  const savedPosition = sessionStorage.getItem('booklistScrollPosition');
-  if (savedPosition) {
-    // 使用 setTimeout 确保 DOM 完全渲染后再滚动
-    setTimeout(() => {
-      window.scrollTo(0, parseInt(savedPosition));
-
-      // 计算应该在哪一页
-      if (productList.value.length > 0) {
-        const itemHeight = 280 + 100; // 估计每个书籍卡片的高度加间距
-        const itemsPerRow = window.innerWidth > 768 ? 4 : 2;
-        const viewportPosition = parseInt(savedPosition);
-        const rowIndex = Math.floor(viewportPosition / itemHeight);
-        const estimatedIndex = rowIndex * itemsPerRow;
-        currentPage.value = Math.floor(estimatedIndex / pageSize.value) + 1 || 1;
-      }
-    }, 100);
-  }
-});
 // 获取已完成订单的书籍数据
 const fetchPurchasedBooks = async () => {
   try {
@@ -117,23 +143,17 @@ const fetchPurchasedBooks = async () => {
 };
 
 const fetchProducts = async () => {
+  loading.value = true; // 开始加载时设置loading为true
   try {
     const response = await getProductList();
     productList.value = response.data.data;
   } catch (error) {
     ElMessage.error("获取商品列表失败");
     console.error(error);
+  } finally {
+    loading.value = false; // 无论成功失败都结束加载状态
   }
 };
-
-interface Product {
-  id: string;
-  title: string;
-  price: string;
-  rate: number;
-  description: string;
-  cover: string;
-}
 
 const fetchLikedBooks = async () => {
   const username = sessionStorage.getItem("username") || "";
@@ -147,51 +167,6 @@ const fetchLikedBooks = async () => {
     console.error("获取收藏书籍失败", e);
   }
 };
-const filteredProductList = computed(() => {
-  let list = processedProductList.value;
-  if (showPurchasedOnly.value) {
-    list = list.filter(product => purchasedBooks.value.includes(product.title));
-  }
-  if (showLikedOnly.value) {
-    list = list.filter(product => likedBookIds.value.includes(product.id));
-  }
-  if (selectedCategory.value !== "全部") {
-    list = list.filter(product =>
-        product.categories && product.categories.includes(selectedCategory.value)
-    );
-  }
-  return list;
-});
-const selectedCategory = ref("全部");
-
-// 提取类别
-const processedProductList = computed(() => {
-  return productList.value.map(product => {
-    const categorySpec = product.specifications?.find(spec => spec.item === "类别");
-    // 拆分类别，去除空格
-    const categoriesArr = categorySpec && categorySpec.value
-        ? categorySpec.value.split('/').map(s => s.trim())
-        : [];
-    return {
-      ...product,
-      categories: categoriesArr // 用数组存储
-    };
-  });
-});
-
-// 添加一个新的计算属性，根据当前页码裁剪商品列表
-const paginatedProductList = computed<Product[]>(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredProductList.value.slice(start, end);
-});
-
-// 初始化数据
-onMounted(() => {
-  fetchProducts();
-  fetchPurchasedBooks();
-  fetchLikedBooks();
-});
 
 // 修改打开详情的方法，改为导航到新页面
 const openDetailDialog = (product: Product) => {
@@ -230,6 +205,29 @@ watch(
     },
     {immediate: true}
 );
+
+onMounted(() => {
+  fetchProducts();
+  fetchPurchasedBooks();
+  fetchLikedBooks();
+
+  // 从 sessionStorage 中获取之前保存的滚动位置
+  const savedPosition = sessionStorage.getItem('booklistScrollPosition');
+  if (savedPosition) {
+    setTimeout(() => {
+      window.scrollTo(0, parseInt(savedPosition));
+      // 计算应该在哪一页
+      if (productList.value.length > 0) {
+        const itemHeight = 280 + 100; // 估计每个书籍卡片的高度加间距
+        const itemsPerRow = window.innerWidth > 768 ? 4 : 2;
+        const viewportPosition = parseInt(savedPosition);
+        const rowIndex = Math.floor(viewportPosition / itemHeight);
+        const estimatedIndex = rowIndex * itemsPerRow;
+        currentPage.value = Math.floor(estimatedIndex / pageSize.value) + 1 || 1;
+      }
+    }, 100);
+  }
+});
 </script>
 
 <template>
@@ -267,8 +265,27 @@ watch(
         </div>
       </el-drawer>
 
-      <!-- 书籍列表 -->
-      <div v-if="filteredProductList.length" class="product-grid">
+      <!-- 书籍列表 - 添加骨架屏 -->
+      <!-- 加载时显示骨架屏 -->
+      <div v-if="loading" class="product-grid">
+        <el-skeleton v-for="i in pageSize" :key="i" animated class="product-card-skeleton">
+          <template #template>
+            <div class="skeleton-card">
+              <el-skeleton-item class="skeleton-image" variant="image"/>
+              <div class="skeleton-content">
+                <el-skeleton-item class="skeleton-title" variant="h3"/>
+                <el-skeleton-item class="skeleton-desc" variant="text"/>
+                <div class="skeleton-footer">
+                  <el-skeleton-item class="skeleton-price" variant="text"/>
+                  <el-skeleton-item class="skeleton-rate" variant="text"/>
+                </div>
+              </div>
+            </div>
+          </template>
+        </el-skeleton>
+      </div>
+      <!-- 加载完成显示实际内容 -->
+      <div v-else-if="filteredProductList.length" class="product-grid">
         <el-card v-for="product in paginatedProductList" :key="product.id" class="product-card" shadow="hover"
                  @click="openDetailDialog(product)">
           <div class="card-image-wrapper">

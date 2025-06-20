@@ -8,14 +8,8 @@ import {addToCart} from "../../api/cart.ts";
 import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
 import {addLike, cancelLike, getLikeCount, getLikeList} from "../../api/product_like.ts";
 import {getOrders, type OrderVO} from "../../api/order.ts";
+import {accountInfo} from "../../api/account.ts";
 import Footer from "../../components/Footer.vue";
-
-const route = useRoute();
-const router = useRouter();
-const username = sessionStorage.getItem("username") || "";
-const isUserAdmin = sessionStorage.getItem("role") === 'admin';
-const productId = ref(route.params.id as string);
-const loading = ref(true);
 
 interface Product {
   id: string;
@@ -46,14 +40,20 @@ interface Comment {
   productId: string;
   likeCount: string;
   isLiked?: boolean;
+  avatar?: string; // 新增字段：用户头像
 }
 
 interface LikedProduct {
   productId: string; // 收藏记录的唯一标识符
   userId: string; // 收藏用户的 ID
-  //product: Product; // 关联的产品对象
 }
 
+const route = useRoute();
+const router = useRouter();
+const username = sessionStorage.getItem("username") || "";
+const isUserAdmin = sessionStorage.getItem("role") === 'admin';
+const productId = ref(route.params.id as string);
+const loading = ref(true);
 const currentProduct = ref<Product>({
   id: "",
   title: "",
@@ -65,18 +65,18 @@ const currentProduct = ref<Product>({
   likeCount: "",
   specifications: [],
 });
-
-// 添加已购买状态变量
 const hasPurchased = ref(false);
-const purchasedBooks = ref<string[]>([]); // 已购买书籍标题列表
-
+const purchasedBooks = ref<string[]>([]);
 const comments = ref<Comment[]>([]);
 const newCommentContent = ref("");
 const newCommentParentId = ref("");
 const replyingTo = ref("");
-
 const isLiked = ref(false); // 是否已收藏
 const likeCount = ref(0); // 收藏人数
+// 添加描述展开/收起状态
+const isDescriptionExpanded = ref(false);
+// 添加产品详情展开/收起状态
+const isDetailExpanded = ref(false);
 
 const checkLikeStatus = async () => {
   if (!username) return;
@@ -120,16 +120,11 @@ const handleProductLike = async () => {
     console.error(error);
   }
 };
-// 添加描述展开/收起状态
-const isDescriptionExpanded = ref(false);
 
 // 切换描述展开状态
 const toggleDescription = () => {
   isDescriptionExpanded.value = !isDescriptionExpanded.value;
 };
-
-// 添加产品详情展开/收起状态
-const isDetailExpanded = ref(false);
 
 // 切换产品详情展开状态
 const toggleDetail = () => {
@@ -270,6 +265,19 @@ const fetchComments = async () => {
   try {
     const response = await getAllCommentsByProductId(productId.value);
     comments.value = Array.isArray(response.data) ? response.data : [];
+
+    // 获取每个评论者的头像信息
+    await Promise.all(comments.value.map(async (comment) => {
+      try {
+        const userInfoRes = await accountInfo(comment.username);
+        if (userInfoRes.data.code === "200" && userInfoRes.data.data) {
+          comment.avatar = userInfoRes.data.data.avatar || '';
+        }
+      } catch (error) {
+        console.error("获取评论者信息失败:", error);
+      }
+    }));
+
     await checkCommentsLikeStatus();
   } catch (error) {
     console.error("获取评论失败:", error);
@@ -367,7 +375,6 @@ onMounted(() => {
 <template>
   <Header/>
   <div class="book-detail-page-container">
-
     <div class="book-detail-page">
       <el-skeleton :loading="loading" animated>
         <template #default>
@@ -449,7 +456,13 @@ onMounted(() => {
                        class="comment-card">
                     <!-- 主评论 -->
                     <div class="comment-main">
-                      <div class="comment-avatar">{{ comment.username.charAt(0).toUpperCase() }}</div>
+                      <!-- 修改：优先显示用户头像 -->
+                      <div v-if="comment.avatar" class="comment-avatar with-image">
+                        <img :src="comment.avatar" alt="用户头像" class="user-avatar-img"/>
+                      </div>
+                      <div v-else class="comment-avatar">
+                        {{ comment.username.charAt(0).toUpperCase() }}
+                      </div>
                       <div class="comment-body">
                         <div class="comment-header">
                           <span class="comment-user">{{ comment.username }}</span>
@@ -478,7 +491,13 @@ onMounted(() => {
                     <div v-if="comments.some(c => c.parentId === comment.commentId)" class="child-comments">
                       <div v-for="childComment in comments.filter(c => c.parentId === comment.commentId)"
                            :key="childComment.commentId" class="child-comment">
-                        <div class="comment-avatar small">{{ childComment.username.charAt(0).toUpperCase() }}</div>
+                        <!-- 修改：优先显示用户头像 -->
+                        <div v-if="childComment.avatar" class="comment-avatar small with-image">
+                          <img :src="childComment.avatar" alt="用户头像" class="user-avatar-img"/>
+                        </div>
+                        <div v-else class="comment-avatar small">
+                          {{ childComment.username.charAt(0).toUpperCase() }}
+                        </div>
                         <div class="comment-body">
                           <div class="comment-header">
                             <span class="comment-user">{{ childComment.username }}</span>
@@ -512,15 +531,19 @@ onMounted(() => {
                   <p>还没有评论，快来发表第一条吧！</p>
                 </div>
 
-                <!-- 添加评论 -->
+                <!-- 添加评论 - 修改这部分 -->
                 <div class="add-comment-section">
                   <div v-if="replyingTo" class="replying-to">
                     <span>回复给：{{ replyingTo }}</span>
                     <el-button class="cancel-reply" type="text" @click="cancelReply">取消回复</el-button>
                   </div>
-                  <el-input v-model="newCommentContent"
-                            :placeholder="replyingTo ? `回复 ${replyingTo}...` : '发表你的想法...'"
-                            class="reply-input" resize="none" rows="3" type="textarea"></el-input>
+                  <div class="form-group">
+                    <textarea v-model="newCommentContent"
+                              :placeholder="replyingTo ? `回复 ${replyingTo}...` : '发表你的想法...'"
+                              class="comment-input-field"
+                              rows="3">
+                    </textarea>
+                  </div>
                   <el-button class="submit-comment" @click="addNewComment">
                     <span class="el-icon-s-promotion"></span> 发布评论
                   </el-button>
@@ -528,8 +551,6 @@ onMounted(() => {
 
               </div>
             </div>
-
-
           </div>
         </template>
         <template #template>
@@ -558,10 +579,8 @@ onMounted(() => {
           </div>
         </template>
       </el-skeleton>
-
     </div>
   </div>
-
   <el-backtop :bottom="50" :right="30"/>
 
   <Footer/>
@@ -901,14 +920,6 @@ onMounted(() => {
 
   /* 评论部分 */
 
-  .comments-section {
-    margin-top: 40px;
-    padding: 40px;
-    background-color: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.03);
-  }
-
   .section-header {
     display: flex;
     justify-content: space-between;
@@ -965,6 +976,19 @@ onMounted(() => {
     width: 32px;
     height: 32px;
     font-size: 14px;
+  }
+
+  .comment-avatar.with-image {
+    background: none;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .user-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
   }
 
   .comment-body {
@@ -1067,7 +1091,7 @@ onMounted(() => {
     margin: 0;
   }
 
-  /* 添加评论区域 */
+  /* 添加评论区域 - 修改这部分样式 */
 
   .add-comment-section {
     margin-top: 30px;
@@ -1092,25 +1116,33 @@ onMounted(() => {
     padding: 0;
   }
 
-  .reply-input .el-textarea__inner {
-    border: none !important;
-    background-color: white !important;
-    border-radius: 10px !important;
-    padding: 15px !important;
-    font-size: 15px !important;
-    transition: box-shadow 0.3s ease !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  .form-group {
+    width: 100%;
+    margin-bottom: 15px;
   }
 
-  .reply-input .el-textarea__inner:focus {
-    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.3) !important;
+  .comment-input-field {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #d2d2d7;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+
+  .comment-input-field:focus {
+    border-color: #06c;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.15);
   }
 
   .submit-comment {
     display: block;
     margin-left: auto;
-    margin-top: 15px;
-    background: rgb(0, 113, 227);
+    background: #0071e3;
     color: white;
     border: none;
     border-radius: 10px;
@@ -1121,7 +1153,7 @@ onMounted(() => {
   }
 
   .submit-comment:hover {
-    background: rgb(64, 158, 255);
+    background: #0086fe;
   }
 
   /* 骨架屏样式 */
@@ -1240,10 +1272,6 @@ onMounted(() => {
 
     .product-title {
       font-size: 24px;
-    }
-
-    .comments-section {
-      padding: 20px;
     }
   }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {computed, ref} from 'vue';
-import {ElButton, ElInput, ElMessage} from "element-plus";
+import {ElButton, ElMessage} from "element-plus";
 import {accountRegister} from "../../api/account.ts";
 import {useRouter} from 'vue-router';
 
@@ -87,35 +87,44 @@ function handleRegister() {
             <label for="username" class="login-input-label">
               用户名<span class="required">*</span>
             </label>
-            <el-input id="username" v-model="username" class="input-field" placeholder="请输入用户名"/>
+            <div class="form-group">
+              <input id="username" v-model="username" class="input-field" placeholder="请输入用户名" type="text"/>
+            </div>
           </div>
           <!-- 昵称 -->
           <div class="login-input-group">
             <label for="name" class="login-input-label">
               昵称<span class="required">*</span>
             </label>
-            <el-input id="name" v-model="name" class="input-field" placeholder="请输入昵称"/>
+            <div class="form-group">
+              <input id="name" v-model="name" class="input-field" placeholder="请输入昵称" type="text"/>
+            </div>
           </div>
           <!-- 密码 -->
           <div class="login-input-group">
             <label for="password" class="login-input-label">
               密码<span class="required">*</span>
             </label>
-            <el-input id="password" v-model="password" class="input-field" placeholder="请输入密码" show-password
-                      type="password"/>
+            <div class="form-group">
+              <input id="password" v-model="password" class="input-field" placeholder="请输入密码" type="password"/>
+            </div>
           </div>
           <!-- 确认密码 -->
           <div class="login-input-group">
             <label for="confirmPassword" class="login-input-label">
               确认密码<span class="required">*</span>
             </label>
-            <el-input id="confirmPassword" type="password" v-model="confirmPassword" placeholder="请再次输入密码"
-                      class="input-field" show-password/>
+            <div class="form-group">
+              <input id="confirmPassword" v-model="confirmPassword" class="input-field" placeholder="请再次输入密码"
+                     type="password"/>
+            </div>
           </div>
           <!-- 手机号 -->
           <div class="login-input-group">
             <label for="telephone" class="login-input-label">手机号</label>
-            <el-input id="telephone" v-model="telephone" class="input-field" placeholder="请输入手机号"/>
+            <div class="form-group">
+              <input id="telephone" v-model="telephone" class="input-field" placeholder="请输入手机号" type="tel"/>
+            </div>
           </div>
           <div v-if="telephone && !telLegal" class="error-message">
             手机号格式不正确
@@ -123,7 +132,9 @@ function handleRegister() {
           <!-- 邮箱 -->
           <div class="login-input-group">
             <label for="email" class="login-input-label">邮箱</label>
-            <el-input id="email" v-model="email" class="input-field" placeholder="请输入邮箱"/>
+            <div class="form-group">
+              <input id="email" v-model="email" class="input-field" placeholder="请输入邮箱" type="email"/>
+            </div>
           </div>
           <div v-if="email && !emailLegal" class="error-message">
             邮箱格式不正确
@@ -131,7 +142,9 @@ function handleRegister() {
           <!-- 地址 -->
           <div class="login-input-group">
             <label for="location" class="login-input-label">地址</label>
-            <el-input id="location" v-model="location" class="input-field" placeholder="请输入地址"/>
+            <div class="form-group">
+              <input id="location" v-model="location" class="input-field" placeholder="请输入地址" type="text"/>
+            </div>
           </div>
           <!-- 按钮区域 -->
           <div class="login-button-group">
@@ -208,27 +221,31 @@ function handleRegister() {
     font-size: 14px;
     color: #444;
   }
+
+  .form-group {
+    flex: 1;
+  }
+
+  .input-field {
+    width: 89%;
+    padding: 10px 15px;
+    border: 1px solid #d2d2d7;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+  }
+
+  .input-field:focus {
+    border-color: #06c;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.15);
+  }
 }
 
 .required {
   color: red;
   margin-left: 2px;
-}
-
-.login-input-field {
-  flex: 1;
-}
-
-/* 自定义输入框样式 */
-.login-input-field >>> .el-input__inner {
-  border-radius: 6px;
-  padding: 12px;
-  font-size: 14px;
-  transition: border-color 0.3s;
-}
-
-.login-input-field >>> .el-input__inner:focus {
-  border-color: #0071e3;
 }
 
 /* 错误提示 */

@@ -5,7 +5,7 @@ import {parseRole, parseTime} from "../../utils";
 import {useRouter} from "vue-router";
 import Header from "../../components/Header.vue";
 import {ElMessage, ElMessageBox, UploadProps} from "element-plus";
-import {UserFilled} from "@element-plus/icons-vue";
+import {Camera, UserFilled} from "@element-plus/icons-vue";
 
 const router = useRouter();
 const role = sessionStorage.getItem("role") || "user";
@@ -146,15 +146,15 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
 }
 
 const goToManagement = () => {
-  router.push({path: "/management"});
+  router.push({path: "/manage/products"});
 };
 
 const goToAd = () => {
-  router.push({path: "/ad"});
+  router.push({path: "/manage/ads"});
 };
 
 const goToCouponManagement = () => {
-  router.push({path: "/admin/coupons"});
+  router.push({path: "/manage/coupons"});
 };
 </script>
 
@@ -170,7 +170,11 @@ const goToCouponManagement = () => {
             <img v-if="avatar" :src="avatar" alt="avatar" class="user-avatar">
             <el-avatar v-else :icon="UserFilled" :size="80" class="user-avatar"/>
             <div class="avatar-overlay">
-              <div class="upload-icon">📷</div>
+              <div class="upload-icon">
+                <el-icon class="upload-icon">
+                  <Camera/>
+                </el-icon>
+              </div>
             </div>
           </div>
         </el-upload>
@@ -192,7 +196,7 @@ const goToCouponManagement = () => {
 
         <div class="info-item">
           <div class="info-label">注册时间</div>
-          <div class="info-value">{{ createTime }}</div>
+          <div class="info-value">{{ createTime.substring(0, 10) }}</div>
         </div>
 
         <div class="info-item">
@@ -210,10 +214,10 @@ const goToCouponManagement = () => {
           <div class="info-value">{{ email }}</div>
         </div>
 
-        <div v-if="role === 'admin'" class="management-btn">
-          <el-button class="button" type="primary" @click="goToManagement">管理商场</el-button>
-          <el-button class="button" type="primary" @click="goToAd">管理广告</el-button>
-          <el-button class="button" type="primary" @click="goToCouponManagement">优惠券管理</el-button>
+        <div v-if="role === 'admin'" class="management-btn-container">
+          <button class="management-btn" @click="goToManagement">管理商品</button>
+          <button class="management-btn" @click="goToAd">管理广告</button>
+          <button class="management-btn" @click="goToCouponManagement">管理优惠券</button>
         </div>
       </div>
     </div>
@@ -228,41 +232,46 @@ const goToCouponManagement = () => {
         </div>
       </div>
       <div v-if="showInfoEdit" class="form-container">
-        <el-form label-position="top">
-          <el-form-item label="昵称">
-            <el-input v-model="newName" placeholder="请输入昵称"/>
-          </el-form-item>
-          <el-form-item label="联系电话">
-            <el-input v-model="newTelephone" placeholder="请输入手机号"/>
-          </el-form-item>
-          <el-form-item label="邮箱">
-            <el-input v-model="newEmail" placeholder="请输入邮箱"/>
-          </el-form-item>
-          <el-form-item label="收货地址">
-            <el-input type="textarea" v-model="newLocation" placeholder="请输入地址"/>
-          </el-form-item>
-          <el-form-item>
-            <el-button class="button" @click="updateInfo">更新资料</el-button>
-          </el-form-item>
-        </el-form>
+        <form class="custom-form" @submit.prevent="updateInfo">
+          <div class="form-group">
+            <label for="name">昵称</label>
+            <input id="name" v-model="newName" placeholder="请输入昵称" type="text">
+          </div>
+          <div class="form-group">
+            <label for="telephone">联系电话</label>
+            <input id="telephone" v-model="newTelephone" placeholder="请输入手机号" type="tel">
+          </div>
+          <div class="form-group">
+            <label for="email">邮箱</label>
+            <input id="email" v-model="newEmail" placeholder="请输入邮箱" type="email">
+          </div>
+          <div class="form-group">
+            <label for="location">收货地址</label>
+            <textarea id="location" v-model="newLocation" placeholder="请输入地址" rows="4"></textarea>
+          </div>
+          <div class="form-submit">
+            <button class="submit-btn" type="submit">更新资料</button>
+          </div>
+        </form>
       </div>
       <div v-else class="form-container">
-        <el-form label-position="top">
-          <el-form-item label="新密码">
-            <el-input v-model="password" placeholder="••••••••" show-password type="password"/>
-          </el-form-item>
-          <el-form-item :label="hasConfirmPasswordInput && !isPasswordIdentical
-            ? '密码不一致'
-            : '确认新密码'
-            ">
-            <el-input type="password" v-model="confirmPassword" placeholder="••••••••" :class="{
-              'error-warn-input': hasConfirmPasswordInput && !isPasswordIdentical,
-            }" show-password/>
-          </el-form-item>
-          <el-form-item>
-            <el-button class="button" @click="updatePassword" :disabled="changeDisabled">修改密码</el-button>
-          </el-form-item>
-        </el-form>
+        <form class="custom-form" @submit.prevent="updatePassword">
+          <div class="form-group">
+            <label for="password">新密码</label>
+            <input id="password" v-model="password" placeholder="••••••••" type="password">
+          </div>
+          <div class="form-group">
+            <label :class="{ 'error-label': hasConfirmPasswordInput && !isPasswordIdentical }" for="confirmPassword">
+              {{ hasConfirmPasswordInput && !isPasswordIdentical ? '密码不一致' : '确认新密码' }}
+            </label>
+            <input id="confirmPassword" v-model="confirmPassword"
+                   :class="{ 'error-input': hasConfirmPasswordInput && !isPasswordIdentical }" placeholder="••••••••"
+                   type="password">
+          </div>
+          <div class="form-submit">
+            <button :disabled="changeDisabled" class="submit-btn" type="submit">修改密码</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -273,30 +282,27 @@ const goToCouponManagement = () => {
 .dashboard-container {
   margin-left: 10%;
   padding: 100px;
-  /* 增大整体内边距 */
   display: flex;
-  gap: 20px;
-  /* 增加左右两侧卡片之间的间距 */
-  font-family: "Segoe UI", Helvetica, "PingFang SC", sans-serif;
+  gap: 40px;
+  font-family: "sf pro display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: #333;
 }
 
 /* 修改后的左侧：用户信息展示卡片 */
 .user-summary {
   background-color: #f9f9f9;
-  border-radius: 12px;
-  padding: 60px 50px 250px;
-  /* 增大内边距 */
+  border-radius: 16px;
+  padding: 60px 50px 100px;
   flex: 1 1 40%;
   text-align: left;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
 /* 保持 header-info 样式不变 */
 .header-info {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 20px;
   margin-bottom: 30px;
 }
 
@@ -306,7 +312,7 @@ const goToCouponManagement = () => {
 }
 
 .welcome-text {
-  font-size: 16px;
+  font-size: 14px;
   color: #777;
 }
 
@@ -319,7 +325,6 @@ const goToCouponManagement = () => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  /* 增大每项间距 */
   margin-left: 10px;
 }
 
@@ -332,7 +337,6 @@ const goToCouponManagement = () => {
   font-size: 12px;
   color: #999;
   margin-bottom: 0;
-  /* 稍微增加间距 */
 }
 
 .info-value {
@@ -343,11 +347,10 @@ const goToCouponManagement = () => {
 /* 修改右侧：编辑区域 */
 .edit-section {
   background-color: #ffffff;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 60px;
-  /* 保持足够的内边距 */
   flex: 1 1 100%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   margin-right: 12%;
 }
 
@@ -357,7 +360,6 @@ const goToCouponManagement = () => {
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 40px;
   gap: 30px;
-  /* 为切换按钮增加间距 */
 }
 
 .tab-item {
@@ -369,31 +371,112 @@ const goToCouponManagement = () => {
 }
 
 .tab-item.active {
-  border-bottom: 2px solid #333;
+  border-bottom: 2px solid #06c;
+  color: #06c;
+  font-weight: 500;
+}
+
+/* 自定义表单和输入框样式 */
+.custom-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 600px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 16px;
+  font-weight: 500;
   color: #333;
 }
 
-/* 修改表单区域 */
-.form-container {
-  max-width: 600px;
-  /* 限制表单宽度 */
+.error-label {
+  color: #ff3b30;
 }
 
-/* 调整每个表单项间距 */
-.el-form-item {
-  margin-bottom: 28px;
-  /* 稍大一些 */
+.form-group input,
+.form-group textarea {
+  padding: 12px 15px;
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
 }
 
-/* 错误输入样式保持不变 */
-.error-warn-input {
-  --el-input-border-color: red;
-  --el-input-hover-border-color: red;
-  --el-input-focus-border-color: red;
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #06c;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.15);
 }
 
-.button {
+.error-input {
+  border-color: #ff3b30;
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
+}
+
+/* 提交按钮样式 - 与ContactUs保持一致 */
+.form-submit {
   margin-top: 10px;
+}
+
+.submit-btn {
+  background: rgb(0, 113, 227);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+  background-color: rgb(64, 158, 255);
+}
+
+.submit-btn:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 管理按钮容器 - 垂直居中排列 */
+.management-btn-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+/* 管理按钮样式 */
+.management-btn {
+  width: 100%;
+  background-color: #f5f5f7;
+  color: #444;
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.management-btn:hover {
+  background-color: rgba(0, 102, 204, 0.1);
+  border-color: #06c;
+  box-shadow: 0 5px 15px rgba(0, 102, 204, 0.15);
 }
 
 .avatar-uploader {
@@ -441,17 +524,9 @@ const goToCouponManagement = () => {
 .upload-icon {
   font-size: 24px;
   color: white;
-  margin-bottom: 4px;
 }
 
-.upload-text {
-  font-size: 12px;
-  color: white;
-  text-align: center;
-  line-height: 1.2;
-}
-
-/* Responsive adjustments 保持一致 */
+/* 响应式调整 */
 @media (max-width: 768px) {
   .dashboard-container {
     flex-direction: column;
@@ -465,8 +540,12 @@ const goToCouponManagement = () => {
     flex: none;
   }
 
-  .form-container {
+  .custom-form {
     max-width: 100%;
+  }
+
+  .management-btn {
+    width: 100%;
   }
 }
 </style>

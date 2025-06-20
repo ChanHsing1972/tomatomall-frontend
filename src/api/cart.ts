@@ -1,7 +1,6 @@
 import {axios} from "../utils/request";
 import {CART_MODULE} from "./_prefix";
 
-
 type ShippingAddress = {
     name: string;
     telephone: string;

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import {computed, onMounted, ref} from "vue";
-import Header from "../../components/Header.vue";
-import {deleteOrder, getOrders, type OrderItem, type OrderStatus, type OrderVO, payOrder} from "../../api/order";
 import {ElMessage, ElNotification} from "element-plus";
+import {deleteOrder, getOrders, type OrderItem, type OrderStatus, type OrderVO, payOrder} from "../../api/order";
 import {Calendar, Document, Location, Picture, Search, ShoppingCart, Ticket} from '@element-plus/icons-vue';
-import Footer from "../../components/Footer.vue";
 import {applyCouponToOrder, getUserCoupons, removeCouponFromOrder, type UserCouponVO} from "../../api/coupon";
+import Header from "../../components/Header.vue";
+import Footer from "../../components/Footer.vue";
 
-// 添加优惠券接口定义，替换之前的模拟接口
+// 添加优惠券接口定义
 interface EnhancedOrderVO extends OrderVO {
   unformattedDate: string; // 原始时间戳
   formattedDate: string;
@@ -26,10 +26,47 @@ const loading = ref(false);
 const payingOrderIds = ref<Set<string>>(new Set());
 const activeTab = ref('all');
 const searchQuery = ref('');
-
 // 添加优惠券相关状态
 const userCoupons = ref<UserCouponVO[]>([]);
 const loadingCoupons = ref(false);
+
+// 筛选后的订单列表
+const filteredOrders = computed(() => {
+  let result = [...orders.value];
+
+  // 按状态筛选
+  if (activeTab.value !== 'all') {
+    result = result.filter(order => order.status === activeTab.value);
+  }
+
+  // 按搜索内容筛选
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter(order =>
+        order.unformattedDate.includes(query) ||
+        order.items.some(item => item.title.toLowerCase().includes(query))
+    );
+  }
+
+  return result;
+});
+
+// 订单统计数据
+const orderStats = computed(() => {
+  const total = orders.value.length;
+  const pending = orders.value.filter(o => o.status === 'PENDING').length;
+  const completed = orders.value.filter(o => o.status === 'TRADE_SUCCESS').length;
+  const cancelled = orders.value.filter(o => o.status === 'EXPIRED').length;
+
+  let totalSpent = 0;
+  orders.value.forEach(order => {
+    if (order.status === 'TRADE_SUCCESS') {
+      totalSpent += parseFloat(order.totalAmount);
+    }
+  });
+
+  return {total, pending, completed, cancelled, totalSpent};
+});
 
 // 状态映射
 const statusMap: Record<OrderStatus, { text: string; type: "" | "success" | "warning" | "info" | "danger" }> = {
@@ -99,7 +136,7 @@ const calcCountdown = (expireTime: string): number => {
   return diff > 0 ? diff : 0;
 };
 
-// 获取用户优惠券列表 - 改为使用真实API
+// 获取用户优惠券列表
 const fetchUserCoupons = async () => {
   loadingCoupons.value = true;
   try {
@@ -131,7 +168,7 @@ const getCouponById = (id: number): UserCouponVO | undefined => {
   return userCoupons.value.find(coupon => coupon.id === id);
 };
 
-// 应用优惠券到订单 - 与后端联通
+// 应用优惠券到订单
 const applyCoupon = async (order: EnhancedOrderVO, couponId: number | null) => {
   if (!couponId) {
     // 如果之前有选中的优惠券，需要从订单中移除
@@ -253,7 +290,6 @@ const handleDeleteOrder = async (orderId: string) => {
   }
 }
 
-
 // 获取订单数据
 const fetchOrders = async () => {
   loading.value = true;
@@ -291,44 +327,6 @@ const fetchOrders = async () => {
     loading.value = false;
   }
 };
-
-// 筛选后的订单列表
-const filteredOrders = computed(() => {
-  let result = [...orders.value];
-
-  // 按状态筛选
-  if (activeTab.value !== 'all') {
-    result = result.filter(order => order.status === activeTab.value);
-  }
-
-  // 按搜索内容筛选
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    result = result.filter(order =>
-        order.unformattedDate.includes(query) ||
-        order.items.some(item => item.title.toLowerCase().includes(query))
-    );
-  }
-
-  return result;
-});
-
-// 订单统计数据
-const orderStats = computed(() => {
-  const total = orders.value.length;
-  const pending = orders.value.filter(o => o.status === 'PENDING').length;
-  const completed = orders.value.filter(o => o.status === 'TRADE_SUCCESS').length;
-  const cancelled = orders.value.filter(o => o.status === 'EXPIRED').length;
-
-  let totalSpent = 0;
-  orders.value.forEach(order => {
-    if (order.status === 'TRADE_SUCCESS') {
-      totalSpent += parseFloat(order.totalAmount);
-    }
-  });
-
-  return {total, pending, completed, cancelled, totalSpent};
-});
 
 // 组件挂载时获取订单数据
 onMounted(() => {

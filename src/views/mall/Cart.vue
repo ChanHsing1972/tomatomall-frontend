@@ -9,20 +9,27 @@ import {useRouter} from 'vue-router'
 import Footer from "../../components/Footer.vue";
 
 const router = useRouter()
+
 const cartItems = ref<any[]>([])
 const loading = ref(false)
 const currentProduct = ref<any>({})
 const detailDialogVisible = ref(false)
 
+const totalPrice = computed(() =>
+    cartItems.value.reduce((sum, item) => {
+      const price = parseFloat(item.price) || 0;
+      return sum + price * item.quantity;
+    }, 0)
+);
+
+const totalItems = computed(() =>
+    cartItems.value.reduce((sum, item) => sum + item.quantity, 0)
+)
+
 const fetchCartList = async () => {
   loading.value = true;
   try {
     const res = await getCartList();
-
-    // 检查数据结构
-    if (!res?.data?.items) {
-      throw new Error('购物车数据格式不正确');
-    }
 
     // 确保 items 是数组
     cartItems.value = Array.isArray(res.data.items) ? res.data.items : [];
@@ -89,17 +96,6 @@ const openDetailDialog = async (item: any) => {
   }
 }
 
-const totalPrice = computed(() =>
-    cartItems.value.reduce((sum, item) => {
-      const price = parseFloat(item.price) || 0;
-      return sum + price * item.quantity;
-    }, 0)
-);
-
-const totalItems = computed(() =>
-    cartItems.value.reduce((sum, item) => sum + item.quantity, 0)
-)
-
 const checkout = () => {
   if (cartItems.value.length === 0) {
     ElMessage.warning('购物车为空，无法结算')
@@ -128,7 +124,7 @@ const submitCheckout = async () => {
       grouping: true
     })
     await fetchCartList()
-    router.push({path: '/orders'})
+    await router.push({path: '/orders'})
   } catch (error) {
     console.error('结算失败:', error)
     ElMessage.error('结算失败，请重试')
@@ -421,17 +417,6 @@ onMounted(() => {
   .detail-dialog {
     padding: 20px 30px;
     border-radius: 30px;
-  }
-
-  .detail-dialog .el-dialog__header {
-    background-color: #fff;
-    border-bottom: none;
-    color: #333;
-  }
-
-  .detail-dialog .el-dialog__body {
-    padding: 30px;
-    margin-bottom: 30px;
   }
 
   .dialog-content {

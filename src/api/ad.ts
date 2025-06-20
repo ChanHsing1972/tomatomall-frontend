@@ -1,7 +1,6 @@
 import {axios} from "../utils/request";
 import {AD_MODULE} from "./_prefix";
 
-
 type advertisementInfo = {
     id: string;
     title: string;

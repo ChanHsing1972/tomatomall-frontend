@@ -1,8 +1,6 @@
 import {axios} from "../utils/request";
 import {PRODUCTLIKE_MODULE} from "./_prefix";
 
-export type LikeInfo = { productId: string; username: string };
-
 export const addLike = (productId: string) => {
     return axios
         .post(`${PRODUCTLIKE_MODULE}/like`, null, {

@@ -72,17 +72,6 @@ export const payOrder = (orderId: number): Promise<ResultVO<PaymentResponse>> =>
         .then(res => res.data);
 };
 
-/**
- * 处理支付宝异步通知
- * 对应后端：@PostMapping("/notify")
- * @param params 支付宝回调参数
- */
-export const handleAlipayNotify = (params: Record<string, string>): Promise<void> => {
-    return axios.post(`${ORDER_MODULE}/notify`, params, {
-        headers: {"Content-Type": "application/x-www-form-urlencoded"}
-    });
-};
-
 export const deleteOrder = async (orderId: string) => {
     return axios.delete(`${ORDER_MODULE}/${orderId}`)
         .then(res => res.data);
