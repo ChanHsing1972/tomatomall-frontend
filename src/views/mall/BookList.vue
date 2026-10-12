@@ -298,11 +298,11 @@ onMounted(() => {
           </div>
           <div class="card-info">
             <h2 class="product-title" :title="product.title">{{ product.title }}</h2>
-            <p class="product-author">{{ product.specifications.find(spec => spec.item === '作者')?.value }}</p>
             <p class="product-description">{{ product.description }}</p>
             <div class="price-rate">
-              <span class="product-price">¥ {{ product.price }}</span>
-              <span class="catalog-category">{{ product.specifications.find(spec => spec.item === '类别')?.value }}</span>
+              <span class="product-price">RMB {{ product.price }}</span>
+              <el-rate v-model="product.rate" allow-half class="product-rate" disabled/>
+              <span class="product-score">{{ product.rate.toFixed(1) }}</span>
             </div>
           </div>
         </el-card>

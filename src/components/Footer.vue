@@ -53,7 +53,7 @@
       </div>
     </div>
     <div class="copyright">
-      © 2026 枕石书屋 · 课程项目演示 · 演示支付不会扣款。
+      © 2026 枕石书屋 · 纯粹阅读，非凡生活。
     </div>
   </footer>
 </template>

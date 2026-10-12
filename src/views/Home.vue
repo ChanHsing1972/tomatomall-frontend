@@ -130,6 +130,11 @@ const newArrivals = ref<
   { id: number; title: string; cover: string; author: string; price: number }[]
 >([]);
 
+const categoryIcons: Record<string, string> = {
+  文学小说: '📖', 散文随笔: '🖋️', 人物传记: '👤', 诗歌戏剧: '🎭',
+  哲学心理: '🧠', 历史文化: '🏛️', 生活健康: '🌿', 科技科普: '🔬', 经济管理: '📊'
+};
+
 // 热门分类
 const categories = ref<
   { id: number; name: string; icon: string; count: number }[]
@@ -190,7 +195,7 @@ onMounted(async () => {
         const value = book.specifications?.find((spec: any) => spec.item === '类别')?.value || '其他';
         value.split('/').forEach((name: string) => counts.set(name.trim(), (counts.get(name.trim()) || 0) + 1));
       });
-      categories.value = Array.from(counts, ([name, count], index) => ({ id: index, name, count, icon: '📚' }));
+      categories.value = Array.from(counts, ([name, count], index) => ({ id: index, name, count, icon: categoryIcons[name] || '📚' }));
       const selected = books.find((book: any) => book.title === '我与地坛') || books[0];
       if (selected) featuredBook.value = {
         id: Number(selected.id), title: selected.title, cover: selected.cover,
@@ -199,7 +204,7 @@ onMounted(async () => {
       };
     }).catch(() => ElMessage.error('书目加载失败，请稍后重试'));
     setTimeout(() => {
-      if (adList.value.length > 0 && !hideAds.value) {
+      if (adList.value.some(ad => ad.title !== '广告 1') && !hideAds.value) {
         adsDialogVisible.value = true;
         // 如果有多个广告，启动自动轮播
         if (displayedAds.value.length > 1) {

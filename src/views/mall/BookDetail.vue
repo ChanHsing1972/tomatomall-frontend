@@ -405,6 +405,10 @@ onMounted(() => {
 
                   <div class="product-meta">
                     <div class="meta-price">¥ {{ currentProduct.price }}</div>
+                    <div class="meta-rating">
+                      <el-rate v-model="currentProduct.rate" allow-half disabled />
+                      <span>{{ currentProduct.rate.toFixed(1) }}</span>
+                    </div>
 
                   </div>
                 </div>
@@ -423,7 +427,7 @@ onMounted(() => {
                   </div>
                   <div v-if="currentProduct.detail && currentProduct.detail.length > 100" class="toggle-detail"
                     @click="toggleDetail">
-                    {{ isDetailExpanded ? '收起' : '查看更多' }}
+                    {{ isDetailExpanded ? '收起' : '展开完整介绍' }}
                   </div>
                 </div>
 

@@ -12,8 +12,7 @@ const password = ref('');
 // 输入框验证
 const hasUsernameInput = computed(() => username.value.trim() !== '');
 const hasPasswordInput = computed(() => password.value.trim() !== '');
-const insecureDemo = window.location.hostname === 'zhenshi.qd.je' && window.location.protocol !== 'https:';
-const loginDisabled = computed(() => !(hasUsernameInput.value && hasPasswordInput.value) || (insecureDemo && username.value.trim() !== 'demo'));
+const loginDisabled = computed(() => !(hasUsernameInput.value && hasPasswordInput.value));
 
 // 登录操作
 function handleLogin() {
@@ -54,7 +53,6 @@ function handleLogin() {
     <div class="login-box">
       <h1 class="login-title">欢迎登录</h1>
       <p class="login-subtitle">枕石书屋欢迎您</p>
-      <p class="demo-login">演示账户：demo<br />密码：ZhenshiDemo2026!<br />演示支付不会扣款。</p>
       <div class="login-form-box" @keyup.enter="handleLogin">
         <div class="login-input-group">
           <label for="username" class="login-input-label">用户名</label>
@@ -73,7 +71,7 @@ function handleLogin() {
             登入
           </el-button>
           <router-link to="/register" custom v-slot="{ navigate }">
-            <el-button @click="navigate" :disabled="insecureDemo" class="register-button">注册</el-button>
+            <el-button @click="navigate" class="register-button">注册</el-button>
           </router-link>
         </div>
       </div>

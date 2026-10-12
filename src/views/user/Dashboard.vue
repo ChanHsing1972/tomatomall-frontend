@@ -83,7 +83,6 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
   <Header />
   <div class="apple-bg">
     <div class="apple-container">
-      <p v-if="sharedDemo">共享演示账户资料只读，请勿在此填写个人联系方式。</p>
       <div class="apple-layout">
         <main class="apple-main">
 

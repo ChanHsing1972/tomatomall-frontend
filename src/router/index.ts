@@ -129,10 +129,6 @@ const protectedRoutes = ['/cart', '/orders', '/dashboard', '/reader', '/messages
 const adminOnlyRoutes = ['/manage'];
 
 router.beforeEach((to, _, next) => {
-  if (to.path === '/register' && window.location.hostname === 'zhenshi.qd.je' && window.location.protocol !== 'https:') {
-    next('/login');
-    return;
-  }
   const token = sessionStorage.getItem('token');
   const role = sessionStorage.getItem('role');
   const isAuthenticated = !!token;
