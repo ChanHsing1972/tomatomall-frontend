@@ -9,6 +9,7 @@ import axios from 'axios';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import './assets/global.css';
+import './styles/store.css';
 // import './mock' //引入mock.js文件，用于模拟数据
 
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || '/';

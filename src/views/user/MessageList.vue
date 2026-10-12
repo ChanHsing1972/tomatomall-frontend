@@ -1,19 +1,13 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { getRecentChats, sendMessage } from '../../api/message';
 import Header from '../../components/Header.vue';
+import Footer from '../../components/Footer.vue';
+import '../../styles/store.css';
 import { ElMessage } from 'element-plus';
-import { accountInfo, getAllUsers } from '../../api/account'; import {
-  Plus,
-  ChatDotRound,
-  Refresh,
-  ChatLineSquare,
-  ArrowRight,
-  Search,
-  Loading,
-  InfoFilled
-} from '@element-plus/icons-vue';
+import { accountInfo, getAllUsers } from '../../api/account';
+import { Refresh, ChatLineSquare, ArrowRight, Search } from '@element-plus/icons-vue';
 interface User {
   id: string;
   name: string;
@@ -23,7 +17,25 @@ interface User {
 
 const router = useRouter();
 const chats = ref<any[]>([]);
-const loading = ref(false);
+const loading = ref(true);
+const loadError = ref('');
+const chatSearch = ref('');
+const filteredChats = computed(() =>
+  chats.value.filter((chat) =>
+    [getOtherUserName(chat), chat.content]
+      .join(' ')
+      .toLowerCase()
+      .includes(chatSearch.value.trim().toLowerCase())
+  )
+);
+const formatTime = (value: string) =>
+  new Date(value).toLocaleString('zh-CN', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
 const currentUserId = sessionStorage.getItem('id');
 const currentUserRole = sessionStorage.getItem('role');
 
@@ -42,6 +54,7 @@ const userList = ref<User[]>([]);
 // 获取最近聊天列表
 const fetchRecentChats = async () => {
   loading.value = true;
+  loadError.value = '';
   try {
     const res = await getRecentChats();
     if (res.code === '200') {
@@ -50,7 +63,7 @@ const fetchRecentChats = async () => {
       ElMessage.error('获取聊天列表失败');
     }
   } catch (error) {
-    console.error('获取聊天列表失败:', error);
+    loadError.value = '消息暂时无法加载，请稍后重试。';
     ElMessage.error('获取聊天列表失败');
   } finally {
     loading.value = false;
@@ -67,7 +80,12 @@ const generateConversationId = (user1Id: string, user2Id: string) => {
 // 打开对话
 const openConversation = (chat: any) => {
   const conversationId = generateConversationId(chat.receiverId, chat.senderId);
-  router.push(`/messages/conversation/${conversationId}`);
+  router.push({
+    path: `/messages/conversation/${conversationId}`,
+    query: {
+      username: chat.senderId === currentUserId ? chat.receiverUsername : chat.senderUsername,
+    },
+  });
 };
 
 // 获取与当前用户对话的另一方的名称
@@ -115,10 +133,13 @@ const searchUsers = async () => {
   }
 };
 
-// 开始对话 
+// 开始对话
 const startConversation = (userId: string) => {
   const conversationId = generateConversationId(currentUserId!, userId);
-  router.push(`/messages/conversation/${conversationId}`);
+  router.push({
+    path: `/messages/conversation/${conversationId}`,
+    query: { username: user.value?.username },
+  });
   closeSearchDialog();
 };
 
@@ -152,6 +173,7 @@ const closeBroadcastDialog = () => {
 
 // 发送群发消息
 const sendBroadcastMessage = async () => {
+  if (broadcastLoading.value) return;
   if (!broadcastMessage.value.trim()) {
     ElMessage.warning('消息内容不能为空');
     return;
@@ -176,7 +198,9 @@ const sendBroadcastMessage = async () => {
     await Promise.all(promises);
 
     if (successCount > 0) {
-      ElMessage.success(`群发消息成功！已发送给 ${successCount} 位用户${failCount > 0 ? `，${failCount} 位用户发送失败` : ''}`);
+      ElMessage.success(
+        `群发消息成功！已发送给 ${successCount} 位用户${failCount > 0 ? `，${failCount} 位用户发送失败` : ''}`
+      );
       closeBroadcastDialog();
       // 刷新聊天列表
       await fetchRecentChats();
@@ -197,510 +221,394 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-wrapper">
-    <Header />
-    <div class="message-content">
-      <div class="page-header">
-        <h1>我的消息</h1>
-        <div class="header-actions">
-          <button class="icon-btn" @click="openSearchUserDialog" title="新消息">
-            <el-icon>
-              <Plus />
-            </el-icon>
-          </button>
-          <button v-if="currentUserRole === 'admin'" class="icon-btn" @click="openBroadcastDialog" title="群发消息">
-            <el-icon>
-              <ChatDotRound />
-            </el-icon>
-          </button>
-          <button class="icon-btn" @click="fetchRecentChats" :disabled="loading" title="刷新">
-            <el-icon :class="{ 'rotating': loading }">
-              <Refresh />
-            </el-icon>
-          </button>
+  <Header />
+  <main class="store-page">
+    <div class="store-shell messages-shell">
+      <header class="store-heading">
+        <div>
+          <span class="store-eyebrow">枕石书屋 · 消息</span>
+          <h1>让阅读，连接彼此。</h1>
+          <p>你的书友对话，都在这里。</p>
         </div>
+        <div class="message-actions">
+          <button
+            class="store-icon-button"
+            @click="fetchRecentChats"
+            :disabled="loading"
+            aria-label="刷新消息"
+          >
+            <el-icon :size="20"><Refresh /></el-icon></button
+          ><button
+            v-if="currentUserRole === 'admin'"
+            class="store-button secondary"
+            @click="openBroadcastDialog"
+          >
+            群发消息</button
+          ><button class="store-button" @click="openSearchUserDialog">新建对话</button>
+        </div>
+      </header>
+      <div class="messages-toolbar">
+        <h2>
+          最近对话 <span v-if="!loading">{{ chats.length }}</span>
+        </h2>
+        <label class="messages-search"
+          ><el-icon><Search /></el-icon
+          ><input v-model="chatSearch" aria-label="搜索对话" placeholder="搜索书友或消息"
+        /></label>
       </div>
-
-      <div class="message-list-container">
-        <div v-if="loading && chats.length === 0" class="loading-state">
-          <el-skeleton :rows="3" animated />
-        </div>
-
-        <div v-else-if="chats.length === 0" class="empty-state">
-          <div class="empty-icon">
-            <el-icon>
-              <ChatLineSquare />
-            </el-icon>
-          </div>
-          <h3>暂无消息</h3>
-          <p>开始新的对话或等待他人联系您。</p>
-          <button class="primary-btn" @click="openSearchUserDialog">开始聊天</button>
-        </div>
-
-        <div v-else class="chat-list">
-          <div v-for="chat in chats" :key="chat.id" class="chat-item" @click="openConversation(chat)">
-            <div class="avatar-wrapper">
-              <img v-if="getOtherUserAvatar(chat)" :src="getOtherUserAvatar(chat)" :alt="getOtherUserName(chat)"
-                class="avatar-img" />
-              <div v-else class="avatar-placeholder">{{ getOtherUserName(chat).charAt(0) }}</div>
-              <div v-if="!chat.isRead && chat.receiverId === currentUserId" class="unread-dot"></div>
-            </div>
-
-            <div class="chat-content">
-              <div class="chat-header">
-                <span class="chat-name">{{ getOtherUserName(chat) }}</span>
-                <span class="chat-time">{{ new Date(chat.createTime).toLocaleDateString() }}</span>
-              </div>
-              <div class="chat-preview" :class="{ 'unread': !chat.isRead && chat.receiverId === currentUserId }">
-                {{ chat.content }}
-              </div>
-            </div>
-
-            <div class="chat-arrow">
-              <el-icon>
-                <ArrowRight />
-              </el-icon>
-            </div>
+      <div
+        v-if="loading"
+        class="chat-skeleton-list"
+        role="status"
+        aria-label="正在加载消息"
+        aria-busy="true"
+      >
+        <div v-for="n in 4" :key="n" class="chat-row skeleton-row">
+          <div class="sk-block chat-avatar"></div>
+          <div class="chat-copy">
+            <div class="sk-line short"></div>
+            <div class="sk-line"></div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Search Dialog -->
-  <el-dialog v-model="searchDialogVisible" title="新消息" width="400px" destroy-on-close custom-class="apple-dialog">
-    <div class="search-container">
-      <div class="search-input-wrapper">
-        <el-icon>
-          <Search />
-        </el-icon>
-        <input v-model="searchKeyword" placeholder="搜索用户..." @keyup.enter="searchUsers" class="apple-input">
+      <div v-else-if="loadError" class="store-error" role="alert">
+        <p>{{ loadError }}</p>
+        <button class="store-link" @click="fetchRecentChats">重新加载</button>
       </div>
-
-      <div v-if="searchLoading" class="search-loading">
-        <el-icon class="is-loading">
-          <Loading />
-        </el-icon>
+      <div v-else-if="!filteredChats.length" class="store-empty">
+        <el-icon :size="52"><ChatLineSquare /></el-icon>
+        <h2>{{ chatSearch ? '没有找到匹配的对话。' : '好书值得分享。' }}</h2>
+        <p>{{ chatSearch ? '换个关键词，再找找看。' : '找到一位书友，聊聊最近读到的故事。' }}</p>
+        <button v-if="!chatSearch" class="store-link" @click="openSearchUserDialog">
+          开始一段对话 <el-icon><ArrowRight /></el-icon></button
+        ><button v-else class="store-link" @click="chatSearch = ''">查看全部消息</button>
       </div>
-
-      <div v-else-if="user" class="user-result" @click="startConversation(user.id)">
-        <div class="user-avatar-small">
-          {{ user.name.charAt(0) }}
-        </div>
-        <div class="user-info">
-          <div class="user-name">{{ user.name }}</div>
-          <div class="user-username">@{{ user.username }}</div>
-        </div>
-        <el-icon class="action-icon">
-          <ChatDotRound />
-        </el-icon>
-      </div>
-
-      <div v-else-if="searchKeyword && !user" class="no-results">
-        未找到用户
-      </div>
-    </div>
-  </el-dialog>
-
-  <!-- Broadcast Dialog -->
-  <el-dialog v-model="broadcastDialogVisible" title="群发消息" width="500px" destroy-on-close custom-class="apple-dialog">
-    <div class="broadcast-container">
-      <div class="info-banner">
-        <el-icon>
-          <InfoFilled />
-        </el-icon>
-        <span>正在发送给 {{ userList.length }} 位用户</span>
-      </div>
-
-      <textarea v-model="broadcastMessage" class="apple-textarea" placeholder="输入消息内容..." rows="6"></textarea>
-
-      <div class="dialog-footer">
-        <button class="secondary-btn" @click="closeBroadcastDialog">取消</button>
-        <button class="primary-btn" :disabled="!broadcastMessage.trim() || broadcastLoading"
-          @click="sendBroadcastMessage">
-          {{ broadcastLoading ? '发送中...' : '发送' }}
+      <div v-else class="chat-list">
+        <button
+          v-for="chat in filteredChats"
+          :key="chat.id"
+          class="chat-row"
+          @click="openConversation(chat)"
+        >
+          <span class="chat-avatar"
+            ><img
+              v-if="getOtherUserAvatar(chat)"
+              :src="getOtherUserAvatar(chat)"
+              alt=""
+              @error="($event.target as HTMLImageElement).style.display = 'none'"
+            /><span v-else>{{ getOtherUserName(chat)?.slice(0, 1) || '书' }}</span></span
+          ><span class="chat-copy"
+            ><span class="chat-top"
+              ><strong>{{ getOtherUserName(chat) }}</strong
+              ><time>{{ formatTime(chat.createTime) }}</time></span
+            ><span class="chat-preview"
+              >{{ chat.senderId === currentUserId ? '你：' : '' }}{{ chat.content }}</span
+            ></span
+          ><span
+            v-if="!chat.isRead && chat.receiverId === currentUserId"
+            class="unread-dot"
+            aria-label="未读消息"
+          ></span
+          ><el-icon class="row-chevron"><ArrowRight /></el-icon>
         </button>
       </div>
+      <aside class="message-help">
+        <h2>寻找你的书友。</h2>
+        <p>通过用户名找到对方，开启关于书籍的交流。</p>
+        <button class="store-link" @click="openSearchUserDialog">
+          查找书友 <el-icon><ArrowRight /></el-icon>
+        </button>
+      </aside>
     </div>
-  </el-dialog>
+  </main>
+  <Footer />
+  <el-dialog
+    v-model="searchDialogVisible"
+    class="store-dialog"
+    title="开始一段对话"
+    width="520px"
+    @closed="closeSearchDialog"
+    ><p class="dialog-intro">输入对方的用户名，找到想交流的书友。</p>
+    <form class="user-search-form" @submit.prevent="searchUsers">
+      <input
+        v-model="searchKeyword"
+        class="store-input"
+        aria-label="书友用户名"
+        placeholder="用户名"
+      /><button class="store-button" :disabled="searchLoading || !searchKeyword.trim()">
+        {{ searchLoading ? '查找中…' : '查找' }}
+      </button>
+    </form>
+    <div v-if="searchLoading" class="search-user-skeleton" role="status" aria-label="正在查找书友">
+      <div class="sk-line"></div>
+      <div class="sk-line short"></div>
+    </div>
+    <div v-else-if="user" class="found-user">
+      <div class="chat-avatar">{{ user.name?.slice(0, 1) || user.username.slice(0, 1) }}</div>
+      <div>
+        <strong>{{ user.name || user.username }}</strong>
+        <p>@{{ user.username }}</p>
+      </div>
+      <button
+        class="store-link"
+        :disabled="user.id === currentUserId"
+        @click="startConversation(user.id)"
+      >
+        {{ user.id === currentUserId ? '这是你' : '开始对话' }}
+      </button>
+    </div></el-dialog
+  >
+  <el-dialog
+    v-if="currentUserRole === 'admin'"
+    v-model="broadcastDialogVisible"
+    class="store-dialog"
+    title="发送书屋消息"
+    width="560px"
+    ><p class="dialog-intro">这条消息会发送给 {{ userList.length }} 位用户。</p>
+    <textarea
+      v-model="broadcastMessage"
+      class="store-input"
+      rows="5"
+      maxlength="2000"
+      aria-label="群发内容"
+      placeholder="输入你想发送的内容"
+    ></textarea
+    ><template #footer
+      ><button class="store-button secondary" @click="closeBroadcastDialog">取消</button
+      ><button
+        class="store-button"
+        :disabled="broadcastLoading || !broadcastMessage.trim() || !userList.length"
+        @click="sendBroadcastMessage"
+      >
+        {{ broadcastLoading ? '发送中…' : '发送消息' }}
+      </button></template
+    ></el-dialog
+  >
 </template>
-
 <style scoped>
-.page-wrapper {
-  background-color: #f5f5f7;
-  min-height: 100vh;
-  padding-top: 60px;
-  font-family: "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+.message-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
 }
-
-.message-content {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 40px 20px;
-}
-
-.page-header {
+.messages-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  gap: 24px;
+  border-bottom: 1px solid #d2d2d7;
+  padding-bottom: 20px;
 }
-
-.page-header h1 {
-  font-size: 40px;
+.messages-toolbar h2 {
+  font-size: 22px;
   font-weight: 600;
-  color: #1d1d1f;
+  letter-spacing: -0.02em;
   margin: 0;
 }
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: #e8e8ed;
-  color: #1d1d1f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 18px;
-}
-
-.icon-btn:hover {
-  background: #d2d2d7;
-}
-
-.icon-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.rotating {
-  animation: rotate 1s linear infinite;
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.message-list-container {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  min-height: 400px;
-}
-
-.loading-state {
-  padding: 40px;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 48px;
-  color: #d2d2d7;
-  margin-bottom: 16px;
-}
-
-.empty-state h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin: 0 0 8px;
-}
-
-.empty-state p {
+.messages-toolbar h2 span {
+  font-size: 16px;
   color: #86868b;
-  margin: 0 0 24px;
+  font-weight: 400;
+  margin-left: 10px;
 }
-
-.primary-btn {
-  background: #2D6FE3;
-  color: #fff;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.primary-btn:hover {
-  background: #0077ed;
-}
-
-.primary-btn:disabled {
-  background: #e5e5e5;
-  cursor: not-allowed;
-}
-
-.secondary-btn {
-  background: #f5f5f7;
-  color: #1d1d1f;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.secondary-btn:hover {
-  background: #e8e8ed;
-}
-
-.chat-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-item {
+.messages-search {
   display: flex;
   align-items: center;
-  padding: 16px 24px;
-  gap: 16px;
+  gap: 10px;
+  color: #86868b;
+}
+.messages-search input {
+  border: 0;
+  background: transparent;
+  font-size: 15px;
+  outline: none;
+  width: 200px;
+  padding: 8px 0;
+}
+.chat-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px 12px;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #e8e8ed;
+  text-align: left;
+  background: white;
+  color: #1d1d1f;
   cursor: pointer;
-  transition: background 0.2s;
-  border-bottom: 1px solid #f5f5f7;
 }
-
-.chat-item:last-child {
-  border-bottom: none;
+.chat-list .chat-row:hover {
+  background: #fafafa;
 }
-
-.chat-item:hover {
+.chat-avatar {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 50%;
   background: #f5f5f7;
+  display: grid;
+  place-items: center;
+  font-size: 23px;
+  font-weight: 500;
+  overflow: hidden;
+  color: #6e6e73;
 }
-
-.avatar-wrapper {
-  position: relative;
-  width: 48px;
-  height: 48px;
-}
-
-.avatar-img {
+.chat-avatar img {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
   object-fit: cover;
 }
-
-.avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: #e8e8ed;
-  color: #1d1d1f;
+.chat-copy {
+  min-width: 0;
+  flex: 1;
+  display: block;
+}
+.chat-top {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 500;
-}
-
-.unread-dot {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 10px;
-  height: 10px;
-  background: #ff3b30;
-  border-radius: 50%;
-  border: 2px solid #fff;
-}
-
-.chat-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.chat-header {
-  display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 4px;
+  gap: 20px;
+  line-height: 1.4;
 }
-
-.chat-name {
-  font-size: 16px;
+.chat-top strong {
+  font-size: 18px;
   font-weight: 600;
-  color: #1d1d1f;
 }
-
-.chat-time {
+.chat-top time {
   font-size: 12px;
-  color: #86868b;
-}
-
-.chat-preview {
-  font-size: 14px;
   color: #86868b;
   white-space: nowrap;
+}
+.chat-preview {
+  display: block;
+  color: #6e6e73;
+  font-size: 15px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 7px;
+  line-height: 1.5;
 }
-
-.chat-preview.unread {
-  color: #1d1d1f;
-  font-weight: 500;
-}
-
-.chat-arrow {
-  color: #d2d2d7;
-  font-size: 14px;
-}
-
-/* Dialog Styles */
-.search-container {
-  padding: 10px 0;
-}
-
-.search-input-wrapper {
-  display: flex;
-  align-items: center;
-  background: #f5f5f7;
-  border-radius: 10px;
-  padding: 8px 12px;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.search-input-wrapper i {
+.row-chevron {
   color: #86868b;
 }
-
-.apple-input {
-  border: none;
-  background: none;
-  outline: none;
-  width: 100%;
-  font-size: 14px;
-  color: #1d1d1f;
-}
-
-.user-result {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  border-radius: 12px;
-  background: #f5f9ff;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.user-result:hover {
-  background: #e8f2ff;
-}
-
-.user-avatar-small {
-  width: 36px;
-  height: 36px;
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
   border-radius: 50%;
-  background: #2D6FE3;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  margin-right: 12px;
+  background: #0071e3;
 }
-
-.user-info {
-  flex: 1;
+.message-help {
+  padding-top: 52px;
 }
-
-.user-name {
-  font-size: 14px;
+.message-help h2 {
+  font-size: 26px;
+  letter-spacing: -0.03em;
   font-weight: 600;
-  color: #1d1d1f;
 }
-
-.user-username {
-  font-size: 12px;
-  color: #86868b;
+.message-help p {
+  font-size: 16px;
+  color: #6e6e73;
+  line-height: 1.7;
 }
-
-.action-icon {
-  color: #2D6FE3;
-  font-size: 20px;
+.skeleton-row {
+  cursor: default;
+  min-height: 113px;
 }
-
-.no-results {
-  text-align: center;
-  color: #86868b;
-  padding: 20px;
+.skeleton-row .chat-avatar {
+  background: #e8e8ed;
 }
-
-/* Broadcast Dialog */
-.broadcast-container {
+.skeleton-row .sk-line {
+  height: 13px;
+  margin: 10px 0;
+}
+.skeleton-row .sk-line.short {
+  width: 25%;
+}
+.dialog-intro {
+  font-size: 16px;
+  color: #6e6e73;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+.user-search-form {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.info-banner {
-  background: #f5f9ff;
-  color: #2D6FE3;
-  padding: 12px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-}
-
-.apple-textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #d2d2d7;
-  border-radius: 12px;
-  font-family: inherit;
-  font-size: 14px;
-  resize: vertical;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.apple-textarea:focus {
-  border-color: #2D6FE3;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
   gap: 12px;
 }
-
-@media (max-width: 768px) {
-  .message-content {
-    padding: 20px;
+.found-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #d2d2d7;
+}
+.found-user p {
+  margin: 6px 0;
+  color: #86868b;
+  font-size: 14px;
+}
+.found-user .store-link {
+  margin-left: auto;
+}
+.search-user-skeleton {
+  margin-top: 24px;
+}
+@media (max-width: 600px) {
+  .message-actions {
+    margin: 0;
+    width: 100%;
+    justify-content: flex-end;
   }
-
-  .page-header h1 {
-    font-size: 32px;
+  .messages-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .messages-search {
+    width: 100%;
+  }
+  .messages-search input {
+    width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+  .chat-row {
+    padding: 22px 0;
+    gap: 14px;
+  }
+  .chat-avatar {
+    width: 46px;
+    height: 46px;
+    font-size: 20px;
+  }
+  .chat-top {
+    gap: 10px;
+  }
+  .chat-top strong {
+    font-size: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chat-top time {
+    font-size: 11px;
+  }
+  .chat-preview {
+    font-size: 14px;
+  }
+  .found-user {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .found-user .store-link {
+    margin-left: 0;
+  }
+  .skeleton-row {
+    min-height: 100px;
   }
 }
 </style>

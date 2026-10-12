@@ -47,3 +47,16 @@ export const clearChat = (otherUserId: number) => {
         })
         .then((res) => res.data);
 };
+
+export interface PrivateMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  createTime: string;
+  isRead: boolean;
+  senderName: string;
+  receiverName: string;
+  senderAvatar?: string;
+  receiverAvatar?: string;
+}

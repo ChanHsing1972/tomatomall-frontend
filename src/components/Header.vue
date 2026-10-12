@@ -5,14 +5,13 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { Message, Search, SwitchButton, User } from '@element-plus/icons-vue';
 import { clearSearchHistory, getSearchHistory, saveSearchHistory, SearchHistory } from '../api/search_history.ts';
 import { getUnreadCount } from '../api/message.ts';
-import AIAssistantDialog from './AIAssistantDialog.vue';
 
 const router = useRouter();
 const searchQuery = ref("");
 const searchHistory = ref<SearchHistory[]>([]);
 const token = ref(sessionStorage.getItem("token") || "");
 const unreadCount = ref(0);
-const aiAssistantVisible = ref(false);
+const mobileSearchVisible = ref(false);
 
 const fetchUnreadCount = async () => {
   try {
@@ -90,6 +89,7 @@ function handleSearch() {
 
   // 保存搜索历史并导航到搜索结果页
   handleSaveSearchHistory(searchQuery.value);
+  mobileSearchVisible.value=false;
   router.push({
     path: '/booklist',
     query: { keyword: searchQuery.value }
@@ -116,13 +116,6 @@ function goToLogin() {
   router.push('/login');
 }
 
-function openAIAssistant() {
-  if (!sessionStorage.getItem('token')) {
-    router.push('/login');
-    return;
-  }
-  aiAssistantVisible.value = true;
-}
 </script>
 
 <template>
@@ -143,15 +136,16 @@ function openAIAssistant() {
         <router-link to="/booklist" class="nav-item">书库</router-link>
         <router-link to="/cart" class="nav-item">购物袋</router-link>
         <router-link to="/orders" class="nav-item">订单</router-link>
-        <a class="nav-item ai-assistant-icon" @click="openAIAssistant">
+        <router-link to="/ai" class="nav-item ai-assistant-icon">
           <span>AI</span>
-        </a>
+        </router-link>
       </el-col>
 
       <!-- 右侧：搜索框及用户操作 -->
-      <el-col :span="6" class="right-section">
+      <el-col :span="6" class="right-section" :class="{'mobile-search-open':mobileSearchVisible}">
+        <button class="mobile-search-toggle" :aria-expanded="mobileSearchVisible" aria-label="搜索书籍" @click="mobileSearchVisible=!mobileSearchVisible"><el-icon :size="20"><Search /></el-icon></button>
         <!-- 有历史时，整个输入框都由 el-dropdown 包裹 -->
-        <el-dropdown v-if="searchHistory.length" class="search-history-dropdown" trigger="click">
+        <el-dropdown v-if="searchHistory.length" class="search-history-dropdown nav-search-host" trigger="click">
           <!-- Default slot：作为触发器的输入框 -->
           <template #default>
             <el-input v-model="searchQuery" class="nav-search" clearable placeholder="搜索" @keyup.enter="handleSearch">
@@ -178,7 +172,7 @@ function openAIAssistant() {
         </el-dropdown>
 
         <!-- 无历史时，单独渲染一个普通输入框 -->
-        <div v-else>
+        <div v-else class="nav-search-host">
           <el-input v-model="searchQuery" class="nav-search" clearable placeholder="搜索" @keyup.enter="handleSearch">
             <template #prefix>
               <el-icon class="search-icon" @click="handleSearch">
@@ -191,13 +185,13 @@ function openAIAssistant() {
         <!-- 根据登录状态显示不同的用户相关操作 -->
         <template v-if="token">
           <!-- 已登录：显示个人中心和退出登录 -->
-          <router-link class="user-link" to="/messages">
+          <router-link class="user-link" to="/messages" aria-label="消息">
             <el-icon :size="24" class="user-icon">
               <Message />
             </el-icon>
             <el-badge v-if="unreadCount > 0" :value="unreadCount" class="unread-badge" type="danger" />
           </router-link>
-          <router-link class="user-link" to="/dashboard">
+          <router-link class="user-link" to="/dashboard" aria-label="个人信息">
             <el-icon :size="24" class="user-icon">
               <User />
             </el-icon>
@@ -218,8 +212,6 @@ function openAIAssistant() {
     </el-row>
   </el-header>
 
-  <!-- AI助手对话框 -->
-  <AIAssistantDialog v-model:visible="aiAssistantVisible" />
 </template>
 
 <style>
@@ -364,4 +356,7 @@ function openAIAssistant() {
     width: 150px;
   }
 }
+.mobile-search-toggle{display:none}
+@media(min-width:768px) and (max-width:1100px){.header .nav-links{gap:18px}.header .right-section{gap:10px}.header .nav-search{width:115px}}
+@media(max-width:767px){.header{height:104px!important;padding:0 16px}.header .nav-row{height:104px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between}.header .nav-row>.el-col:first-child{display:none}.header .logo-col{height:56px;width:auto;max-width:none;flex:0 0 auto}.header .right-section{height:56px;width:auto;max-width:none;flex:0 0 auto;gap:10px}.header .nav-links{height:48px;order:3;flex:0 0 100%;max-width:100%;justify-content:space-between;gap:12px;border-top:1px solid #d2d2d75c}.header .nav-item{line-height:48px;font-size:14px}.header .mobile-search-toggle{display:grid;place-items:center;min-width:32px;min-height:44px;border:0;background:transparent;color:#666;cursor:pointer}.header .nav-search-host{display:none}.header .mobile-search-open .nav-search-host{display:block;position:absolute;top:104px;left:0;width:100%;padding:14px 0;background:#f5f5f7;border-bottom:1px solid #d2d2d7}.header .mobile-search-open .nav-search{width:100%}.header .user-icon,.header .logout-icon{line-height:44px}.header .user-link,.header .logout-link{min-height:44px;min-width:28px}}
 </style>

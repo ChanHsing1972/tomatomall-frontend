@@ -2,9 +2,10 @@
 import { computed, ref } from 'vue';
 import { ElButton, ElMessage } from "element-plus";
 import { accountInfo, accountLogin } from "../../api/account.ts";
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 // 输入框值
 const username = ref('');
 const password = ref('');
@@ -35,7 +36,8 @@ function handleLogin() {
         sessionStorage.setItem('telephone', res.data.data.telephone);
         sessionStorage.setItem('location', res.data.data.location);
         sessionStorage.setItem('id', res.data.data.id);
-        router.push({ path: "/home" });
+        const target=route.query.redirect;
+        router.push(typeof target==='string'&&target.startsWith('/')&&!target.startsWith('//')?target:'/home');
       });
     } else if (res.data.code === '401') {
       ElMessage({

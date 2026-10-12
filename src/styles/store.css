@@ -1,0 +1,258 @@
+/* Shared only by the account, order and conversation surfaces. */
+.store-page {
+  box-sizing: border-box;
+  --store-ink: #1d1d1f;
+  --store-muted: #6e6e73;
+  --store-line: #d2d2d7;
+  --store-soft: #f5f5f7;
+  --store-blue: #0066cc;
+  color: var(--store-ink);
+  background: #fff;
+  min-height: 100dvh;
+  padding-top: 60px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.store-page *,
+.store-dialog * {
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.store-shell {
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 88px 24px 96px;
+}
+.store-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 52px;
+}
+.store-heading h1 {
+  font-size: clamp(32px, 4.2vw, 48px);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  margin: 0 0 20px;
+  font-weight: 600;
+}
+.store-heading p {
+  color: var(--store-muted);
+  line-height: 1.6;
+  margin: 0;
+  font-size: 17px;
+}
+.store-eyebrow {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--store-muted);
+  margin-bottom: 14px;
+}
+.store-button {
+  border: 0;
+  border-radius: 999px;
+  background: var(--store-blue);
+  color: white;
+  min-height: 44px;
+  padding: 11px 22px;
+  font-size: 15px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s;
+}
+.store-button:hover {
+  background: #0071e3;
+}
+.store-button.secondary {
+  background: var(--store-soft);
+  color: var(--store-ink);
+}
+.store-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.store-link {
+  border: 0;
+  background: transparent;
+  color: var(--store-blue);
+  padding: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  cursor: pointer;
+  text-decoration: none;
+}
+.store-link:hover {
+  text-decoration: underline;
+}
+.store-link:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.store-input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #86868b;
+  border-radius: 12px;
+  padding: 13px 16px;
+  background: #fff;
+  color: var(--store-ink);
+  font-size: 16px;
+  outline: none;
+}
+.store-page :focus-visible,
+.store-dialog :focus-visible {
+  outline: 3px solid #0071e3;
+  outline-offset: 3px;
+}
+.store-input:focus {
+  border-color: #0071e3;
+  box-shadow: 0 0 0 3px #0071e326;
+}
+.store-empty {
+  text-align: center;
+  padding: 76px 24px;
+  border-top: 1px solid var(--store-line);
+  border-bottom: 1px solid var(--store-line);
+}
+.store-empty h2 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin: 20px 0 12px;
+}
+.store-empty p {
+  color: var(--store-muted);
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 0 auto 24px;
+  max-width: 480px;
+}
+.store-error {
+  padding: 24px;
+  background: var(--store-soft);
+  border-radius: 16px;
+  line-height: 1.7;
+  margin: 20px 0;
+}
+.store-icon-button {
+  display: grid;
+  place-items: center;
+  background: var(--store-soft);
+  border: 0;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  cursor: pointer;
+  color: var(--store-ink);
+}
+.store-icon-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.store-dialog.el-dialog {
+  --el-dialog-padding-primary: 32px;
+  max-width: calc(100vw - 32px);
+  border-radius: 22px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.store-dialog .el-dialog__title {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.store-dialog .el-dialog__body {
+  color: #1d1d1f;
+}
+.sk-block,
+.sk-line {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: #e8e8ed;
+  border-radius: 7px;
+  isolation: isolate;
+}
+.sk-block::after,
+.sk-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, #ffffff80, transparent);
+  animation: store-shimmer 1.8s ease-in-out infinite;
+}
+.sk-line {
+  height: 16px;
+  width: 82%;
+  margin: 14px 0;
+}
+.sk-line.short {
+  width: 55%;
+}
+.sk-line.price-line {
+  width: 34%;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@keyframes store-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-block::after,
+  .sk-line::after {
+    animation: none;
+  }
+}
+@media (max-width: 600px) {
+  .store-shell {
+    padding: 44px 20px 64px;
+  }
+  .store-heading {
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  .store-heading h1 {
+    margin-bottom: 14px;
+  }
+  .store-heading p {
+    font-size: 15px;
+  }
+  .store-dialog.el-dialog {
+    --el-dialog-padding-primary: 20px;
+    margin-top: 5dvh;
+    max-height: 90dvh;
+    overflow: auto;
+  }
+  .store-empty {
+    padding: 48px 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .store-page {
+    padding-top: 104px;
+  }
+  .home {
+    padding-top: 44px;
+  }
+  .booklist-container .main-container {
+    padding-top: 140px;
+  }
+  .book-detail-page-container .book-detail-page {
+    margin-top: 104px;
+  }
+}

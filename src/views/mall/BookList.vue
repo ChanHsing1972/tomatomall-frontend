@@ -216,15 +216,6 @@ onMounted(() => {
   if (savedPosition) {
     setTimeout(() => {
       window.scrollTo(0, parseInt(savedPosition));
-      // 计算应该在哪一页
-      if (productList.value.length > 0) {
-        const itemHeight = 280 + 100; // 估计每个书籍卡片的高度加间距
-        const itemsPerRow = window.innerWidth > 768 ? 4 : 2;
-        const viewportPosition = parseInt(savedPosition);
-        const rowIndex = Math.floor(viewportPosition / itemHeight);
-        const estimatedIndex = rowIndex * itemsPerRow;
-        currentPage.value = Math.floor(estimatedIndex / pageSize.value) + 1 || 1;
-      }
     }, 100);
   }
 });
@@ -267,27 +258,11 @@ onMounted(() => {
 
       <!-- 书籍列表 - 添加骨架屏 -->
       <!-- 加载时显示骨架屏 -->
-      <div v-if="loading" class="product-grid">
-        <el-skeleton
-          v-for="i in pageSize"
-          :key="i"
-          animated
-          class="product-card product-card-skeleton"
-        >
-          <template #template>
-            <div class="skeleton-card">
-              <el-skeleton-item class="skeleton-image" variant="image"/>
-              <div class="skeleton-content">
-                <el-skeleton-item class="skeleton-title" variant="h3"/>
-                <el-skeleton-item class="skeleton-desc" variant="text"/>
-                <div class="skeleton-footer">
-                  <el-skeleton-item class="skeleton-price" variant="text"/>
-                  <el-skeleton-item class="skeleton-rate" variant="text"/>
-                </div>
-              </div>
-            </div>
-          </template>
-        </el-skeleton>
+      <div v-if="loading" class="product-grid" role="status" aria-label="正在加载书籍" aria-busy="true">
+        <div v-for="i in pageSize" :key="i" class="product-card skeleton-product" aria-hidden="true">
+          <div class="card-image-wrapper sk-block"></div>
+          <div class="card-info"><h2 class="product-title"><span class="sk-line short"></span></h2><p class="product-description"><span class="sk-line"></span></p><div class="price-rate"><span class="product-price"><span class="sk-line"></span></span><span class="sk-line skeleton-rating"></span></div></div>
+        </div>
       </div>
       <!-- 加载完成显示实际内容 -->
       <div v-else-if="filteredProductList.length" class="product-grid">
@@ -1146,4 +1121,9 @@ onMounted(() => {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
   }
+</style>
+<style>
+.booklist-container .skeleton-product{padding:20px;cursor:default;box-shadow:none}.booklist-container .skeleton-product:hover{transform:none;box-shadow:none}.booklist-container .skeleton-product .sk-line{height:14px;margin:0}.booklist-container .skeleton-product .product-title .sk-line{height:1.2em;width:75%}.booklist-container .skeleton-product .skeleton-rating{width:100px}.booklist-container .skeleton-product .price-rate{min-height:32px}.booklist-container .skeleton-product .product-description .sk-line{margin-top:3px}.booklist-container .skeleton-product .product-price .sk-line{width:70px}
+@media(min-width:768px) and (max-width:1023px){.booklist-container .product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:767px){.booklist-container .main-container{padding:124px 16px 32px}.booklist-container .filter-button-container{margin-bottom:16px;padding-right:0}.booklist-container .filter-button{min-height:44px}.booklist-container .product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.booklist-container .product-card .el-card__body,.booklist-container .skeleton-product{padding:12px}.booklist-container .card-image-wrapper{height:auto;aspect-ratio:3/4;border-radius:9px}.booklist-container .product-title{font-size:16px;margin-top:14px}.booklist-container .product-description{font-size:12px;height:20px}.booklist-container .price-rate{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px;align-items:center}.booklist-container .product-price{grid-column:1/-1;width:auto;font-size:12px}.booklist-container .product-rate{margin-left:0;--el-rate-icon-size:14px;--el-rate-height:24px}.booklist-container .product-score{font-size:11px}.booklist-container .skeleton-product .skeleton-rating{width:80px;grid-column:1;margin-top:5px}.booklist-container .skeleton-product .price-rate{min-height:42px}.booklist-container .pagination-container .el-pagination__jump{display:none}.booklist-container .pagination-container{margin-top:28px}}
 </style>

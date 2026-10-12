@@ -28,11 +28,16 @@ export type OrderVO = {
     orderId: string;         // 订单ID
     userId: string;          // 用户ID
     totalAmount: string;     // 订单总金额
-    paymentMethod?: string;  // 支付方式
+    paymentMethod?: string;
+    payAmount?: string;
+    discountAmount?: string;
+    userCouponId?: string;
+    paymentTime?: string;
+    expireTime: string;  // 支付方式
     createTime: string;      // 创建时间
     status: OrderStatus;     // 订单状态
     shippingAddress: ShippingAddress; // 收货地址
-    orderItems: string[];    // 订单商品项ID列表
+    orderItems: OrderItem[];    // 订单商品项ID列表
 };
 
 // 对应后端 ResultVO 包装

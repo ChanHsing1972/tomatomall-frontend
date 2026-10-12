@@ -3,7 +3,7 @@ import { coverFallback } from "../utils";
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
 import AIAssistantDialog from "../components/AIAssistantDialog.vue";
-import { onMounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { getAllAds } from "../api/ad.ts";
 import { getProductList, getProductDetail } from "../api/product.ts";
 import { ElMessage } from "element-plus";
@@ -125,7 +125,7 @@ const recommendedBooks = ref<
   { id: number; title: string; cover: string; desc: string; price: number }[]
 >([]);
 
-// 思想与生活
+// 新书上架
 const newArrivals = ref<
   { id: number; title: string; cover: string; author: string; price: number }[]
 >([]);
@@ -153,6 +153,9 @@ const featuredBook = ref({
 
 // 动画控制
 const heroVisible = ref(false);
+const loadingBooks = ref(true);
+let adsDelay: number | undefined;
+onUnmounted(() => { stopAutoPlay(); window.clearTimeout(adsDelay); });
 onMounted(async () => {
   await fetchAds();
 
@@ -185,7 +188,7 @@ onMounted(async () => {
         id: Number(book.id), title: book.title, cover: book.cover,
         desc: book.description, price: Number(book.price)
       }));
-      newArrivals.value = books.filter((book: any) => ['散文随笔', '人物传记', '哲学心理'].includes(book.specifications?.find((spec: any) => spec.item === '类别')?.value)).slice(0, 4).map((book: any) => ({
+      newArrivals.value = books.filter((book: any) => ['5', '6', '7', '8'].includes(String(book.id))).map((book: any) => ({
         id: Number(book.id), title: book.title, cover: book.cover,
         author: book.specifications?.find((spec: any) => spec.item === '作者')?.value || '枕石书屋',
         price: Number(book.price)
@@ -200,10 +203,10 @@ onMounted(async () => {
       if (selected) featuredBook.value = {
         id: Number(selected.id), title: selected.title, cover: selected.cover,
         author: selected.specifications?.find((spec: any) => spec.item === '作者')?.value || '枕石书屋',
-        desc: selected.description, price: Number(selected.price)
+        desc: selected.id === '11' ? featuredBook.value.desc : selected.description, price: Number(selected.price)
       };
-    }).catch(() => ElMessage.error('书目加载失败，请稍后重试'));
-    setTimeout(() => {
+    }).catch(() => ElMessage.error('书目加载失败，请稍后重试')).finally(() => { loadingBooks.value = false; });
+    adsDelay = window.setTimeout(() => {
       if (adList.value.some(ad => ad.title !== '广告 1') && !hideAds.value) {
         adsDialogVisible.value = true;
         // 如果有多个广告，启动自动轮播
@@ -218,7 +221,7 @@ onMounted(async () => {
 
 // 格式化价格
 const formatPrice = (price: number) => {
-  return `¥ ${price.toFixed(2)}`;
+  return `RMB ${price.toFixed(2)}`;
 };
 
 // AI助手对话框
@@ -285,7 +288,7 @@ const aiAssistantVisible = ref(false);
           <div class="product-info">
             <h2>{{ currentProduct.title }}</h2>
             <div class="product-price">价格: {{ currentProduct.price }}</div>
-
+            <div class="product-rate">评分: {{ currentProduct.rate }}/10</div>
           </div>
         </div>
         <div class="product-description">
@@ -331,7 +334,8 @@ const aiAssistantVisible = ref(false);
         </div>
         <a class="view-all" href="javascript:void(0)" @click="navigateToLibrary">查看全部</a>
       </div>
-      <div class="categories">
+      <div v-if="loadingBooks" class="categories" role="status" aria-label="正在加载分类"><div v-for="n in 9" :key="n" class="category-card"><div class="category-icon"><span class="sk-block category-icon-placeholder"></span></div><h3><span class="sk-line"></span></h3><p><span class="sk-line short"></span></p></div></div>
+      <div v-else class="categories">
         <div v-for="category in categories" :key="category.id" class="category-card" @click="navigateToLibrary">
           <div class="category-icon">{{ category.icon }}</div>
           <h3>{{ category.name }}</h3>
@@ -345,11 +349,12 @@ const aiAssistantVisible = ref(false);
       <div class="section-title">
         <div class="title-wrapper">
           <span class="subtitle">专属推荐</span>
-          <h2>书屋精选</h2>
+          <h2>今日热门</h2>
         </div>
         <a class="view-all" href="javascript:void(0)" @click="navigateToLibrary">查看全部</a>
       </div>
-      <div class="display-books">
+      <div v-if="loadingBooks" class="display-books" role="status" aria-label="正在加载书籍" aria-busy="true"><div v-for="n in 4" :key="n" class="recommended-book home-book-skeleton"><div class="display-book-cover sk-block"></div><div class="display-book-info"><h3><span class="sk-line short"></span></h3><p class="book-desc"><span class="sk-line home-description"></span></p><div class="price"><span class="sk-line price-line"></span></div></div></div></div>
+      <div v-else class="display-books">
         <div v-for="book in recommendedBooks" :key="book.id" class="recommended-book"
           @click="navigateToBookDetail(book.id)">
           <div class="display-book-cover">
@@ -364,19 +369,21 @@ const aiAssistantVisible = ref(false);
       </div>
     </section>
 
-    <!-- 思想与生活-->
+    <!-- 新书上架-->
     <section class="new-arrivals-section" :class="{ 'visible': heroVisible }">
       <div class="section-title">
         <div class="title-wrapper">
           <span class="subtitle">书库已更新</span>
-          <h2>思想与生活</h2>
+          <h2>新书上架</h2>
         </div>
         <a class="view-all" href="javascript:void(0)" @click="navigateToLibrary">查看全部</a>
       </div>
-      <div class="display-books">
+      <div v-if="loadingBooks" class="display-books" role="status" aria-label="正在加载书籍" aria-busy="true"><div v-for="n in 4" :key="n" class="recommended-book home-book-skeleton"><div class="display-book-cover sk-block"></div><div class="display-book-info"><h3><span class="sk-line short"></span></h3><p class="book-desc"><span class="sk-line home-description"></span></p><div class="price"><span class="sk-line price-line"></span></div></div></div></div>
+      <div v-else class="display-books">
         <div v-for="book in newArrivals" :key="book.id" class="new-book" @click="navigateToBookDetail(book.id)">
           <div class="display-book-cover">
             <img :src="book.cover" @error="coverFallback($event, book.title)" alt="书籍封面" />
+            <div class="new-tag">NEW</div>
           </div>
           <div class="display-book-info">
             <h3>{{ book.title }}</h3>
@@ -390,7 +397,8 @@ const aiAssistantVisible = ref(false);
     <!-- 特色书籍 -->
     <section class="featured-section" :class="{ 'visible': heroVisible }">
       <div class="featured-book">
-        <div class="featured-content">
+        <div v-if="loadingBooks" class="featured-content" role="status" aria-label="正在加载精选书籍"><div class="featured-info"><div class="sk-line short"></div><div class="sk-line"></div><div class="sk-line"></div><div class="sk-line short"></div></div><div class="featured-image sk-block"></div></div>
+        <div v-else class="featured-content">
           <div class="featured-info">
             <div class="featured-badge">编辑精选</div>
             <h2>{{ featuredBook.title }}</h2>
@@ -409,6 +417,39 @@ const aiAssistantVisible = ref(false);
       </div>
     </section>
 
+
+    <!--  用户社区展示-->
+    <section class="community-section">
+      <h2 class="community-title">加入枕石书屋社区</h2>
+      <p class="community-subtitle">与全国书友分享阅读体验，参与读书活动，获取专属推荐</p>
+      <div class="community-stats">
+        <div class="stat-item">
+          <span class="stat-number">28.5 万</span>
+          <span class="stat-label">活跃书友</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">43.2 万</span>
+          <span class="stat-label">书评笔记</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">1274</span>
+          <span class="stat-label">读书小组</span>
+        </div>
+      </div>
+      <button class="community-btn">敬请期待</button>
+    </section>
+
+    <!-- 订阅区域 -->
+    <section class="subscribe-section" :class="{ 'visible': heroVisible }">
+      <div class="subscribe-content">
+        <h2>订阅获取更新</h2>
+        <p>第一时间获取新书资讯和独家优惠</p>
+        <div class="subscribe-form">
+          <input placeholder="输入您的邮箱地址" type="email" />
+          <button>订阅</button>
+        </div>
+      </div>
+    </section>
 
     <!-- 页脚 -->
     <Footer />
@@ -859,7 +900,7 @@ const aiAssistantVisible = ref(false);
 
 }
 
-/* 思想与生活区域 */
+/* 新书上架区域 */
 .new-arrivals-section {
   padding: 80px 0;
   background-color: #f5f5f7;
@@ -1386,4 +1427,8 @@ const aiAssistantVisible = ref(false);
   }
 
 }
+/* Loading placeholders inherit the original home card geometry. */
+.home-book-skeleton{min-width:0}.category-icon-placeholder{width:44px;height:44px;margin:auto}.category-card .sk-line{margin:0 auto}.category-card p .sk-line{height:14px}.home-book-skeleton .display-book-cover{height:380px;margin-bottom:0}.home-book-skeleton .sk-line{margin:0;height:22px}.home-book-skeleton .home-description{height:38px;margin-top:10px}.home-book-skeleton .price-line{height:28px;margin-top:0}
+@media(max-width:767px){.home .hero-content{width:calc(100% - 40px)}.home .hero-image{width:100%;height:300px;flex:none;min-width:0}.home .hero-image img{height:300px}.home .section-title{padding:0 20px;gap:16px}.home .display-books{grid-template-columns:repeat(2,minmax(0,1fr));padding:0 20px;gap:24px 14px}.home .display-book-cover{height:auto;aspect-ratio:3/4}.home .home-book-skeleton .display-book-cover{height:auto;aspect-ratio:3/4}.home .categories{padding:0 20px;gap:14px}.home .category-card{width:calc(50% - 7px);padding:24px 10px}.home .featured-book{margin:0 20px}.home .featured-content{padding:24px;gap:24px}.home .featured-info,.home .featured-image{width:100%;min-width:0}.home .featured-image{height:auto}.home .featured-image img{max-height:380px;object-fit:contain}.home .featured-actions{flex-wrap:wrap;gap:12px}.home .community-stats{gap:24px;flex-wrap:wrap}.home .subscribe-form{max-width:100%;padding:0 20px}.home .subscribe-form input{min-width:0}.home .ad-dialog{width:calc(100% - 32px)!important}.home .product-detail{overflow-wrap:anywhere}}
+@media(prefers-reduced-motion:reduce){.home *{animation:none!important;transition:none!important}.home .hero,.home .categories-section,.home .recommended-section,.home .new-arrivals-section,.home .featured-section,.home .subscribe-section{opacity:1;transform:none}}
 </style>

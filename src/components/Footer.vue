@@ -156,6 +156,7 @@
   border-top: 1px solid #d2d2d7;
   padding-top: 20px;
 }
+@media(max-width:767px){.footer{padding:40px 20px 24px}.footer-content{flex-direction:column;gap:28px}.footer-logo{width:100%;flex:none}.footer-links{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 20px}.footer-column{min-width:0}.social-icons{gap:10px}.copyright{margin-top:28px;line-height:1.7}}
 </style>
 <script lang="ts" setup>
 </script>

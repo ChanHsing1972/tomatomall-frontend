@@ -136,10 +136,8 @@ const fetchProductDetail = async () => {
     const detailResponse = await getProductDetail(productId.value);
     currentProduct.value = detailResponse.data.data;
     document.title = `${currentProduct.value.title} - 枕石书屋`;
-    const likeResponse = await getLikeCount(productId.value);
-    likeCount.value = likeResponse.data.data;
-    await fetchComments();
-    await fetchPurchasedStatus(); // 获取书籍购买状态
+    const [likeResponse] = await Promise.all([getLikeCount(productId.value), fetchComments(), fetchPurchasedStatus()]);
+    likeCount.value = likeResponse.data.data; // 获取书籍购买状态
   } catch (error) {
     console.error("获取书籍详情失败:", error);
     ElMessage.error("获取书籍详情失败");
@@ -404,7 +402,7 @@ onMounted(() => {
                   </div>
 
                   <div class="product-meta">
-                    <div class="meta-price">¥ {{ currentProduct.price }}</div>
+                    <div class="meta-price">RMB  {{ currentProduct.price }}</div>
                     <div class="meta-rating">
                       <el-rate v-model="currentProduct.rate" allow-half disabled />
                       <span>{{ currentProduct.rate.toFixed(1) }}</span>
@@ -540,29 +538,7 @@ onMounted(() => {
           </div>
         </template>
         <template #template>
-          <div class="skeleton-content">
-            <div class="skeleton-header">
-              <div class="skeleton-image"></div>
-              <div class="skeleton-info">
-                <el-skeleton-item style="width: 50%" variant="h1" />
-                <el-skeleton-item style="margin: 15px 0; width: 30%" variant="text" />
-                <el-skeleton-item style="width: 100%" variant="p" />
-                <el-skeleton-item style="width: 100%" variant="p" />
-              </div>
-            </div>
-            <div class="skeleton-body">
-              <el-skeleton-item style="width: 30%" variant="h3" />
-              <div v-for="i in 3" :key="i">
-                <div class="skeleton-comment">
-                  <div class="skeleton-avatar"></div>
-                  <div class="skeleton-content">
-                    <el-skeleton-item style="width: 20%" variant="text" />
-                    <el-skeleton-item style="width: 100%" variant="p" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div class="detail-container detail-skeleton" role="status" aria-label="正在加载图书详情" aria-busy="true"><div class="product-main-content"><div class="dialog-image"><div class="detail-cover sk-block"></div><div class="product-actions"><span class="sk-block action-button"></span><span class="sk-block action-button"></span></div></div><div class="dialog-info"><div class="sk-line detail-title"></div><div class="sk-line short"></div><div class="product-specs"><div v-for="n in 8" :key="n" class="spec-item"><div class="sk-line price-line"></div><div class="sk-line"></div></div></div><div class="detail-description-skeleton"><div class="sk-line"></div><div class="sk-line"></div><div class="sk-line short"></div></div></div></div></div>
         </template>
       </el-skeleton>
     </div>
@@ -1268,4 +1244,9 @@ onMounted(() => {
   cursor: not-allowed;
   opacity: 0.7;
 }
+</style>
+
+<style>
+.book-detail-page-container .detail-skeleton .detail-cover{width:100%;height:auto;aspect-ratio:3/4}.book-detail-page-container .detail-skeleton .action-button{width:48%;height:44px}.book-detail-page-container .detail-skeleton .detail-title{height:36px;width:70%;margin-bottom:20px}.book-detail-page-container .detail-skeleton .product-specs{margin-top:34px;gap:24px}.book-detail-page-container .detail-skeleton .spec-item .sk-line{height:13px;margin:3px 0}.book-detail-page-container .detail-description-skeleton{margin-top:32px;background:#f5f5f7;border-radius:16px;padding:24px}
+@media(max-width:767px){.book-detail-page-container .book-detail-page{padding:20px 16px;margin-top:104px}.book-detail-page-container .detail-container{padding:0}.book-detail-page-container .product-main-content{flex-direction:column;gap:28px}.book-detail-page-container .dialog-image,.book-detail-page-container .dialog-info{width:100%;max-width:none;flex:none}.book-detail-page-container .dialog-image{padding:20px}.book-detail-page-container .dialog-info{padding:0}.book-detail-page-container .dialog-image .detail-cover{max-width:340px;height:auto;aspect-ratio:3/4;margin:auto}.book-detail-page-container .product-actions{gap:12px}.book-detail-page-container .action-button{padding:12px;font-size:14px}.book-detail-page-container .product-specs{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.book-detail-page-container .spec-value{font-size:15px;overflow-wrap:anywhere}.book-detail-page-container .title-like-wrapper{gap:12px;align-items:flex-start}.book-detail-page-container .product-title{font-size:32px}.book-detail-page-container .product-detail-content{padding:20px}.book-detail-page-container .comment-body{min-width:0}.book-detail-page-container .comment-header{flex-wrap:wrap}}
 </style>

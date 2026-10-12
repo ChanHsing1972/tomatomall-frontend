@@ -3,6 +3,6 @@ import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
   plugins: [vue()],
-  server: { port: 3000, proxy: { '/api': 'http://localhost:8080' } },
+  server: { port: 3000, proxy: { '/api': {target:process.env.DEV_API_PROXY || 'http://localhost:8080',changeOrigin:true}, '/catalog-covers': {target:process.env.DEV_API_PROXY || 'http://localhost:8080',changeOrigin:true} } },
   base: '/',
 });

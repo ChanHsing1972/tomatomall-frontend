@@ -150,7 +150,7 @@ const formatCouponValue = (value: number, type: string) => {
   if (type === 'DISCOUNT') {
     return `${value}%`;
   } else {
-    return `¥${value.toFixed(2)}`;
+    return `RMB ${value.toFixed(2)}`;
   }
 };
 
@@ -182,7 +182,7 @@ onMounted(() => {
       </el-table-column>
       <el-table-column label="最低消费" prop="minimumSpend" width="100">
         <template #default="scope">
-          ¥{{ scope.row.minimumSpend.toFixed(2) }}
+          RMB {{ scope.row.minimumSpend.toFixed(2) }}
         </template>
       </el-table-column>
       <el-table-column label="描述" min-width="180" prop="description"/>

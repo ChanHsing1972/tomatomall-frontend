@@ -10,6 +10,7 @@ const router = createRouter({
     }
   },
   routes: [
+    { path:'/ai', component:()=>import('../views/AI.vue'), meta:{title:'AI 选书'} },
     {
       path: '/',
       redirect: '/home',
