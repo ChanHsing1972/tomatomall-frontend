@@ -1,0 +1,358 @@
+image: node:18
+
+stages:
+  - build
+  - code-quality
+  - security
+  - docker
+
+variables:
+  # NPM镜像配置(适配中国大陆网络环境)
+  NPM_CONFIG_REGISTRY: "https://registry.npmmirror.com"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+    - .npm/
+
+# ============= 任务(3): 网页端构建 =============
+build-job:
+  stage: build
+  script:
+    - echo "安装依赖..."
+    - npm install
+    - echo "构建前端项目..."
+    - npm run build
+    - echo "构建完成！"
+  artifacts:
+    paths:
+      - dist/
+      - node_modules/
+    expire_in: 1 week
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+
+# ============= 任务(4): 网页端代码质量检查 =============
+code-quality-job:
+  stage: code-quality
+  image: python:3.11-slim
+  allow_failure: true
+  script:
+    - echo "开始前端代码质量检查..."
+    - find src -type f \( -name "*.ts" -o -name "*.vue" -o -name "*.js" \) -exec grep -nH "TODO\|FIXME\|HACK\|XXX" {} \; > todos.txt || true
+    - |
+      cat > parse_todos.py << 'PYEOF'
+      import json
+      issues = []
+      try:
+          with open('todos.txt', 'r') as f:
+              for line in f:
+                  if ':' in line:
+                      parts = line.split(':', 2)
+                      if len(parts) >= 3:
+                          issues.append({
+                              'type': 'issue',
+                              'check_name': 'TODO',
+                              'description': parts[2].strip(),
+                              'categories': ['Style'],
+                              'location': {
+                                  'path': parts[0],
+                                  'lines': {'begin': int(parts[1]), 'end': int(parts[1])}
+                              },
+                              'severity': 'info'
+                          })
+      except:
+          pass
+      if not issues:
+          issues = [{'type': 'issue', 'check_name': 'INFO', 'description': '未发现代码质量问题', 'categories': ['Style'], 'location': {'path': 'src/', 'lines': {'begin': 1, 'end': 1}}, 'severity': 'info'}]
+      with open('code-quality-report.json', 'w') as f:
+          json.dump(issues, f)
+      PYEOF
+    - python3 parse_todos.py || echo '[{"type":"issue","check_name":"INFO","description":"代码质量检查完成","categories":["Style"],"location":{"path":"src/","lines":{"begin":1,"end":1}},"severity":"info"}]' > code-quality-report.json
+    - cat code-quality-report.json
+  artifacts:
+    reports:
+      codequality: code-quality-report.json
+    paths:
+      - code-quality-report.json
+    expire_in: 1 week
+
+# ============= 任务(4): 前端代码格式检查（Prettier）=============
+prettier-check:
+  stage: code-quality
+  script:
+    - echo "检查代码格式..."
+    - npm install
+    - npm run format:check || echo "代码格式需要修正"
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - master
+
+# ============= 任务(5): 前端依赖安全检查 - npm audit =============
+npm-audit:
+  stage: security
+  allow_failure: true
+  script:
+    - echo "运行npm audit依赖安全检查..."
+    - npm install
+    - npm audit --json > npm-audit.json || true
+    - npm audit || true
+    - |
+      # 转换npm audit报告为GitLab格式
+      cat > convert_npm_audit.py << 'PYEOF'
+      import json
+      import hashlib
+
+      vulnerabilities = []
+
+      try:
+          with open('npm-audit.json', 'r') as f:
+              audit_data = json.load(f)
+
+          if 'vulnerabilities' in audit_data:
+              for pkg_name, vuln_data in audit_data['vulnerabilities'].items():
+                  severity_map = {
+                      'critical': 'Critical',
+                      'high': 'High',
+                      'moderate': 'Medium',
+                      'low': 'Low',
+                      'info': 'Info'
+                  }
+
+                  severity = severity_map.get(vuln_data.get('severity', 'info').lower(), 'Unknown')
+
+                  via = vuln_data.get('via', [])
+                  description = ''
+                  cve_id = ''
+
+                  if isinstance(via, list) and len(via) > 0:
+                      if isinstance(via[0], dict):
+                          description = via[0].get('title', '')
+                          cve_id = via[0].get('url', '').split('/')[-1] if via[0].get('url') else ''
+
+                  fingerprint = hashlib.sha256(f"{pkg_name}:{severity}".encode()).hexdigest()
+
+                  vulnerabilities.append({
+                      'id': fingerprint[:16],
+                      'category': 'dependency_scanning',
+                      'name': f"Vulnerability in {pkg_name}",
+                      'message': description or f"Security vulnerability in {pkg_name}",
+                      'description': description or f"Package {pkg_name} has a security vulnerability",
+                      'severity': severity,
+                      'confidence': 'High',
+                      'scanner': {
+                          'id': 'npm-audit',
+                          'name': 'NPM Audit'
+                      },
+                      'location': {
+                          'file': 'package.json',
+                          'dependency': {
+                              'package': {
+                                  'name': pkg_name
+                              }
+                          }
+                      },
+                      'identifiers': [{
+                          'type': 'npm',
+                          'name': pkg_name,
+                          'value': pkg_name
+                      }]
+                  })
+      except Exception as e:
+          print(f"解析npm audit报告出错: {e}")
+
+      report = {
+          'version': '15.0.0',
+          'vulnerabilities': vulnerabilities,
+          'scan': {
+              'scanner': {
+                  'id': 'npm-audit',
+                  'name': 'NPM Audit',
+                  'version': '9.0.0'
+              },
+              'type': 'dependency_scanning',
+              'start_time': '',
+              'end_time': '',
+              'status': 'success'
+          }
+      }
+
+      with open('gl-dependency-scanning-report.json', 'w') as f:
+          json.dump(report, f, indent=2)
+
+      print(f"生成了 {len(vulnerabilities)} 个依赖安全问题报告")
+      PYEOF
+    - python3 convert_npm_audit.py || true
+  artifacts:
+    when: always
+    paths:
+      - npm-audit.json
+      - gl-dependency-scanning-report.json
+    reports:
+      dependency_scanning: gl-dependency-scanning-report.json
+    expire_in: 1 week
+
+# ============= 任务(5): 前端静态安全检查 - ESLint Security Plugin =============
+eslint-security:
+  stage: security
+  allow_failure: true
+  before_script:
+    - npm install
+    - npm install --save-dev eslint eslint-plugin-security || true
+  script:
+    - echo "运行ESLint安全检查..."
+    - |
+      # 创建ESLint配置文件
+      cat > .eslintrc.json << 'EOF'
+      {
+        "env": {
+          "browser": true,
+          "es2021": true,
+          "node": true
+        },
+        "extends": [
+          "eslint:recommended"
+        ],
+        "plugins": ["security"],
+        "rules": {
+          "security/detect-object-injection": "warn",
+          "security/detect-non-literal-regexp": "warn",
+          "security/detect-unsafe-regex": "error",
+          "security/detect-buffer-noassert": "error",
+          "security/detect-eval-with-expression": "error",
+          "security/detect-no-csrf-before-method-override": "error",
+          "security/detect-possible-timing-attacks": "warn"
+        }
+      }
+      EOF
+    - npx eslint src --ext .js,.ts,.vue --format json -o eslint-security.json || true
+    - npx eslint src --ext .js,.ts,.vue || true
+    - |
+      # 转换ESLint报告为GitLab SAST格式
+      cat > convert_eslint.py << 'PYEOF'
+      import json
+      import hashlib
+
+      vulnerabilities = []
+
+      try:
+          with open('eslint-security.json', 'r') as f:
+              eslint_data = json.load(f)
+
+          for file_result in eslint_data:
+              file_path = file_result.get('filePath', '')
+              # 转换为相对路径
+              if '/tomatomall-frontend/' in file_path:
+                  file_path = file_path.split('/tomatomall-frontend/')[-1]
+
+              for message in file_result.get('messages', []):
+                  severity_map = {2: 'High', 1: 'Medium', 0: 'Low'}
+                  severity = severity_map.get(message.get('severity', 1), 'Unknown')
+
+                  rule_id = message.get('ruleId', 'unknown')
+                  fingerprint = hashlib.sha256(
+                      f"{file_path}:{rule_id}:{message.get('line')}".encode()
+                  ).hexdigest()
+
+                  vulnerabilities.append({
+                      'id': fingerprint[:16],
+                      'category': 'sast',
+                      'name': rule_id,
+                      'message': message.get('message', ''),
+                      'description': message.get('message', ''),
+                      'severity': severity,
+                      'confidence': 'Medium',
+                      'scanner': {
+                          'id': 'eslint-security',
+                          'name': 'ESLint Security'
+                      },
+                      'location': {
+                          'file': file_path,
+                          'start_line': message.get('line', 1),
+                          'end_line': message.get('endLine', message.get('line', 1))
+                      },
+                      'identifiers': [{
+                          'type': 'eslint_rule_id',
+                          'name': rule_id,
+                          'value': rule_id
+                      }]
+                  })
+      except Exception as e:
+          print(f"解析ESLint报告出错: {e}")
+
+      report = {
+          'version': '15.0.0',
+          'vulnerabilities': vulnerabilities,
+          'scan': {
+              'scanner': {
+                  'id': 'eslint-security',
+                  'name': 'ESLint Security Plugin',
+                  'version': '1.0.0'
+              },
+              'type': 'sast',
+              'start_time': '',
+              'end_time': '',
+              'status': 'success'
+          }
+      }
+
+      with open('gl-sast-report.json', 'w') as f:
+          json.dump(report, f, indent=2)
+
+      print(f"生成了 {len(vulnerabilities)} 个安全问题报告")
+      PYEOF
+    - python3 convert_eslint.py || true
+  artifacts:
+    when: always
+    paths:
+      - eslint-security.json
+      - gl-sast-report.json
+    reports:
+      sast: gl-sast-report.json
+    expire_in: 1 week
+
+# ============= 可选: Docker镜像构建(使用宿主机Docker) =============
+build-docker-job:
+  stage: docker
+  image: node:18
+  allow_failure: true
+  tags:
+    - docker
+  before_script:
+    - echo "检查Docker环境..."
+    - docker --version || echo "Docker未安装"
+    - docker info || echo "无法连接到Docker daemon"
+  script:
+    - echo "构建前端Docker镜像（使用宿主机Docker）..."
+    - |
+      cat > Dockerfile << 'EOF'
+      FROM node:18 AS builder
+      WORKDIR /app
+      COPY package*.json ./
+      RUN npm install
+      COPY . .
+      RUN npm run build
+
+      FROM nginx:alpine
+      COPY --from=builder /app/dist /usr/share/nginx/html
+      EXPOSE 80
+      CMD ["nginx", "-g", "daemon off;"]
+      EOF
+    - docker build -t tomatomall-frontend:latest . || echo "Docker构建失败,但不影响主流程"
+    - docker save tomatomall-frontend:latest -o tomatomall-frontend.tar || true
+    - echo "Docker镜像构建完成"
+  artifacts:
+    paths:
+      - tomatomall-frontend.tar
+    expire_in: 1 week
+    when: on_success
+  dependencies:
+    - build-job
+  only:
+    - main
+    - master

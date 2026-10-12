@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import {ref, watch} from 'vue';
-import {ElMessage} from 'element-plus';
-import {QuestionFilled} from '@element-plus/icons-vue';
-import {askAIAssistant} from '../api/aiService';
+import { ref, watch } from 'vue';
+import { ElMessage } from 'element-plus';
+import { QuestionFilled } from '@element-plus/icons-vue';
+import { askAIAssistant } from '../api/aiService';
 
 const props = defineProps<{
   visible: boolean;
@@ -37,7 +37,7 @@ watch(() => props.visible, (newValue) => {
     if (chatHistory.value.length === 0) {
       chatHistory.value.push({
         role: 'ai',
-        content: '您好，我是番茄书城智能助手，有什么可以帮您？'
+        content: '您好，我是枕石书屋智能助手，有什么可以帮您？'
       });
     }
   }
@@ -45,7 +45,7 @@ watch(() => props.visible, (newValue) => {
 
 // 发送问题到后端
 const submitQuestion = async () => {
-  if (!question.value.trim()) {
+  if (loading.value || !question.value.trim()) {
     ElMessage.warning('请输入您的问题');
     return;
   }
@@ -131,13 +131,13 @@ const clearHistory = () => {
 </script>
 
 <template>
-  <el-dialog v-model="props.visible" :before-close="closeDialog" destroy-on-close title="AI 书城助手" width="650px">
+  <el-dialog :model-value="props.visible" @update:model-value="emit('update:visible', $event)" :before-close="closeDialog" destroy-on-close title="AI 书城助手" width="650px">
     <div class="ai-assistant-container">
       <!-- 聊天历史 -->
       <div class="chat-history">
         <div v-if="chatHistory.length === 0" class="empty-chat">
           <el-icon :size="50" class="empty-icon">
-            <QuestionFilled/>
+            <QuestionFilled />
           </el-icon>
           <p>您可以询问任何关于书城中书籍的问题</p>
           <p class="example">例如："书城里有哪些书"，"推荐一些计算机类书籍"</p>
@@ -167,7 +167,7 @@ const clearHistory = () => {
         <div class="actions actions-horizontal">
           <div class="question-chips-horizontal">
             <div v-for="(q, index) in suggestedQuestions" :key="index" class="question-chip"
-                 @click="selectSuggestedQuestion(q)">
+              @click="selectSuggestedQuestion(q)">
               {{ q }}
             </div>
           </div>
@@ -175,7 +175,7 @@ const clearHistory = () => {
         </div>
         <div class="input-wrapper">
           <el-input v-model="question" :rows="3" placeholder="请输入您的问题..." resize="none" type="textarea"
-                    @keydown="handleKeyDown"/>
+            @keydown="handleKeyDown" />
           <el-button :disabled="loading" :loading="loading" type="primary" @click="submitQuestion">
             发送
           </el-button>

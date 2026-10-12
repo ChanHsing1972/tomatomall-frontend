@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import {computed, ref} from 'vue';
-import {ElButton, ElMessage} from "element-plus";
-import {accountRegister} from "../../api/account.ts";
-import {useRouter} from 'vue-router';
+import { computed, ref } from 'vue';
+import { ElButton, ElMessage } from "element-plus";
+import { accountRegister } from "../../api/account.ts";
+import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
@@ -35,13 +35,13 @@ const emailLegal = computed(() => {
 
 const registerDisabled = computed(() => {
   return !(
-      hasUsernameInput.value &&
-      hasNameInput.value &&
-      hasPasswordInput.value &&
-      hasConfirmPasswordInput.value &&
-      isPasswordIdentical.value &&
-      telLegal.value &&
-      emailLegal.value
+    hasUsernameInput.value &&
+    hasNameInput.value &&
+    hasPasswordInput.value &&
+    hasConfirmPasswordInput.value &&
+    isPasswordIdentical.value &&
+    telLegal.value &&
+    emailLegal.value
   );
 });
 
@@ -61,17 +61,15 @@ function handleRegister() {
       ElMessage({
         message: "注册成功！请登录账号",
         type: 'success',
-        center: true,
       });
-      router.push({path: "/login"});
+      router.push({ path: "/login" });
     } else if (res.data.code === '401') {
       ElMessage({
         message: res.data.msg,
         type: 'error',
-        center: true,
       });
     }
-  });
+  }).catch((error) => ElMessage.error(error.message || '注册失败，请稍后重试'));
 }
 </script>
 
@@ -80,7 +78,7 @@ function handleRegister() {
     <div class="apple-login-wrapper">
       <div class="login-box">
         <h1 class="login-title">创建新账户</h1>
-        <p class="login-subtitle">番茄书城欢迎您</p>
+        <p class="login-subtitle">枕石书屋欢迎您</p>
         <div class="login-form-box" @keyup.enter="handleRegister">
           <!-- 用户名 -->
           <div class="login-input-group">
@@ -88,7 +86,7 @@ function handleRegister() {
               用户名<span class="required">*</span>
             </label>
             <div class="form-group">
-              <input id="username" v-model="username" class="input-field" placeholder="请输入用户名" type="text"/>
+              <input id="username" v-model="username" class="input-field" placeholder="3–32 位字母、数字或下划线" type="text" />
             </div>
           </div>
           <!-- 昵称 -->
@@ -97,7 +95,7 @@ function handleRegister() {
               昵称<span class="required">*</span>
             </label>
             <div class="form-group">
-              <input id="name" v-model="name" class="input-field" placeholder="请输入昵称" type="text"/>
+              <input id="name" v-model="name" class="input-field" placeholder="请输入昵称" type="text" />
             </div>
           </div>
           <!-- 密码 -->
@@ -106,7 +104,7 @@ function handleRegister() {
               密码<span class="required">*</span>
             </label>
             <div class="form-group">
-              <input id="password" v-model="password" class="input-field" placeholder="请输入密码" type="password"/>
+              <input id="password" v-model="password" class="input-field" placeholder="8–72 位密码" type="password" />
             </div>
           </div>
           <!-- 确认密码 -->
@@ -116,14 +114,14 @@ function handleRegister() {
             </label>
             <div class="form-group">
               <input id="confirmPassword" v-model="confirmPassword" class="input-field" placeholder="请再次输入密码"
-                     type="password"/>
+                type="password" />
             </div>
           </div>
           <!-- 手机号 -->
           <div class="login-input-group">
             <label for="telephone" class="login-input-label">手机号</label>
             <div class="form-group">
-              <input id="telephone" v-model="telephone" class="input-field" placeholder="请输入手机号" type="tel"/>
+              <input id="telephone" v-model="telephone" class="input-field" placeholder="请输入手机号" type="tel" />
             </div>
           </div>
           <div v-if="telephone && !telLegal" class="error-message">
@@ -133,7 +131,7 @@ function handleRegister() {
           <div class="login-input-group">
             <label for="email" class="login-input-label">邮箱</label>
             <div class="form-group">
-              <input id="email" v-model="email" class="input-field" placeholder="请输入邮箱" type="email"/>
+              <input id="email" v-model="email" class="input-field" placeholder="请输入邮箱" type="email" />
             </div>
           </div>
           <div v-if="email && !emailLegal" class="error-message">
@@ -143,7 +141,7 @@ function handleRegister() {
           <div class="login-input-group">
             <label for="location" class="login-input-label">地址</label>
             <div class="form-group">
-              <input id="location" v-model="location" class="input-field" placeholder="请输入地址" type="text"/>
+              <input id="location" v-model="location" class="input-field" placeholder="请输入地址" type="text" />
             </div>
           </div>
           <!-- 按钮区域 -->

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {computed, onMounted, ref} from "vue";
-import {ElMessage, ElNotification} from "element-plus";
-import {deleteOrder, getOrders, type OrderItem, type OrderStatus, type OrderVO, payOrder} from "../../api/order";
-import {Calendar, Document, Location, Picture, Search, ShoppingCart, Ticket} from '@element-plus/icons-vue';
-import {applyCouponToOrder, getUserCoupons, removeCouponFromOrder, type UserCouponVO} from "../../api/coupon";
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import { ElMessage, ElNotification } from "element-plus";
+import { deleteOrder, getOrders, type OrderItem, type OrderStatus, type OrderVO, payOrder } from "../../api/order";
+import { Calendar, Document, Location, Picture, Search, ShoppingCart } from '@element-plus/icons-vue';
+import { applyCouponToOrder, getUserCoupons, removeCouponFromOrder, type UserCouponVO } from "../../api/coupon";
 import Header from "../../components/Header.vue";
 import Footer from "../../components/Footer.vue";
 
@@ -43,8 +43,8 @@ const filteredOrders = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     result = result.filter(order =>
-        order.unformattedDate.includes(query) ||
-        order.items.some(item => item.title.toLowerCase().includes(query))
+      order.unformattedDate.includes(query) ||
+      order.items.some(item => item.title.toLowerCase().includes(query))
     );
   }
 
@@ -65,14 +65,14 @@ const orderStats = computed(() => {
     }
   });
 
-  return {total, pending, completed, cancelled, totalSpent};
+  return { total, pending, completed, cancelled, totalSpent };
 });
 
 // 状态映射
 const statusMap: Record<OrderStatus, { text: string; type: "" | "success" | "warning" | "info" | "danger" }> = {
-  PENDING: {text: "待支付", type: "warning"},
-  TRADE_SUCCESS: {text: "已完成", type: "success"},
-  EXPIRED: {text: "已过期", type: "info"}
+  PENDING: { text: "待支付", type: "warning" },
+  TRADE_SUCCESS: { text: "已完成", type: "success" },
+  EXPIRED: { text: "已过期", type: "info" }
 };
 
 // 格式化日期
@@ -241,10 +241,15 @@ const handlePayOrder = async (orderId: string) => {
   try {
     payingOrderIds.value.add(orderId);
 
-    const {code, data, message} = await payOrder(Number(orderId));
+    const { code, data, message } = await payOrder(Number(orderId));
 
     if (code.toString() === "200") {
       // 处理支付返回结果
+      if (data.demo) {
+        ElMessage.success('演示支付成功，本次操作不会扣款');
+        await fetchOrders();
+        return;
+      }
       if (data.paymentForm) {
         // 直接跳转到支付URL
         window.location.href = data.paymentForm.trim();
@@ -272,7 +277,7 @@ const handlePayOrder = async (orderId: string) => {
 
 const handleDeleteOrder = async (orderId: string) => {
   try {
-    const {code, message} = await deleteOrder(orderId);
+    const { code, message } = await deleteOrder(orderId);
     if (code.toString() === "200") {
       ElMessage({
         message: "订单已删除",
@@ -297,21 +302,23 @@ const fetchOrders = async () => {
     const res = await getOrders();
     if (res.code === "200" && res.data) {
       orders.value = await Promise.all(
-          res.data.map(async (order: OrderVO) => {
-            // 获取所有商品详情
-            const items = order.orderItems;
-            return {
-              ...order,
-              expireTime: (order as any).expireTime,
-              unformattedDate: convertTimestamp(order.createTime),
-              formattedDate: formatDate(order.createTime),
-              statusText: statusMap[order.status].text,
-              items,
-              timeline: generateTimeline(order),
-              selectedCouponId: undefined,
-              showCouponDialog: false
-            };
-          })
+        res.data.map(async (order: OrderVO) => {
+          // 获取所有商品详情
+          const items = order.orderItems;
+          return {
+            ...order,
+            expireTime: (order as any).expireTime,
+            unformattedDate: convertTimestamp(order.createTime),
+            formattedDate: formatDate(order.createTime),
+            statusText: statusMap[order.status].text,
+            items,
+            timeline: generateTimeline(order),
+            selectedCouponId: (order as any).userCouponId ? Number((order as any).userCouponId) : undefined,
+            appliedDiscount: Number((order as any).discountAmount || 0),
+            countdown: calcCountdown((order as any).expireTime),
+            showCouponDialog: false
+          };
+        })
       );
     } else {
       ElMessage.error(res.message || "获取订单失败");
@@ -329,10 +336,12 @@ const fetchOrders = async () => {
 };
 
 // 组件挂载时获取订单数据
+let countdownTimer: number;
+onUnmounted(() => window.clearInterval(countdownTimer));
 onMounted(() => {
   fetchOrders();
   fetchUserCoupons(); // 获取用户优惠券列表
-  window.setInterval(() => {
+  countdownTimer = window.setInterval(() => {
     orders.value.forEach(order => {
       order.countdown = calcCountdown(order.expireTime);
     });
@@ -343,739 +352,704 @@ window.scrollTo(0, 0);
 </script>
 
 <template>
-  <Header/>
-  <el-main class="orders-container">
-    <!-- 订单统计卡片 -->
-    <div class="order-stats">
-      <div class="stat-card">
-        <div class="stat-icon total-icon">
-          <el-icon>
-            <ShoppingCart/>
-          </el-icon>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ orderStats.total }}</div>
-          <div class="stat-label">全部订单</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon pending-icon">
-          <el-icon>
-            <Document/>
-          </el-icon>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ orderStats.pending }}</div>
-          <div class="stat-label">待支付</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon completed-icon">
-          <el-icon>
-            <Location/>
-          </el-icon>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ orderStats.completed }}</div>
-          <div class="stat-label">已完成</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon spent-icon">
-          <el-icon>
-            <Calendar/>
-          </el-icon>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">¥{{ orderStats.totalSpent.toFixed(2) }}</div>
-          <div class="stat-label">已消费</div>
-        </div>
-      </div>
-    </div>
+  <Header />
+  <div class="page-wrapper">
+    <div class="orders-content">
 
-    <!-- 搜索与筛选 -->
-    <div class="search-filter-container">
-      <el-input v-model="searchQuery" placeholder="搜索订单号或商品名称" class="search-input" :prefix-icon="Search"
-                clearable/>
-      <el-tabs v-model="activeTab" class="order-tabs">
-        <el-tab-pane label="全部订单" name="all"></el-tab-pane>
-        <el-tab-pane label="待支付" name="PENDING"></el-tab-pane>
-        <el-tab-pane label="已完成" name="TRADE_SUCCESS"></el-tab-pane>
-        <el-tab-pane label="已过期" name="EXPIRED"></el-tab-pane>
-      </el-tabs>
-    </div>
+      <!-- 订单统计卡片 -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon total-icon">
+            <el-icon>
+              <ShoppingCart />
+            </el-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ orderStats.total }}</div>
+            <div class="stat-label">全部订单</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon pending-icon">
+            <el-icon>
+              <Document />
+            </el-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ orderStats.pending }}</div>
+            <div class="stat-label">待支付</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon completed-icon">
+            <el-icon>
+              <Location />
+            </el-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ orderStats.completed }}</div>
+            <div class="stat-label">已完成</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon spent-icon">
+            <el-icon>
+              <Calendar />
+            </el-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">¥{{ orderStats.totalSpent.toFixed(2) }}</div>
+            <div class="stat-label">已消费</div>
+          </div>
+        </div>
+      </div>
 
-    <el-skeleton :loading="loading" animated>
-      <template #default>
-        <el-card shadow="hover" class="order-card" v-for="order in filteredOrders" :key="order.orderId">
+      <!-- 搜索与筛选 -->
+      <div class="filter-section">
+        <div class="search-wrapper">
+          <el-input v-model="searchQuery" placeholder="搜索订单号或商品名称" :prefix-icon="Search" clearable
+            class="custom-search" />
+        </div>
+        <div class="tabs-wrapper">
+          <button class="tab-btn" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'">全部</button>
+          <button class="tab-btn" :class="{ active: activeTab === 'PENDING' }"
+            @click="activeTab = 'PENDING'">待支付</button>
+          <button class="tab-btn" :class="{ active: activeTab === 'TRADE_SUCCESS' }"
+            @click="activeTab = 'TRADE_SUCCESS'">已完成</button>
+          <button class="tab-btn" :class="{ active: activeTab === 'EXPIRED' }"
+            @click="activeTab = 'EXPIRED'">已过期</button>
+        </div>
+      </div>
+
+      <div v-if="loading" class="loading-state">
+        <el-skeleton :rows="3" animated />
+      </div>
+
+      <div v-else-if="filteredOrders.length === 0" class="empty-state">
+        <el-empty description="暂无订单">
+          <el-button type="primary" class="primary-btn" @click="$router.push('/booklist')">去逛逛</el-button>
+        </el-empty>
+      </div>
+
+      <div v-else class="order-list">
+        <div v-for="order in filteredOrders" :key="order.orderId" class="order-card">
           <div class="order-header">
-            <div class="order-info">
-
-              <span v-if="order.status === 'PENDING'" class="countdown-time">过期时间&nbsp;&nbsp;{{
-                  formatCountdown(order.countdown)
-                }}</span>
-              <el-collapse class="shipping-address">
-                <el-collapse-item title="收货信息" name="1">
-                  <p>订单编号：{{ order.unformattedDate }}</p>
-                  <p>下单时间：{{ order.formattedDate }}</p>
-                  <p v-if="order.paymentMethod">支付方式：支付宝</p>
-                  <p>姓名：{{ order.shippingAddress.name }}</p>
-                  <p>电话：{{ order.shippingAddress.telephone }}</p>
-                  <p v-if="order.shippingAddress.postalCode">邮编：{{ order.shippingAddress.postalCode }}</p>
-                  <p>地址：{{ order.shippingAddress.address }}</p>
-                </el-collapse-item>
-              </el-collapse>
+            <div class="header-left">
+              <span class="order-date">{{ order.formattedDate }}</span>
+              <span class="order-id">订单号 {{ order.unformattedDate }}</span>
             </div>
-            <el-tag :type="statusMap[order.status].type" effect="dark" size="default" class="status-tag">
-              {{ order.statusText }}
-            </el-tag>
+            <div class="header-right">
+              <span class="status-badge" :class="order.status.toLowerCase()">{{ order.statusText }}</span>
+            </div>
           </div>
 
           <!-- 倒计时进度条(待支付订单) -->
-          <div v-if="order.status === 'PENDING'" class="countdown-wrapper">
-            <div class="countdown-progress">
-              <div class="countdown-bar" :style="{ width: `${(order.countdown / 600) * 100}%` }"></div>
-            </div>
+          <div v-if="order.status === 'PENDING'" class="countdown-section">
             <div class="countdown-text">
-              <el-icon class="countdown-icon">
-                <Calendar/>
+              <el-icon>
+                <Calendar />
               </el-icon>
               <span>剩余支付时间：{{ formatCountdown(order.countdown) }}</span>
             </div>
+            <div class="progress-bar">
+              <div class="progress-fill" :style="{ width: `${(order.countdown / 600) * 100}%` }"></div>
+            </div>
           </div>
-
-          <el-divider></el-divider>
 
           <div class="order-items">
             <div v-for="item in order.items" :key="item.productId" class="order-item">
-              <img v-if="item.cover" :src="item.cover" alt="商品图片" class="item-cover"/>
-              <div v-else class="item-cover-placeholder">
-                <el-icon :size="30">
-                  <Picture/>
-                </el-icon>
+              <div class="item-image">
+                <img v-if="item.cover" :src="item.cover" alt="商品图片" />
+                <div v-else class="placeholder-image"><el-icon>
+                    <Picture />
+                  </el-icon></div>
               </div>
-              <div class="item-info">
-                <p class="item-title">{{ item.title }}</p>
-                <p class="item-meta">
-                  <span>单价: ￥{{ item.price }}</span>
+              <div class="item-details">
+                <h3 class="item-title">{{ item.title }}</h3>
+                <div class="item-meta">
                   <span>数量: {{ item.quantity }}</span>
-                  <span>小计: ￥{{ (parseFloat(item.price) * item.quantity).toFixed(2) }}</span>
-                </p>
+                  <span>单价: ¥{{ item.price }}</span>
+                </div>
+              </div>
+              <div class="item-total">
+                ¥{{ (parseFloat(item.price) * item.quantity).toFixed(2) }}
               </div>
             </div>
           </div>
 
-          <el-divider></el-divider>
           <div class="order-footer">
-            <div class="detail-footer">
-              <span>共 {{ order.orderItems.length }} 件商品</span>
+            <div class="footer-info">
+              <div class="shipping-info">
+                <span class="label">收货人:</span> {{ order.shippingAddress.name }}
+                <span class="divider">|</span>
+                {{ order.shippingAddress.telephone }}
+              </div>
 
-              <!-- 添加优惠券信息展示 -->
-              <div v-if="order.status === 'PENDING' && order.selectedCouponId" class="coupon-applied">
+              <!-- 优惠券展示 -->
+              <div v-if="order.status === 'PENDING' && order.selectedCouponId" class="coupon-tag">
                 <el-tag closable size="small" type="success" @close="removeCoupon(order)">
-                  <el-icon>
-                    <Ticket/>
-                  </el-icon>
-                  已使用优惠券: {{ getCouponById(order.selectedCouponId)?.description }} (-￥{{
-                    order.appliedDiscount ||
-                    getCouponById(order.selectedCouponId)?.value
-                  }})
+                  已优惠: ¥{{ order.appliedDiscount || getCouponById(order.selectedCouponId)?.value }}
                 </el-tag>
               </div>
-
-              <!-- 总价显示 -->
-              <span class="total-price">总计&nbsp;&nbsp;<strong>RMB {{
-                  order.selectedCouponId
-                      ? calculateFinalPrice(order)
-                      : Number(order.totalAmount).toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })
-                }}</strong>
-                <span v-if="order.selectedCouponId" class="original-price">
-                  <s>￥{{ Number(order.totalAmount).toFixed(2) }}</s>
-                </span>
-              </span>
             </div>
-            <div class="button-footer">
-              <!-- 添加优惠券按钮 -->
-              <el-button v-if="order.status === 'PENDING'" class="coupon-btn" plain size="default" type="info"
-                         @click="showCouponSelector(order)">
-                <el-icon>
-                  <Ticket/>
-                </el-icon>
-                {{ order.selectedCouponId ? '更换优惠券' : '使用优惠券' }}
-              </el-button>
 
-              <el-button v-if="order.status === 'PENDING'" type="primary" size="default" class="pay-btn"
-                         :loading="payingOrderIds.has(order.orderId)" @click="handlePayOrder(order.orderId)">
-                立即支付
-              </el-button>
-              <el-button plain size="default" class="delete-btn" style="color: rgb(0, 113, 227)"
-                         @click="handleDeleteOrder(order.orderId)">
-                移除
-              </el-button>
+            <div class="footer-actions">
+              <div class="total-amount">
+                <span class="label">总计</span>
+                <span class="amount">
+                  ¥{{ order.selectedCouponId ? calculateFinalPrice(order) :
+                    Number(order.totalAmount).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+                </span>
+                <span v-if="order.selectedCouponId" class="original-amount">
+                  <s>¥{{ Number(order.totalAmount).toFixed(2) }}</s>
+                </span>
+              </div>
+
+              <div class="action-buttons">
+                <template v-if="order.status === 'PENDING'">
+                  <button class="secondary-btn" @click="showCouponSelector(order)">
+                    {{ order.selectedCouponId ? '更换优惠券' : '使用优惠券' }}
+                  </button>
+                  <button class="primary-btn" :disabled="payingOrderIds.has(order.orderId)"
+                    @click="handlePayOrder(order.orderId)">
+                    {{ payingOrderIds.has(order.orderId) ? '处理中...' : '演示支付（不会扣款）' }}
+                  </button>
+                </template>
+                <button class="text-btn" @click="handleDeleteOrder(order.orderId)">移除订单</button>
+              </div>
             </div>
           </div>
 
-          <!-- 添加优惠券选择对话框 -->
-          <el-dialog v-model="order.showCouponDialog" center destroy-on-close title="选择优惠券" width="500px">
-            <el-empty v-if="getAvailableCoupons(parseFloat(order.totalAmount)).length === 0"
-                      description="暂无可用优惠券"/>
-
-            <el-skeleton v-if="loadingCoupons" :rows="3" animated/>
-
-            <div v-else class="coupon-list">
-              <el-radio-group v-model="order.selectedCouponId">
+          <!-- 优惠券选择对话框 -->
+          <el-dialog v-model="order.showCouponDialog" title="选择优惠券" width="500px" destroy-on-close center>
+            <div class="coupon-dialog-content">
+              <el-empty v-if="getAvailableCoupons(parseFloat(order.totalAmount)).length === 0" description="暂无可用优惠券" />
+              <div v-else class="coupon-list">
                 <div v-for="coupon in getAvailableCoupons(parseFloat(order.totalAmount))" :key="coupon.id"
-                     class="coupon-item">
-                  <el-radio :label="coupon.id" class="coupon-radio">
-                    <div class="coupon-card">
-                      <div class="coupon-left">
-                        <div class="coupon-amount">
-                          <template v-if="coupon.type === 'DISCOUNT'">{{ coupon.value }}折</template>
-                          <template v-else>￥{{ coupon.value }}</template>
-                        </div>
-                        <div class="coupon-condition">满{{ coupon.minimumSpend }}元可用</div>
-                      </div>
-                      <div class="coupon-right">
-                        <div class="coupon-name">{{ coupon.name }}</div>
-                        <div class="coupon-desc">{{ coupon.description }}</div>
-                        <div class="coupon-validity">有效期至: {{
-                            new Date(coupon.endDate).toLocaleDateString()
-                          }}
-                        </div>
-                      </div>
+                  class="coupon-option" :class="{ selected: order.selectedCouponId === coupon.id }"
+                  @click="applyCoupon(order, coupon.id)">
+                  <div class="coupon-left">
+                    <div class="coupon-value">
+                      <span v-if="coupon.type === 'DISCOUNT'">{{ coupon.value }}折</span>
+                      <span v-else>¥{{ coupon.value }}</span>
                     </div>
-                  </el-radio>
+                    <div class="coupon-cond">满{{ coupon.minimumSpend }}可用</div>
+                  </div>
+                  <div class="coupon-right">
+                    <div class="coupon-name">{{ coupon.name }}</div>
+                    <div class="coupon-desc">{{ coupon.description }}</div>
+                  </div>
                 </div>
-              </el-radio-group>
+              </div>
             </div>
-
-            <template #footer>
-              <span class="dialog-footer">
-                <el-button @click="order.showCouponDialog = false">取消</el-button>
-                <el-button type="danger" @click="applyCoupon(order, null)">不使用优惠券</el-button>
-                <el-button type="primary"
-                           @click="applyCoupon(order, order.selectedCouponId ?? null)">确认使用</el-button>
-              </span>
-            </template>
           </el-dialog>
-        </el-card>
-
-        <el-empty v-if="!loading && filteredOrders.length === 0" description="暂无订单" class="empty-state">
-          <el-button type="primary" @click="$router.push('/booklist')">
-            去逛逛
-          </el-button>
-        </el-empty>
-      </template>
-    </el-skeleton>
-  </el-main>
-
-  <Footer/>
+        </div>
+      </div>
+    </div>
+  </div>
+  <Footer />
 </template>
 
-<style>
-.orders-container {
-  font-family: "sf pro display", sans-serif;
-  width: 65%;
-  margin: 60px auto 0;
-  padding: 40px;
-  border-radius: 20px;
+<style scoped>
+.page-wrapper {
+  background-color: #f5f5f7;
+  min-height: 100vh;
+  padding-top: 60px;
+  font-family: "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-/* 订单统计卡片样式 */
-.order-stats {
-  display: flex;
+.orders-content {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.page-header {
+  margin-bottom: 40px;
+}
+
+.page-header h1 {
+  font-size: 40px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
+  margin-bottom: 40px;
 }
 
 .stat-card {
   background: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  flex: 1;
-  min-width: 180px;
+  border-radius: 18px;
+  padding: 24px;
   display: flex;
   align-items: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+  gap: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s;
 }
 
 .stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 .stat-icon {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 15px;
-}
-
-.stat-icon .el-icon {
   font-size: 24px;
-  color: #fff;
 }
 
 .total-icon {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #e8f2ff;
+  color: #0071e3;
 }
 
 .pending-icon {
-  background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+  background: #fff5e5;
+  color: #ff9500;
 }
 
 .completed-icon {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: #e6fffa;
+  color: #00c7be;
 }
 
 .spent-icon {
-  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+  background: #f5f5f7;
+  color: #1d1d1f;
 }
 
-.stat-content {
-  flex: 1;
+.stat-info {
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-value {
   font-size: 24px;
-  font-weight: 700;
-  color: #333;
-  line-height: 1.2;
+  font-weight: 600;
+  color: #1d1d1f;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #888;
-  margin-top: 4px;
+  font-size: 13px;
+  color: #86868b;
 }
 
-/* 搜索和筛选样式 */
-.search-filter-container {
+/* Filter Section */
+.filter-section {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 30px;
   flex-wrap: wrap;
   gap: 20px;
 }
 
-.search-input {
+.search-wrapper {
+  flex: 1;
   max-width: 300px;
 }
 
-.search-input .el-input__inner {
-  border-radius: 20px;
-  height: 40px;
+.custom-search :deep(.el-input__wrapper) {
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px #d2d2d7 inset;
+  padding: 4px 12px;
 }
 
-.order-tabs {
-  flex: 1;
+.custom-search :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #0071e3 inset;
 }
 
-.order-tabs .el-tabs__nav {
+.tabs-wrapper {
+  display: flex;
+  background: #e8e8ed;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.tab-btn {
+  padding: 8px 20px;
   border: none;
+  background: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #86868b;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.order-tabs .el-tabs__item {
-  font-size: 15px;
-  height: 40px;
-  line-height: 40px;
+.tab-btn.active {
+  background: #fff;
+  color: #1d1d1f;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Order List */
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .order-card {
-  border-radius: 25px;
-  margin: 20px auto;
-  padding: 20px 30px;
-  background-color: #fafafa;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.order-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  background: #fff;
+  border-radius: 18px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .order-header {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: -25px;
-  padding-bottom: 10px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f5f5f7;
 }
 
-.order-number {
-  margin-bottom: 8px;
-}
-
-.order-number-label {
-  font-size: 13px;
-  color: #888;
-  margin-right: 8px;
-}
-
-.order-number-value {
-  font-size: 15px;
-  font-weight: 600;
-  font-family: 'Roboto Mono', monospace;
-}
-
-.order-info {
+.header-left {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
-.status-tag {
-  padding: 6px 14px;
-  font-size: 14px;
+.order-date {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.order-id {
+  font-size: 13px;
+  color: #86868b;
+}
+
+.status-badge {
+  padding: 6px 12px;
   border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.countdown-time {
-  font-size: 14px;
-  color: #555;
+.status-badge.pending {
+  background: #fff5e5;
+  color: #ff9500;
 }
 
-/* 倒计时进度条样式 */
-.countdown-wrapper {
-  padding: 12px 0;
-  margin: 15px 0 -15px;
+.status-badge.trade_success {
+  background: #e6fffa;
+  color: #00c7be;
 }
 
-.countdown-progress {
-  background: #eee;
-  height: 4px;
-  border-radius: 2px;
-  margin-bottom: 8px;
-  overflow: hidden;
+.status-badge.expired {
+  background: #f5f5f7;
+  color: #86868b;
 }
 
-.countdown-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #ffd04b, #ff9d00);
-  border-radius: 2px;
-  transition: width 1s linear;
+/* Countdown */
+.countdown-section {
+  background: #fff9f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
 }
 
 .countdown-text {
   display: flex;
   align-items: center;
-  color: #d48806;
+  gap: 8px;
+  color: #ff9500;
   font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
 }
 
-.countdown-icon {
-  margin-right: 6px;
+.progress-bar {
+  height: 6px;
+  background: rgba(255, 149, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-.shipping-address {
-  font-size: 14px;
-  color: #555;
-  border: none;
-  background: none;
-  box-shadow: none;
-  padding: 0;
+.progress-fill {
+  height: 100%;
+  background: #ff9500;
+  transition: width 1s linear;
 }
 
-/* 移除默认上下间距 */
-.shipping-address .el-collapse-item__header {
-  background: none !important;
-  border: none !important;
-  padding: 0 !important;
-  margin-top: -13px !important;
-  font-size: 14px;
-  color: #555;
-  width: 85px;
-}
-
-/* 调整内容区的上下内边距 */
-.shipping-address .el-collapse-item__wrap {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  margin-left: 15px !important;
-  font-size: 14px;
-  color: #555;
-}
-
-.shipping-address p {
-  font-size: 14px;
-  color: #555;
-  margin: 0;
-}
-
+/* Order Items */
 .order-items {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
 .order-item {
   display: flex;
   align-items: center;
-  gap: 15px;
-  border-radius: 10px;
-  transition: background-color 0.3s;
+  gap: 20px;
 }
 
-.order-item:hover {
-  background-color: #f5faff;
-}
-
-.item-cover {
+.item-image {
   width: 80px;
   height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f5f5f7;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.item-cover-placeholder {
-  width: 80px;
-  height: 80px;
+.placeholder-image {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f5f5;
-  border-radius: 6px;
-  color: #999;
+  color: #86868b;
 }
 
-.item-info {
+.item-details {
   flex: 1;
-  margin-left: 5px;
 }
 
-.item-info .item-title {
-  font-weight: 600;
-  margin-bottom: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-}
-
-.item-info .item-meta {
-  display: flex;
-  gap: 15px;
-  font-size: 13px;
-  color: #777;
-}
-
-/* 订单时间线样式 */
-.order-timeline {
-  padding: 20px 0;
-}
-
-.timeline-title {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  color: #555;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.timeline-title .el-icon {
-  margin-right: 8px;
+.item-title {
   font-size: 16px;
+  font-weight: 500;
+  color: #1d1d1f;
+  margin: 0 0 8px;
 }
 
-.el-timeline {
-  padding-left: 10px;
-}
-
-.el-timeline-item__content h4 {
+.item-meta {
   font-size: 14px;
-  color: #333;
-  margin: 0 0 4px;
-}
-
-.el-timeline-item__content p {
-  font-size: 13px;
-  color: #888;
-  margin: 0;
-}
-
-.detail-footer {
+  color: #86868b;
   display: flex;
-  flex-direction: column;
-  font-size: 14px;
-  gap: 2px;
-  margin-top: -5px;
+  gap: 16px;
 }
 
+.item-total {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+/* Footer */
 .order-footer {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-top: 0;
+  align-items: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid #f5f5f7;
 }
 
-.total-price {
-  font-size: 18px;
-  color: #333;
+.footer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shipping-info {
+  font-size: 14px;
+  color: #86868b;
+}
+
+.shipping-info .label {
+  color: #1d1d1f;
+  font-weight: 500;
+}
+
+.divider {
+  margin: 0 8px;
+  color: #d2d2d7;
+}
+
+.footer-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.total-amount {
+  font-size: 14px;
+  color: #86868b;
+}
+
+.total-amount .amount {
+  font-size: 24px;
   font-weight: 600;
+  color: #1d1d1f;
+  margin-left: 8px;
 }
 
-/* 优惠券样式 */
-.coupon-applied {
-  margin: 8px 0;
+.original-amount {
+  margin-left: 8px;
+  text-decoration: line-through;
+  color: #86868b;
 }
 
-.coupon-applied .el-tag {
-  display: inline-flex;
+.action-buttons {
+  display: flex;
+  gap: 12px;
   align-items: center;
 }
 
-.coupon-applied .el-icon {
-  margin-right: 4px;
-}
-
-.original-price {
-  margin-left: 8px;
+.primary-btn {
+  background: #2D6FE3;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
   font-size: 14px;
-  color: #999;
-}
-
-.coupon-list {
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 10px 0;
-}
-
-.coupon-item {
-  margin-bottom: 15px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
-.coupon-radio {
-  width: 100%;
-  height: auto;
-  margin-right: 0;
+.primary-btn:hover {
+  background: #0077ed;
 }
 
-.coupon-card {
+.primary-btn:disabled {
+  background: #e5e5e5;
+  cursor: not-allowed;
+}
+
+.secondary-btn {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.secondary-btn:hover {
+  background: #e8e8ed;
+}
+
+.text-btn {
+  background: none;
+  border: none;
+  color: #86868b;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.text-btn:hover {
+  color: #ff3b30;
+}
+
+/* Coupon Dialog */
+.coupon-list {
   display: flex;
-  width: 100%;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-  margin: 10px 0;
-  transition: all 0.3s;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
-.coupon-card:hover {
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  border-color: #ff9500;
+.coupon-option {
+  display: flex;
+  border: 1px solid #d2d2d7;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.coupon-option:hover {
+  border-color: #0071e3;
+}
+
+.coupon-option.selected {
+  border-color: #0071e3;
+  background: #f5f9ff;
 }
 
 .coupon-left {
-  width: 120px;
-  background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
-  padding: 15px;
+  background: #f5f5f7;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  position: relative;
+  justify-content: center;
+  min-width: 100px;
 }
 
-.coupon-left::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 6px;
-  background: repeating-linear-gradient(0deg,
-  #fff,
-  #fff 5px,
-  transparent 5px,
-  transparent 10px);
-}
-
-.coupon-amount {
+.coupon-value {
   font-size: 24px;
-  font-weight: bold;
-  color: #fff;
+  font-weight: 600;
+  color: #1d1d1f;
 }
 
-.coupon-condition {
+.coupon-cond {
   font-size: 12px;
-  color: #fff;
-  margin-top: 5px;
+  color: #86868b;
+  margin-top: 4px;
 }
 
 .coupon-right {
+  padding: 16px;
   flex: 1;
-  padding: 15px;
-  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .coupon-name {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 4px;
 }
 
 .coupon-desc {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 5px;
+  font-size: 13px;
+  color: #86868b;
 }
 
-.coupon-validity {
-  font-size: 12px;
-  color: #999;
-}
-
-.el-radio-group {
-  width: 100%;
-}
-
-.coupon-radio {
-  width: 100%;
-  margin-right: 0;
-  margin-bottom: 10px;
-}
-
-.coupon-radio .el-radio__input {
-  align-self: flex-start;
-  margin-top: 20px;
-}
-
-/* 响应式调整 */
 @media (max-width: 768px) {
-  .orders-container {
-    width: 90%;
-    padding: 20px;
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
-  .order-stats {
-    gap: 15px;
-  }
-
-  .stat-card {
-    min-width: calc(50% - 15px);
-  }
-
-  .search-filter-container {
+  .order-header {
     flex-direction: column;
+    gap: 12px;
+  }
+
+  .order-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .footer-actions {
+    width: 100%;
     align-items: stretch;
   }
 
-  .search-input {
-    max-width: none;
+  .action-buttons {
+    justify-content: flex-end;
   }
 }
 </style>

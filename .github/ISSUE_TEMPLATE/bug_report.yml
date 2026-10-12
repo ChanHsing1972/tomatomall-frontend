@@ -1,0 +1,15 @@
+name: 问题反馈
+description: 提供可复现的步骤与期望行为。
+body:
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 如何复现问题？
+      description: 请填写操作步骤、实际结果与期望结果，勿包含密码或个人信息。
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 使用环境
+      placeholder: 浏览器、设备及应用版本。

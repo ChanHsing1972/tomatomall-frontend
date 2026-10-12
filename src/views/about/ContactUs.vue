@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import Header from "../../components/Header.vue";
 import Footer from "../../components/Footer.vue";
-import {onMounted, reactive, ref} from "vue";
-import {ElMessage} from "element-plus";
+import { onMounted, reactive, ref } from "vue";
+import { ElMessage } from "element-plus";
 
 // 联系信息
 const contactInfo = reactive({
@@ -14,10 +14,10 @@ const contactInfo = reactive({
 
 // 社交媒体
 const socialMedia = reactive([
-  {name: "微信", icon: "📱", link: "#"},
-  {name: "微博", icon: "💬", link: "#"},
-  {name: "知乎", icon: "📖", link: "#"},
-  {name: "哔哩哔哩", icon: "📹", link: "#"}
+  { name: "微信", icon: "📱", link: "#" },
+  { name: "微博", icon: "💬", link: "#" },
+  { name: "知乎", icon: "📖", link: "#" },
+  { name: "哔哩哔哩", icon: "📹", link: "#" }
 ]);
 
 // 办公地点
@@ -61,7 +61,7 @@ const faqs = reactive([
     answer: "正常情况下，我们会在确认订单后24小时内安排发货，大部分地区可在3-5天内送达。特殊地区可能需要更长时间。"
   },
   {
-    question: "如何成为番茄书城的签约作者？",
+    question: "如何成为枕石书屋的签约作者？",
     answer: "请将您的作品简介和个人履历发送至author@tomato-bookstore.com，我们的编辑团队会在审阅后与您联系。"
   }
 ]);
@@ -83,7 +83,7 @@ const submitForm = () => {
     return;
   }
 
-  ElMessage.success("您的消息已成功发送，我们将尽快与您联系！");
+  ElMessage.info("这是界面演示，反馈尚未发送。欢迎在 GitHub 仓库提交 Issue。");
 
   // 重置表单
   contactForm.name = "";
@@ -120,7 +120,7 @@ const toggleFaq = (index: number) => {
 
 <template>
   <div class="contact-us-page">
-    <Header/>
+    <Header />
 
     <!-- 英雄区域 -->
     <section class="hero">
@@ -131,7 +131,7 @@ const toggleFaq = (index: number) => {
     </section>
 
     <!-- 主要内容 -->
-    <div class="container">
+    <div class="container"><p class="demo-notice">本页为课程项目的界面演示。公司、招聘、客服和商业服务文案为设计示例。</p>
       <!-- 联系方式概览 -->
       <section class="contact-overview-section">
         <div class="contact-cards">
@@ -159,7 +159,7 @@ const toggleFaq = (index: number) => {
       <!-- 沟通区域 -->
       <section class="communication-section">
         <div class="section-header">
-          <span class="section-tag">联系番茄书城</span>
+          <span class="section-tag">联系枕石书屋</span>
           <h2>让我们保持联系</h2>
         </div>
 
@@ -216,7 +216,7 @@ const toggleFaq = (index: number) => {
                 <div class="cooperation-text">
                   <h3>一起探索无限可能</h3>
                   <p>
-                    番茄书城始终开放合作的大门，无论您是出版社、作家、内容创作者，还是想与我们进行品牌合作的企业，我们都期待与您建立长期友好的合作关系。</p>
+                    枕石书屋始终开放合作的大门，无论您是出版社、作家、内容创作者，还是想与我们进行品牌合作的企业，我们都期待与您建立长期友好的合作关系。</p>
                   <ul class="cooperation-list">
                     <li>
                       <strong>出版合作</strong>
@@ -325,14 +325,13 @@ const toggleFaq = (index: number) => {
         <div class="map-container">
           <div class="map-placeholder">
             <!-- 这里放置地图，实际应用中可以使用高德地图、百度地图等API -->
-            <img
-                alt="公司地图"
-                src="https://api.map.baidu.com/staticimage/v2?ak=您的密钥&mcode=您的安全码&center=116.404,39.915&width=780&height=400&zoom=15"/>
+            <img alt="公司地图"
+              src="https://api.map.baidu.com/staticimage/v2?ak=您的密钥&mcode=您的安全码&center=116.404,39.915&width=780&height=400&zoom=15" />
             <div class="map-overlay">
               <div class="map-info">
-                <h3>番茄书城总部</h3>
+                <h3>枕石书屋总部</h3>
                 <p>{{ contactInfo.address }}</p>
-                <a class="map-link" href="https://map.baidu.com/search/番茄书城总部" target="_blank">查看导航 →</a>
+                <a class="map-link" href="https://map.baidu.com/search/枕石书屋总部" target="_blank">查看导航 →</a>
               </div>
             </div>
           </div>
@@ -348,7 +347,7 @@ const toggleFaq = (index: number) => {
 
         <div class="faq-container">
           <div v-for="(faq, index) in faqs" :key="index" :class="{ 'expanded': expandedFaq === index }"
-               class="faq-item">
+            class="faq-item">
             <div class="faq-question" @click="toggleFaq(index)">
               <h3>{{ faq.question }}</h3>
               <span class="expand-icon">{{ expandedFaq === index ? '−' : '+' }}</span>
@@ -375,7 +374,7 @@ const toggleFaq = (index: number) => {
 
           <div class="social-media-icons">
             <a v-for="(social, index) in socialMedia" :key="index" :href="social.link" class="social-icon-link"
-               target="_blank">
+              target="_blank">
               <div class="social-icon">{{ social.icon }}</div>
               <span class="social-name">{{ social.name }}</span>
             </a>
@@ -384,7 +383,7 @@ const toggleFaq = (index: number) => {
       </section>
     </div>
 
-    <Footer/>
+    <Footer />
   </div>
 </template>
 

@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import {nextTick, onMounted, onUnmounted, ref, watch} from 'vue';
-import {useRoute, useRouter} from 'vue-router';
-import {clearChat, getConversation, markAsRead, sendMessage} from '../../api/message';
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { clearChat, getConversation, markAsRead, sendMessage } from '../../api/message';
 import Header from '../../components/Header.vue';
-import {ElMessage, ElMessageBox} from 'element-plus';
-import {ArrowLeft, Delete} from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { ArrowLeft, Delete, Position } from '@element-plus/icons-vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -143,13 +143,13 @@ const scrollToBottom = () => {
 const clearChatHistory = async () => {
   try {
     await ElMessageBox.confirm(
-        '确定清空双方聊天记录？对方的记录也将被删除。此操作不可逆。',
-        '清空聊天',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning',
-        }
+      '确定清空双方聊天记录？对方的记录也将被删除。此操作不可逆。',
+      '清空聊天',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
     );
 
     loading.value = true;
@@ -206,110 +206,131 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="conversation-page">
-    <Header/>
-    <div class="conversation-container">
-      <el-card class="conversation-card" shadow="hover">
-        <template #header>
-          <div class="card-header">
-            <div class="header-left">
-              <el-button :icon="ArrowLeft" class="back-button" plain @click="router.push('/messages')">
-                返回
-              </el-button>
+  <div class="page-wrapper">
+    <Header />
+    <div class="conversation-content">
+      <div class="chat-window">
+        <div class="chat-header">
+          <div class="header-left">
+            <button class="icon-btn" @click="router.push('/messages')" title="返回">
+              <el-icon>
+                <ArrowLeft />
+              </el-icon>
+            </button>
+            <div class="user-status">
               <span class="chat-title">{{ otherUserName || '加载中...' }}</span>
-            </div>
-            <div class="header-actions">
-              <el-button :disabled="loading || messages.length === 0" :icon="Delete" plain size="small" type="danger"
-                         @click="clearChatHistory">
-                清空聊天
-              </el-button>
+              <span class="status-dot"></span>
             </div>
           </div>
-        </template>
+          <div class="header-actions">
+            <button class="icon-btn danger" :disabled="loading || messages.length === 0" @click="clearChatHistory"
+              title="清空聊天记录">
+              <el-icon>
+                <Delete />
+              </el-icon>
+            </button>
+          </div>
+        </div>
 
-        <el-skeleton v-if="loading && messages.length === 0" :loading="loading" :rows="10" animated>
-        </el-skeleton>
+        <div class="messages-container" ref="messageList">
+          <div v-if="loading && messages.length === 0" class="loading-state">
+            <el-skeleton :rows="10" animated />
+          </div>
 
-        <div v-else ref="messageList" class="message-list">
-          <div v-if="messages.length === 0" class="empty-state">
+          <div v-else-if="messages.length === 0" class="empty-state">
             <div class="empty-icon">💬</div>
-            <p>暂无消息，开始聊天吧！</p>
-            <p class="empty-hint">这是你与对方的私聊空间</p>
+            <h3>暂无消息</h3>
+            <p>开始与 {{ otherUserName }} 的对话</p>
           </div>
 
-          <div v-for="msg in messages" :key="msg.id"
-               :class="['message-item', msg.senderId === currentUserId ? 'sent' : 'received']">
-            <template v-if="msg.senderId !== currentUserId">
-              <div class="message-avatar">
-                <img v-if="msg.senderAvatar" :alt="msg.senderName" :src="msg.senderAvatar" class="avatar-image"/>
-                <el-avatar v-else :size="36">{{ msg.senderName.charAt(0) }}</el-avatar>
+          <div v-else class="message-list">
+            <div v-for="msg in messages" :key="msg.id"
+              :class="['message-row', msg.senderId === currentUserId ? 'sent' : 'received']">
+
+              <div v-if="msg.senderId !== currentUserId" class="avatar-wrapper">
+                <img v-if="msg.senderAvatar" :src="msg.senderAvatar" :alt="msg.senderName" class="avatar-img" />
+                <div v-else class="avatar-placeholder">{{ msg.senderName.charAt(0) }}</div>
               </div>
-              <div class="message-content">
-                <div class="message-bubble">{{ msg.content }}</div>
+
+              <div class="message-bubble-wrapper">
+                <div class="message-bubble">
+                  {{ msg.content }}
+                </div>
                 <div class="message-time">{{ formatDateTime(msg.createTime) }}</div>
               </div>
-            </template>
-            <template v-else>
-              <div class="message-content">
-                <div class="message-bubble">{{ msg.content }}</div>
-                <div class="message-time">{{ formatDateTime(msg.createTime) }}</div>
+
+              <div v-if="msg.senderId === currentUserId" class="avatar-wrapper">
+                <img v-if="msg.senderAvatar" :src="msg.senderAvatar" :alt="msg.senderName" class="avatar-img" />
+                <div v-else class="avatar-placeholder">{{ msg.senderName.charAt(0) }}</div>
               </div>
-              <div class="message-avatar">
-                <img v-if="msg.senderAvatar" :alt="msg.senderName" :src="msg.senderAvatar" class="avatar-image"/>
-                <el-avatar v-else :size="36">{{ msg.senderName.charAt(0) }}</el-avatar>
-              </div>
-            </template>
+            </div>
           </div>
         </div>
 
-        <div class="message-input">
-          <el-input v-model="newMessage" :disabled="sending" :rows="3" placeholder="输入消息..." type="textarea"
-                    @keydown="handleKeyDown"/>
-          <div class="input-actions">
-            <span class="hint">Enter 发送，Shift+Enter 换行</span>
-            <el-button :loading="sending" type="primary" @click="sendNewMessage">发送</el-button>
+        <div class="input-area">
+          <div class="input-wrapper">
+            <textarea v-model="newMessage" :disabled="sending" placeholder="输入消息..." @keydown="handleKeyDown"
+              class="message-textarea" rows="1"></textarea>
+            <button class="send-btn" :disabled="!newMessage.trim() || sending" @click="sendNewMessage">
+              <el-icon>
+                <Position />
+              </el-icon>
+            </button>
           </div>
+          <div class="input-hint">按 Enter 发送，Shift+Enter 换行</div>
         </div>
-      </el-card>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.conversation-page {
+.page-wrapper {
+  background-color: #f5f5f7;
   min-height: 100vh;
-  background-color: #f5f7fa;
+  padding-top: 60px;
+  font-family: "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.conversation-container {
+.conversation-content {
   max-width: 850px;
   margin: 0 auto;
-  padding: 100px 20px 40px;
-}
-
-.conversation-card {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border: none;
-  transition: all 0.3s ease;
-}
-
-.card-header {
+  padding: 40px 20px;
+  height: calc(100vh - 60px);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+}
+
+.chat-window {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.chat-header {
+  display: flex;
   justify-content: space-between;
-  padding: 15px 20px;
-  border-bottom: 1px solid #ebeef5;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f5f5f7;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
 }
 
 .header-left {
   display: flex;
   align-items: center;
+  gap: 16px;
 }
 
-.back-button {
-  margin-right: 16px;
+.user-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .chat-title {
@@ -318,37 +339,51 @@ onUnmounted(() => {
   color: #1d1d1f;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #34c759;
+  border-radius: 50%;
 }
 
-.message-list {
-  height: 450px;
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 16px;
+}
+
+.icon-btn:hover {
+  background: #e8e8ed;
+}
+
+.icon-btn.danger {
+  color: #ff3b30;
+  background: #fff0f0;
+}
+
+.icon-btn.danger:hover {
+  background: #ffe5e5;
+}
+
+.messages-container {
+  flex: 1;
   overflow-y: auto;
-  padding: 25px;
-  background-color: #f9fafb;
-  border-radius: 4px;
+  padding: 24px;
+  background: #fff;
   scroll-behavior: smooth;
 }
 
-.message-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.message-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.message-list::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.message-list::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+.loading-state {
+  padding: 40px;
 }
 
 .empty-state {
@@ -358,7 +393,6 @@ onUnmounted(() => {
   justify-content: center;
   height: 100%;
   text-align: center;
-  color: #909399;
 }
 
 .empty-icon {
@@ -366,173 +400,184 @@ onUnmounted(() => {
   margin-bottom: 16px;
 }
 
-.empty-hint {
-  font-size: 14px;
-  color: #c0c4cc;
-  margin-top: 5px;
+.empty-state h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 8px;
 }
 
-.message-item {
+.empty-state p {
+  color: #86868b;
+}
+
+.message-list {
   display: flex;
-  margin-bottom: 20px;
-  align-items: flex-start;
-  animation: fadeIn 0.3s ease;
+  flex-direction: column;
+  gap: 20px;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  max-width: 80%;
 }
 
-.sent {
-  justify-content: flex-end;
+.message-row.sent {
+  align-self: flex-end;
+  flex-direction: row;
 }
 
-.received {
-  justify-content: flex-start;
+.message-row.received {
+  align-self: flex-start;
 }
 
-.message-avatar {
-  margin: 0 12px;
+.avatar-wrapper {
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
 }
 
-.avatar-image {
-  width: 36px;
-  height: 36px;
+.avatar-img {
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.message-content {
-  max-width: 70%;
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #e8e8ed;
+  color: #1d1d1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.message-bubble-wrapper {
   display: flex;
   flex-direction: column;
-}
-
-.sent .message-content {
-  align-items: flex-end;
-}
-
-.received .message-content {
-  align-items: flex-start;
+  gap: 4px;
 }
 
 .message-bubble {
   padding: 12px 16px;
   border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.4;
   word-break: break-word;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  line-height: 1.5;
-  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .sent .message-bubble {
-  background-color: rgb(0, 113, 227);
-  color: white;
-  border-top-right-radius: 4px;
+  background: #2D6FE3;
+  color: #fff;
+  border-bottom-right-radius: 4px;
 }
-
 
 .received .message-bubble {
-  background-color: white;
-  border: 1px solid #eaeaea;
-  border-top-left-radius: 4px;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  border-bottom-left-radius: 4px;
 }
 
-
 .message-time {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 5px;
+  font-size: 11px;
+  color: #86868b;
+  margin: 0 4px;
 }
 
 .sent .message-time {
   text-align: right;
 }
 
-.received .message-time {
-  text-align: left;
-}
-
-.message-input {
+.input-area {
   padding: 20px;
-  background-color: #fff;
-  border-top: 1px solid #ebeef5;
+  background: #fff;
+  border-top: 1px solid #f5f5f7;
 }
 
-.input-actions {
+.input-wrapper {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
+  align-items: flex-end;
+  gap: 12px;
+  background: #f5f5f7;
+  border-radius: 24px;
+  padding: 8px 8px 8px 20px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
 }
 
-.hint {
-  font-size: 13px;
-  color: #909399;
+.input-wrapper:focus-within {
+  background: #fff;
+  border-color: #2D6FE3;
+  box-shadow: 0 0 0 4px rgba(45, 111, 227, 0.1);
+}
+
+.message-textarea {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 15px;
+  resize: none;
+  max-height: 120px;
+  padding: 8px 0;
+  color: #1d1d1f;
+}
+
+.send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #2D6FE3;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.send-btn:hover {
+  background: #0077ed;
+  transform: scale(1.05);
+}
+
+.send-btn:disabled {
+  background: #d2d2d7;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.input-hint {
+  font-size: 12px;
+  color: #86868b;
+  margin-top: 8px;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
-  .conversation-container {
-    padding: 80px 15px 30px;
+  .conversation-content {
+    padding: 0;
+    height: calc(100vh - 60px);
   }
 
-  .message-list {
-    height: 400px;
-    padding: 20px;
+  .chat-window {
+    border-radius: 0;
+    box-shadow: none;
   }
 
-  .message-content {
-    max-width: 80%;
-  }
-}
-
-@media (max-width: 576px) {
-  .conversation-container {
-    padding: 70px 10px 20px;
-  }
-
-  .card-header {
-    padding: 12px 15px;
-  }
-
-  .back-button {
-    margin-right: 10px;
-  }
-
-  .message-list {
-    height: 350px;
-    padding: 15px;
-  }
-
-  .message-avatar {
-    margin: 0 8px;
-  }
-
-  .avatar-image {
-    width: 30px;
-    height: 30px;
-  }
-
-  .message-bubble {
-    padding: 10px 12px;
-  }
-
-  .message-content {
-    max-width: 85%;
-  }
-
-  .message-input {
-    padding: 15px;
+  .message-row {
+    max-width: 90%;
   }
 }
 </style>

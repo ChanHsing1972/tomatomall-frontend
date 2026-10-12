@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import {useRouter} from 'vue-router';
-import {ElMessageBox} from 'element-plus';
-import {onMounted, onUnmounted, ref} from 'vue';
-import {Message, Search, SwitchButton, User} from '@element-plus/icons-vue';
-import {clearSearchHistory, getSearchHistory, saveSearchHistory, SearchHistory} from '../api/search_history.ts';
-import {getUnreadCount} from '../api/message.ts';
+import { useRouter } from 'vue-router';
+import { ElMessageBox } from 'element-plus';
+import { onMounted, onUnmounted, ref } from 'vue';
+import { Message, Search, SwitchButton, User } from '@element-plus/icons-vue';
+import { clearSearchHistory, getSearchHistory, saveSearchHistory, SearchHistory } from '../api/search_history.ts';
+import { getUnreadCount } from '../api/message.ts';
 import AIAssistantDialog from './AIAssistantDialog.vue';
 
 const router = useRouter();
@@ -32,7 +32,7 @@ function logout() {
     type: "warning",
   }).then(() => {
     sessionStorage.clear();
-    router.push({path: "/home"});
+    router.push({ path: "/home" });
   });
 }
 
@@ -43,7 +43,7 @@ async function fetchSearchHistory() {
     const history = response.data.data as SearchHistory[];
     // 反转顺序，去重并限制为最近的 10 个
     const uniqueHistory = Array.from(
-        new Set(history.reverse().map((item: SearchHistory) => item.query))
+      new Set(history.reverse().map((item: SearchHistory) => item.query))
     );
     searchHistory.value = uniqueHistory.slice(0, 10).map(query => ({
       id: history.find(item => item.query === query)?.id || 0,
@@ -92,7 +92,7 @@ function handleSearch() {
   handleSaveSearchHistory(searchQuery.value);
   router.push({
     path: '/booklist',
-    query: {keyword: searchQuery.value}
+    query: { keyword: searchQuery.value }
   });
 }
 
@@ -117,6 +117,10 @@ function goToLogin() {
 }
 
 function openAIAssistant() {
+  if (!sessionStorage.getItem('token')) {
+    router.push('/login');
+    return;
+  }
   aiAssistantVisible.value = true;
 }
 </script>
@@ -129,7 +133,7 @@ function openAIAssistant() {
 
       <el-col :span="6" class="logo-col">
         <router-link to="/home" class="logo-link">
-          <h1 class="logo-text">番茄书城</h1>
+          <h1 class="logo-text">枕石书屋</h1>
         </router-link>
       </el-col>
 
@@ -153,7 +157,7 @@ function openAIAssistant() {
             <el-input v-model="searchQuery" class="nav-search" clearable placeholder="搜索" @keyup.enter="handleSearch">
               <template #prefix>
                 <el-icon class="search-icon" @click="handleSearch">
-                  <Search/>
+                  <Search />
                 </el-icon>
               </template>
             </el-input>
@@ -163,7 +167,7 @@ function openAIAssistant() {
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item v-for="item in searchHistory" :key="item.id"
-                                @click="searchQuery = item.query; handleSearch()">
+                @click="searchQuery = item.query; handleSearch()">
                 {{ item.query }}
               </el-dropdown-item>
               <el-dropdown-item divided @click="clearHistory">
@@ -178,7 +182,7 @@ function openAIAssistant() {
           <el-input v-model="searchQuery" class="nav-search" clearable placeholder="搜索" @keyup.enter="handleSearch">
             <template #prefix>
               <el-icon class="search-icon" @click="handleSearch">
-                <Search/>
+                <Search />
               </el-icon>
             </template>
           </el-input>
@@ -189,18 +193,18 @@ function openAIAssistant() {
           <!-- 已登录：显示个人中心和退出登录 -->
           <router-link class="user-link" to="/messages">
             <el-icon :size="24" class="user-icon">
-              <Message/>
+              <Message />
             </el-icon>
-            <el-badge v-if="unreadCount > 0" :value="unreadCount" class="unread-badge" type="danger"/>
+            <el-badge v-if="unreadCount > 0" :value="unreadCount" class="unread-badge" type="danger" />
           </router-link>
           <router-link class="user-link" to="/dashboard">
             <el-icon :size="24" class="user-icon">
-              <User/>
+              <User />
             </el-icon>
           </router-link>
           <a class="logout-link" @click="logout">
             <el-icon :size="24" class="logout-icon">
-              <SwitchButton/>
+              <SwitchButton />
             </el-icon>
           </a>
         </template>
@@ -215,7 +219,7 @@ function openAIAssistant() {
   </el-header>
 
   <!-- AI助手对话框 -->
-  <AIAssistantDialog v-model:visible="aiAssistantVisible"/>
+  <AIAssistantDialog v-model:visible="aiAssistantVisible" />
 </template>
 
 <style>

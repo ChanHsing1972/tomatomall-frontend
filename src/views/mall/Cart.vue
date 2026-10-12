@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import {computed, onMounted, ref} from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import Header from '../../components/Header.vue'
-import {checkoutCart, getCartList, OrderInfo, removeFromCart, updateCartItem,} from '../../api/cart.ts'
-import {getProductDetail} from '../../api/product.ts'
-import {ElImage, ElMessage} from 'element-plus'
-import {ArrowDownBold} from "@element-plus/icons-vue";
-import {useRouter} from 'vue-router'
+import { checkoutCart, getCartList, OrderInfo, removeFromCart, updateCartItem, } from '../../api/cart.ts'
+import { getProductDetail } from '../../api/product.ts'
+import { ElImage, ElMessage } from 'element-plus'
+import { ArrowDownBold } from "@element-plus/icons-vue";
+import { useRouter } from 'vue-router'
 import Footer from "../../components/Footer.vue";
 
 const router = useRouter()
@@ -16,14 +16,14 @@ const currentProduct = ref<any>({})
 const detailDialogVisible = ref(false)
 
 const totalPrice = computed(() =>
-    cartItems.value.reduce((sum, item) => {
-      const price = parseFloat(item.price) || 0;
-      return sum + price * item.quantity;
-    }, 0)
+  cartItems.value.reduce((sum, item) => {
+    const price = parseFloat(item.price) || 0;
+    return sum + price * item.quantity;
+  }, 0)
 );
 
 const totalItems = computed(() =>
-    cartItems.value.reduce((sum, item) => sum + item.quantity, 0)
+  cartItems.value.reduce((sum, item) => sum + item.quantity, 0)
 )
 
 const fetchCartList = async () => {
@@ -52,7 +52,7 @@ const fetchCartList = async () => {
 const removeItem = async (cartItemId: string) => {
   try {
     await removeFromCart(cartItemId)
-    ElMessage({message: '删除成功', type: 'success', duration: 1000})
+    ElMessage({ message: '删除成功', type: 'success', duration: 1000 })
     await fetchCartList()
   } catch (error) {
     console.error('删除商品失败:', error)
@@ -124,7 +124,7 @@ const submitCheckout = async () => {
       grouping: true
     })
     await fetchCartList()
-    await router.push({path: '/orders'})
+    await router.push({ path: '/orders' })
   } catch (error) {
     console.error('结算失败:', error)
     ElMessage.error('结算失败，请重试')
@@ -139,13 +139,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <Header/>
+  <Header />
   <el-main class="cart-container">
     <!-- 顶部区域 -->
     <div class="cart-header" v-if="cartItems.length > 0">
       <h1>您的购物袋总计 RMB {{
-          totalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
-        }}</h1>
+        totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      }}</h1>
       <p>所有订单均可享受免费送货和退货服务。</p>
       <el-button class="full-width-btn" type="primary" @click="checkout">结账
       </el-button>
@@ -159,13 +159,13 @@ onMounted(() => {
     <div v-if="cartItems.length > 0" class="product-list">
       <div v-for="(item) in cartItems" :key="item.id" class="product-section">
         <div class="product-image">
-          <el-image :src="item.cover" class="rounded-image" fit="cover"/>
+          <el-image :src="item.cover" class="rounded-image" fit="cover" />
         </div>
         <div class="product-details">
           <div class="info-left">
             <h3 class="product-title" @click.stop="openDetailDialog(item)">{{ item.title }}
               <el-icon style="font-size: 12px">
-                <ArrowDownBold/>
+                <ArrowDownBold />
               </el-icon>
             </h3>
             <span class="product-price">
@@ -176,9 +176,8 @@ onMounted(() => {
                 })
               }}
             </span>
-            <el-input v-model="item.quantity" class="quantity-select"
-                      placeholder="请选择数量" size="default"
-                      @change="updateQuantity(item.cartItemId, parseInt($event))"></el-input>
+            <el-input v-model="item.quantity" class="quantity-select" placeholder="请选择数量" size="default"
+              @change="updateQuantity(item.cartItemId, parseInt($event))"></el-input>
           </div>
           <div class="action-right">
             <p class="product-subtotal">
@@ -190,7 +189,7 @@ onMounted(() => {
               }}
             </p>
             <el-button plain size="default" style="color: rgb(0, 113, 227)" type="text"
-                       @click="removeItem(item.cartItemId)">
+              @click="removeItem(item.cartItemId)">
               移除
             </el-button>
           </div>
@@ -225,7 +224,7 @@ onMounted(() => {
     <el-dialog v-model="detailDialogVisible" class="detail-dialog" top="10vh" width="60%">
       <div class="dialog-content">
         <div class="dialog-image">
-          <el-image :src="currentProduct.cover" class="detail-cover" fit="cover"/>
+          <el-image :src="currentProduct.cover" class="detail-cover" fit="cover" />
         </div>
         <div class="dialog-info">
           <div class="info-section">
@@ -256,7 +255,7 @@ onMounted(() => {
     </el-dialog>
   </el-main>
 
-  <Footer/>
+  <Footer />
 </template>
 
 
@@ -293,7 +292,7 @@ onMounted(() => {
     padding: 18px 0;
     border: none;
     color: #fff;
-    background: rgb(0, 113, 227);
+    background: #2D6FE3;
     transition: background 0.3s;
   }
 
@@ -400,7 +399,7 @@ onMounted(() => {
     padding: 28px 0;
     border: none;
     color: #fff;
-    background: rgb(0, 113, 227);
+    background: #2D6FE3;
     transition: background 0.3s;
   }
 

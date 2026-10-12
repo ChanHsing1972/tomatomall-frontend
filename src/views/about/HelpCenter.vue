@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import Header from "../../components/Header.vue";
 import Footer from "../../components/Footer.vue";
-import {onMounted, reactive, ref} from "vue";
+import { onMounted, reactive, ref } from "vue";
 
 // 当页面挂载时，滚动到顶部
 onMounted(() => {
@@ -91,7 +91,7 @@ const hotQuestions = reactive([
 const faqData = reactive({
   account: [
     {
-      question: '如何注册番茄书城账号？',
+      question: '如何注册枕石书屋账号？',
       answer: '您可以通过点击网站右上角的"登录"按钮，然后选择"注册新账号"，填写必要的个人信息即可完成注册。我们支持手机号、邮箱及第三方账号（微信、QQ等）登录。'
     },
     {
@@ -127,12 +127,12 @@ const faqData = reactive({
   ],
   reading: [
     {
-      question: '如何在番茄书城阅读电子书？',
-      answer: '购买电子书后，您可以通过以下方式阅读：1. 网页版：直接在个人中心的"我的书架"中阅读；2. APP：下载番茄书城APP，登录后在"书架"中阅读；3. 电子阅读器：部分图书支持导出至特定品牌的电子阅读器。'
+      question: '如何在枕石书屋阅读电子书？',
+      answer: '购买电子书后，您可以通过以下方式阅读：1. 网页版：直接在个人中心的"我的书架"中阅读；2. APP：下载枕石书屋APP，登录后在"书架"中阅读；3. 电子阅读器：部分图书支持导出至特定品牌的电子阅读器。'
     },
     {
       question: '电子书支持离线阅读吗？',
-      answer: '是的，您可以在番茄书城APP中将购买的电子书下载到本地，然后在无网络环境下阅读。部分图书还支持音频离线下载功能。'
+      answer: '是的，您可以在枕石书屋APP中将购买的电子书下载到本地，然后在无网络环境下阅读。部分图书还支持音频离线下载功能。'
     },
     {
       question: '怎样调整阅读设置（字体、背景等）？',
@@ -181,8 +181,8 @@ const faqData = reactive({
   ],
   app: [
     {
-      question: '番茄书城APP如何下载安装？',
-      answer: '您可以在各大应用商店（App Store、华为应用市场、小米商店、应用宝等）搜索"番茄书城"下载安装，或者在我们官网首页扫描二维码直接下载。'
+      question: '枕石书屋APP如何下载安装？',
+      answer: '您可以在各大应用商店（App Store、华为应用市场、小米商店、应用宝等）搜索"枕石书屋"下载安装，或者在我们官网首页扫描二维码直接下载。'
     },
     {
       question: '网页版和APP版有什么区别？',
@@ -236,7 +236,7 @@ const showChat = ref(false);
 const chatMessages = ref([
   {
     sender: 'bot',
-    text: '您好！我是番茄书城智能客服小茄，有什么可以帮您解决的问题吗？',
+    text: '您好！我是枕石书屋智能客服小茄，有什么可以帮您解决的问题吗？',
     time: new Date()
   }
 ]);
@@ -270,13 +270,13 @@ const sendMessage = () => {
 
 // 格式化时间
 const formatTime = (date: string | number | Date) => {
-  return new Date(date).toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
+  return new Date(date).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 };
 </script>
 
 <template>
   <div class="help-center">
-    <Header/>
+    <Header />
 
     <!-- 英雄区域 -->
     <section class="hero">
@@ -287,7 +287,7 @@ const formatTime = (date: string | number | Date) => {
     </section>
 
     <!-- 主要内容 -->
-    <div class="container">
+    <div class="container"><p class="demo-notice">本页为课程项目的界面演示。公司、招聘、客服和商业服务文案为设计示例。</p>
       <!-- 搜索结果 -->
       <section v-if="isSearching" class="search-results-section">
         <div class="section-header">
@@ -319,8 +319,8 @@ const formatTime = (date: string | number | Date) => {
           </div>
           <div class="categories-grid">
             <div v-for="category in helpCategories" :key="category.id"
-                 :class="{ active: activeCategory === category.id }"
-                 class="category-card" @click="setActiveCategory(category.id)">
+              :class="{ active: activeCategory === category.id }" class="category-card"
+              @click="setActiveCategory(category.id)">
               <div class="category-icon">{{ category.icon }}</div>
               <h3>{{ category.title }}</h3>
               <p>{{ category.description }}</p>
@@ -358,8 +358,7 @@ const formatTime = (date: string | number | Date) => {
           <div class="tabs-container">
             <div class="tabs-header">
               <div v-for="category in helpCategories" :key="category.id"
-                   :class="{ active: activeCategory === category.id }"
-                   class="tab" @click="setActiveCategory(category.id)">
+                :class="{ active: activeCategory === category.id }" class="tab" @click="setActiveCategory(category.id)">
                 {{ category.title }}
               </div>
             </div>
@@ -368,7 +367,7 @@ const formatTime = (date: string | number | Date) => {
               <div v-for="(questions, categoryId) in faqData" v-show="activeCategory === categoryId" :key="categoryId">
                 <div v-if="questions.length" class="faq-container">
                   <div v-for="(faq, index) in questions" :key="index" :class="{ expanded: expandedFaq === index }"
-                       class="faq-item">
+                    class="faq-item">
                     <div class="faq-question" @click="toggleFaq(index)">
                       <h3>{{ faq.question }}</h3>
                       <span class="expand-icon">{{ expandedFaq === index ? '−' : '+' }}</span>
@@ -430,9 +429,8 @@ const formatTime = (date: string | number | Date) => {
           <div class="tutorial-card">
             <div class="tutorial-thumbnail">
               <div class="play-icon">▶</div>
-              <img
-                  alt="新手入门指南"
-                  src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80">
+              <img alt="新手入门指南"
+                src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80">
             </div>
             <h3>新手入门指南</h3>
             <p>3:45</p>
@@ -441,9 +439,8 @@ const formatTime = (date: string | number | Date) => {
           <div class="tutorial-card">
             <div class="tutorial-thumbnail">
               <div class="play-icon">▶</div>
-              <img
-                  alt="如何借阅电子书"
-                  src="https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60">
+              <img alt="如何借阅电子书"
+                src="https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60">
             </div>
             <h3>如何阅读电子书</h3>
             <p>5:12</p>
@@ -452,9 +449,8 @@ const formatTime = (date: string | number | Date) => {
           <div class="tutorial-card">
             <div class="tutorial-thumbnail">
               <div class="play-icon">▶</div>
-              <img
-                  alt="支付与退款教程"
-                  src="https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cGF5bWVudHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60">
+              <img alt="支付与退款教程"
+                src="https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cGF5bWVudHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60">
             </div>
             <h3>支付与退款教程</h3>
             <p>4:30</p>
@@ -463,9 +459,8 @@ const formatTime = (date: string | number | Date) => {
           <div class="tutorial-card">
             <div class="tutorial-thumbnail">
               <div class="play-icon">▶</div>
-              <img
-                  alt="会员等级与福利"
-                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzR8fHRlYW18ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60">
+              <img alt="会员等级与福利"
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzR8fHRlYW18ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60">
             </div>
             <h3>会员等级与福利</h3>
             <p>6:15</p>
@@ -496,7 +491,7 @@ const formatTime = (date: string | number | Date) => {
       </div>
     </div>
 
-    <Footer/>
+    <Footer />
   </div>
 </template>
 

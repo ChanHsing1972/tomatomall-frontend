@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-import {onMounted, ref} from 'vue';
-import {useRoute, useRouter} from 'vue-router';
-import {ElMessage} from 'element-plus';
+import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
 import Header from "../../components/Header.vue";
-import {getProductDetail} from "../../api/product.ts";
-import {addToCart} from "../../api/cart.ts";
-import {addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike} from "../../api/comment.ts";
-import {addLike, cancelLike, getLikeCount, getLikeList} from "../../api/product_like.ts";
-import {getOrders, type OrderVO} from "../../api/order.ts";
-import {accountInfo} from "../../api/account.ts";
+import { getProductDetail } from "../../api/product.ts";
+import { addToCart } from "../../api/cart.ts";
+import { addComment, deleteComment, getAllCommentsByProductId, isLikeComment, likeOrDislike } from "../../api/comment.ts";
+import { addLike, cancelLike, getLikeCount, getLikeList } from "../../api/product_like.ts";
+import { getOrders, type OrderVO } from "../../api/order.ts";
+import { accountInfo } from "../../api/account.ts";
 import Footer from "../../components/Footer.vue";
 
 interface Product {
@@ -86,7 +86,7 @@ const checkLikeStatus = async () => {
     if (response?.code === '200') {
       const likedProducts = response.data || [];
       isLiked.value = likedProducts.some(
-          (item: LikedProduct) => item.productId?.toString() === productId.value
+        (item: LikedProduct) => item.productId?.toString() === productId.value
       );
     } else {
       console.error('获取收藏列表失败:', response?.msg);
@@ -137,7 +137,7 @@ const fetchProductDetail = async () => {
   try {
     const detailResponse = await getProductDetail(productId.value);
     currentProduct.value = detailResponse.data.data;
-    document.title = `${currentProduct.value.title} - 番茄书城`;
+    document.title = `${currentProduct.value.title} - 枕石书屋`;
     const likeResponse = await getLikeCount(productId.value);
     likeCount.value = likeResponse.data.data;
     await fetchComments();
@@ -159,7 +159,7 @@ const fetchPurchasedStatus = async () => {
     if (response.code === "200" && response.data) {
       const completedOrders = response.data.filter((order: OrderVO) => order.status === "TRADE_SUCCESS");
       const bookTitles = completedOrders.flatMap((order: OrderVO) =>
-          order.orderItems.map((item: any) => item.title)
+        order.orderItems.map((item: any) => item.title)
       );
       purchasedBooks.value = Array.from(new Set(bookTitles)); // 去重
 
@@ -207,8 +207,8 @@ const handleLike = async (comment: Comment) => {
     if (response.code === '200') {
       comment.isLiked = !comment.isLiked;
       comment.likeCount = comment.isLiked
-          ? (parseInt(comment.likeCount) + 1).toString()
-          : (parseInt(comment.likeCount) - 1).toString();
+        ? (parseInt(comment.likeCount) + 1).toString()
+        : (parseInt(comment.likeCount) - 1).toString();
     }
   } catch (error) {
     ElMessage.error('操作失败');
@@ -224,7 +224,7 @@ const addToCartHandle = async () => {
   }
 
   try {
-    const response = await addToCart({productId: productId.value, quantity: 1});
+    const response = await addToCart({ productId: productId.value, quantity: 1 });
     if (response.data.code == "200") {
       ElMessage({
         message: '已加入购物袋',
@@ -257,7 +257,7 @@ const goToReader = () => {
     return;
   }
 
-  router.push({path: '/reader', query: {productId: productId.value}});
+  router.push({ path: '/reader', query: { productId: productId.value } });
 }
 
 // 获取评论列表
@@ -347,7 +347,7 @@ const setReply = (comment: Comment) => {
   replyingTo.value = comment.username;
   // 自动聚焦到评论框
   setTimeout(() => {
-    document.querySelector('.reply-input')?.scrollIntoView({behavior: 'smooth'});
+    document.querySelector('.reply-input')?.scrollIntoView({ behavior: 'smooth' });
     const textarea = document.querySelector('.reply-input textarea') as HTMLTextAreaElement;
     if (textarea) textarea.focus();
   }, 100);
@@ -373,7 +373,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Header/>
+  <Header />
   <div class="book-detail-page-container">
     <div class="book-detail-page">
       <el-skeleton :loading="loading" animated>
@@ -383,7 +383,7 @@ onMounted(() => {
             <div class="product-main-content">
               <!-- 左侧大图区域 -->
               <div class="dialog-image">
-                <el-image :src="currentProduct.cover" class="detail-cover" fit="cover"/>
+                <el-image :src="currentProduct.cover" class="detail-cover" fit="cover" />
                 <div class="product-actions">
                   <el-button :disabled="!hasPurchased" class="action-button read-button" @click="goToReader">
                     {{ hasPurchased ? '阅读' : '阅读 - 请先购买' }}
@@ -408,7 +408,7 @@ onMounted(() => {
                   <div class="product-meta">
                     <div class="meta-price">RMB {{ currentProduct.price }}</div>
                     <div class="meta-rating">
-                      <el-rate v-model="currentProduct.rate" allow-half disabled/>
+                      <el-rate v-model="currentProduct.rate" allow-half disabled />
                       <span>{{ currentProduct.rate.toFixed(1) }}</span>
                     </div>
                   </div>
@@ -424,10 +424,10 @@ onMounted(() => {
                     <div class="spec-value description">
                       {{
                         isDescriptionExpanded ? currentProduct.description : currentProduct.description.substr(0, 50) +
-                            (currentProduct.description.length > 50 ? '...' : '')
+                          (currentProduct.description.length > 50 ? '...' : '')
                       }}
                       <span v-if="currentProduct.description.length > 50" class="toggle-description"
-                            @click="toggleDescription">
+                        @click="toggleDescription">
                         {{ isDescriptionExpanded ? '收起' : '展开' }}
                       </span>
                     </div>
@@ -439,7 +439,7 @@ onMounted(() => {
                     <div v-html="currentProduct.detail"></div>
                   </div>
                   <div v-if="currentProduct.detail && currentProduct.detail.length > 100" class="toggle-detail"
-                       @click="toggleDetail">
+                    @click="toggleDetail">
                     {{ isDetailExpanded ? '收起' : '查看更多' }}
                   </div>
                 </div>
@@ -453,12 +453,12 @@ onMounted(() => {
 
                 <div v-if="Array.isArray(comments) && comments.length" class="comments-list">
                   <div v-for="comment in comments.filter(c => !c.parentId)" :key="comment.commentId"
-                       class="comment-card">
+                    class="comment-card">
                     <!-- 主评论 -->
                     <div class="comment-main">
                       <!-- 修改：优先显示用户头像 -->
                       <div v-if="comment.avatar" class="comment-avatar with-image">
-                        <img :src="comment.avatar" alt="用户头像" class="user-avatar-img"/>
+                        <img :src="comment.avatar" alt="用户头像" class="user-avatar-img" />
                       </div>
                       <div v-else class="comment-avatar">
                         {{ comment.username.charAt(0).toUpperCase() }}
@@ -480,7 +480,7 @@ onMounted(() => {
                             <span class="el-icon-chat-line-round"></span> 回复
                           </div>
                           <div v-if="comment.username === username || isUserAdmin" class="action-delete"
-                               @click="deleteCommentById(comment.commentId)">
+                            @click="deleteCommentById(comment.commentId)">
                             <span class="el-icon-delete"></span> 删除
                           </div>
                         </div>
@@ -490,10 +490,10 @@ onMounted(() => {
                     <!-- 子评论列表 -->
                     <div v-if="comments.some(c => c.parentId === comment.commentId)" class="child-comments">
                       <div v-for="childComment in comments.filter(c => c.parentId === comment.commentId)"
-                           :key="childComment.commentId" class="child-comment">
+                        :key="childComment.commentId" class="child-comment">
                         <!-- 修改：优先显示用户头像 -->
                         <div v-if="childComment.avatar" class="comment-avatar small with-image">
-                          <img :src="childComment.avatar" alt="用户头像" class="user-avatar-img"/>
+                          <img :src="childComment.avatar" alt="用户头像" class="user-avatar-img" />
                         </div>
                         <div v-else class="comment-avatar small">
                           {{ childComment.username.charAt(0).toUpperCase() }}
@@ -508,7 +508,7 @@ onMounted(() => {
 
                           <div class="comment-actions">
                             <div :class="{ active: childComment.isLiked }" class="action-like"
-                                 @click="handleLike(childComment)">
+                              @click="handleLike(childComment)">
                               <span :class="childComment.isLiked ? 'el-icon-star-filled' : 'el-icon-star'"></span>
                               <span>{{ childComment.likeCount }}</span>
                             </div>
@@ -516,7 +516,7 @@ onMounted(() => {
                               <span class="el-icon-chat-line-round"></span> 回复
                             </div>
                             <div v-if="childComment.username === username || isUserAdmin" class="action-delete"
-                                 @click="deleteCommentById(childComment.commentId)">
+                              @click="deleteCommentById(childComment.commentId)">
                               <span class="el-icon-delete"></span> 删除
                             </div>
                           </div>
@@ -539,9 +539,8 @@ onMounted(() => {
                   </div>
                   <div class="form-group">
                     <textarea v-model="newCommentContent"
-                              :placeholder="replyingTo ? `回复 ${replyingTo}...` : '发表你的想法...'"
-                              class="comment-input-field"
-                              rows="3">
+                      :placeholder="replyingTo ? `回复 ${replyingTo}...` : '发表你的想法...'" class="comment-input-field"
+                      rows="3">
                     </textarea>
                   </div>
                   <el-button class="submit-comment" @click="addNewComment">
@@ -558,20 +557,20 @@ onMounted(() => {
             <div class="skeleton-header">
               <div class="skeleton-image"></div>
               <div class="skeleton-info">
-                <el-skeleton-item style="width: 50%" variant="h1"/>
-                <el-skeleton-item style="margin: 15px 0; width: 30%" variant="text"/>
-                <el-skeleton-item style="width: 100%" variant="p"/>
-                <el-skeleton-item style="width: 100%" variant="p"/>
+                <el-skeleton-item style="width: 50%" variant="h1" />
+                <el-skeleton-item style="margin: 15px 0; width: 30%" variant="text" />
+                <el-skeleton-item style="width: 100%" variant="p" />
+                <el-skeleton-item style="width: 100%" variant="p" />
               </div>
             </div>
             <div class="skeleton-body">
-              <el-skeleton-item style="width: 30%" variant="h3"/>
+              <el-skeleton-item style="width: 30%" variant="h3" />
               <div v-for="i in 3" :key="i">
                 <div class="skeleton-comment">
                   <div class="skeleton-avatar"></div>
                   <div class="skeleton-content">
-                    <el-skeleton-item style="width: 20%" variant="text"/>
-                    <el-skeleton-item style="width: 100%" variant="p"/>
+                    <el-skeleton-item style="width: 20%" variant="text" />
+                    <el-skeleton-item style="width: 100%" variant="p" />
                   </div>
                 </div>
               </div>
@@ -581,9 +580,9 @@ onMounted(() => {
       </el-skeleton>
     </div>
   </div>
-  <el-backtop :bottom="50" :right="30"/>
+  <el-backtop :bottom="50" :right="30" />
 
-  <Footer/>
+  <Footer />
 </template>
 
 <style>

@@ -2,11 +2,11 @@
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
 import AIAssistantDialog from "../components/AIAssistantDialog.vue";
-import {onMounted, ref} from "vue";
-import {getAllAds} from "../api/ad.ts";
-import {getProductDetail} from "../api/product.ts";
-import {ElMessage} from "element-plus";
-import {useRouter} from 'vue-router'; // 添加路由导入
+import { onMounted, ref } from "vue";
+import { getAllAds } from "../api/ad.ts";
+import { getProductList, getProductDetail } from "../api/product.ts";
+import { ElMessage } from "element-plus";
+import { useRouter } from 'vue-router'; // 添加路由导入
 
 type ad = {
   id: string,
@@ -121,17 +121,17 @@ onMounted(async () => {
 
 // 模拟推荐书籍数据
 const recommendedBooks = ref<
-    { id: number; title: string; cover: string; desc: string; price: number }[]
+  { id: number; title: string; cover: string; desc: string; price: number }[]
 >([]);
 
 // 新书上架
 const newArrivals = ref<
-    { id: number; title: string; cover: string; author: string; price: number }[]
+  { id: number; title: string; cover: string; author: string; price: number }[]
 >([]);
 
 // 热门分类
 const categories = ref<
-    { id: number; name: string; icon: string; count: number }[]
+  { id: number; name: string; icon: string; count: number }[]
 >([]);
 
 // 特色书籍
@@ -141,7 +141,7 @@ const featuredBook = ref({
   author: "史铁生",
   cover: "https://chanhsing.oss-cn-shanghai.aliyuncs.com/v2-53a8accd00d8f9923ff47a243d691d84_r.jpg",
   desc: "史铁生是当代中国最令人敬佩的作家之一。他的写作与他的生命完全同构在了一起，在自己的“写作之夜”，史铁生用残缺的身体，说出了最为健全而丰满的思想。" +
-      "他体验到的是生命的苦难，表达出的却是存在的明朗和欢乐，他睿智的言辞，照亮的反而是我们日益幽暗的内心。 地坛只是一个载体，而文章的本质却是一个绝望的人寻求希望的过程，以及对母亲的思念。",
+    "他体验到的是生命的苦难，表达出的却是存在的明朗和欢乐，他睿智的言辞，照亮的反而是我们日益幽暗的内心。 地坛只是一个载体，而文章的本质却是一个绝望的人寻求希望的过程，以及对母亲的思念。",
   price: 99.00
 });
 
@@ -173,82 +173,30 @@ onMounted(async () => {
     heroVisible.value = true;
 
     // 加载其他初始内容
-    recommendedBooks.value = [
-      {
-        id: 1,
-        title: "长安的荔枝",
-        cover: "//images.weserv.nl/?url=https://img3.doubanio.com/view/subject/s/public/s34327482.jpg",
-        desc: "跟随小人物的视角穿越回唐朝",
-        price: 45.00
-      },
-      {
-        id: 2,
-        title: "太白金星有点烦",
-        cover: "//images.weserv.nl/?url=https://img9.doubanio.com/view/subject/s/public/s34544956.jpg",
-        desc: "幽默风趣的历史小说",
-        price: 45.00
-      },
-      {
-        id: 3,
-        title: "食南之徒",
-        cover: "//images.weserv.nl/?url=https://img3.doubanio.com/view/subject/s/public/s34823157.jpg",
-        desc: "捕捉世界之美，每一瞬间都动人",
-        price: 56.00
-      },
-      {
-        id: 4,
-        title: "素食者",
-        cover: "//images.weserv.nl/?url=https://img3.doubanio.com/view/subject/s/public/s33956462.jpg",
-        desc: "亚洲首位国际布克文学奖得主获奖作",
-        price: 48.00
-      },
-    ];
-
-    categories.value = [
-      {id: 1, name: "文学小说", icon: "📚", count: 1280},
-      {id: 2, name: "科技前沿", icon: "🔬", count: 853},
-      {id: 3, name: "艺术设计", icon: "🎨", count: 672},
-      {id: 4, name: "生活方式", icon: "☕️", count: 945},
-      {id: 5, name: "经济管理", icon: "📊", count: 1056},
-      {id: 6, name: "历史文化", icon: "🏛️", count: 789},
-      {id: 7, name: "运动健身", icon: "🏋️", count: 900},
-      {id: 8, name: "美食烹饪", icon: "🍳", count: 1120},
-      {id: 9, name: "旅游攻略", icon: "✈️", count: 730},
-      {id: 10, name: "音乐艺术", icon: "🎵", count: 640}
-    ];
-
-    newArrivals.value = [
-      {
-        id: 5,
-        title: "恶女的告白",
-        author: "[日] 叶真中显",
-        cover: "//images.weserv.nl/?url=https://img9.doubanio.com/view/subject/s/public/s34917944.jpg",
-        price: 55.00
-      },
-      {
-        id: 6,
-        title: "明亮的夜晚",
-        author: "[韩] 崔恩荣",
-        cover: "//images.weserv.nl/?url=https://img3.doubanio.com/view/subject/s/public/s34577743.jpg",
-        price: 52.00
-      },
-      {
-        id: 7,
-        title: "猫鱼",
-        author: "陈冲",
-        cover: "//images.weserv.nl/?url=https://img9.doubanio.com/view/subject/s/public/s34867425.jpg",
-        price: 168.00
-      },
-      {
-        id: 8,
-        title: "东京八平米",
-        author: "[日] 吉井忍",
-        cover: "//images.weserv.nl/?url=https://img1.doubanio.com/view/subject/s/public/s34361490.jpg",
-        price: 79.00
-      }
-    ];
-
-    // 延迟3秒后再显示广告弹窗
+    getProductList().then(({ data }) => {
+      const books = data.data || [];
+      recommendedBooks.value = books.slice(0, 4).map((book: any) => ({
+        id: Number(book.id), title: book.title, cover: book.cover,
+        desc: book.description, price: Number(book.price)
+      }));
+      newArrivals.value = books.slice(-4).reverse().map((book: any) => ({
+        id: Number(book.id), title: book.title, cover: book.cover,
+        author: book.specifications?.find((spec: any) => spec.item === '作者')?.value || '枕石书屋',
+        price: Number(book.price)
+      }));
+      const counts = new Map<string, number>();
+      books.forEach((book: any) => {
+        const value = book.specifications?.find((spec: any) => spec.item === '类别')?.value || '其他';
+        value.split('/').forEach((name: string) => counts.set(name.trim(), (counts.get(name.trim()) || 0) + 1));
+      });
+      categories.value = Array.from(counts, ([name, count], index) => ({ id: index, name, count, icon: '📚' }));
+      const selected = books.find((book: any) => book.title === '我与地坛') || books[0];
+      if (selected) featuredBook.value = {
+        id: Number(selected.id), title: selected.title, cover: selected.cover,
+        author: selected.specifications?.find((spec: any) => spec.item === '作者')?.value || '枕石书屋',
+        desc: selected.description, price: Number(selected.price)
+      };
+    }).catch(() => ElMessage.error('书目加载失败，请稍后重试'));
     setTimeout(() => {
       if (adList.value.length > 0 && !hideAds.value) {
         adsDialogVisible.value = true;
@@ -275,16 +223,16 @@ const aiAssistantVisible = ref(false);
 <template>
   <div class="home">
     <!-- 顶部导航 -->
-    <Header/>
+    <Header />
 
     <!-- 美化后的广告弹窗 -->
     <el-dialog v-model="adsDialogVisible" :show-close="false" class="ad-dialog" destroy-on-close width="50%"
-               @close="handleClose">
+      @close="handleClose">
       <template #header>
         <div class="ad-dialog-header">
           <h3>精品推荐</h3>
           <div class="ad-controls">
-            <el-checkbox v-model="hideAds" label="不再显示" size="small"/>
+            <el-checkbox v-model="hideAds" label="不再显示" size="small" />
             <el-button class="close-btn" type="text" @click="adsDialogVisible = false">
               <i class="el-icon-close">×</i>
             </el-button>
@@ -296,9 +244,9 @@ const aiAssistantVisible = ref(false);
         <div class="carousel-container">
           <transition-group class="ad-transition-group" name="ad-fade" tag="div">
             <div v-for="(ad, index) in displayedAds" v-show="currentAdIndex === index" :key="ad.id" class="ad-item"
-                 @click="openDetailDialog(ad.productId)">
+              @click="openDetailDialog(ad.productId)">
               <div class="ad-image-container">
-                <img :src="ad.imgUrl" alt="广告图片" class="ad-image"/>
+                <img :src="ad.imgUrl" alt="广告图片" class="ad-image" />
               </div>
               <div class="ad-content">
                 <h3 class="ad-title">{{ ad.title }}</h3>
@@ -312,8 +260,7 @@ const aiAssistantVisible = ref(false);
         <!-- 广告指示器 -->
         <div v-if="displayedAds.length > 1" class="ad-indicators">
           <span v-for="(_, index) in displayedAds" :key="index"
-                :class="['ad-indicator', { 'active': index === currentAdIndex }]"
-                @click="currentAdIndex = index"></span>
+            :class="['ad-indicator', { 'active': index === currentAdIndex }]" @click="currentAdIndex = index"></span>
         </div>
       </div>
 
@@ -328,7 +275,7 @@ const aiAssistantVisible = ref(false);
     <el-dialog v-model="detailDialogVisible" title="商品详情" width="50%">
       <div class="product-detail">
         <div class="detail-header">
-          <img :src="currentProduct.cover" alt="封面" class="product-cover"/>
+          <img :src="currentProduct.cover" alt="封面" class="product-cover" />
           <div class="product-info">
             <h2>{{ currentProduct.title }}</h2>
             <div class="product-price">价格: {{ currentProduct.price }}</div>
@@ -355,7 +302,7 @@ const aiAssistantVisible = ref(false);
       <div class="hero-content">
         <div class="hero-text">
           <h1>纯粹阅读<br>非凡生活</h1>
-          <p>在番茄书城，发现每一本书的灵魂。</p>
+          <p>在枕石书屋，发现每一本书的灵魂。</p>
           <div class="hero-actions">
             <button class="primary-btn" @click="navigateToLibrary">立即探索</button>
             <button class="secondary-btn" @click="navigateToLibrary">了解更多</button>
@@ -363,7 +310,7 @@ const aiAssistantVisible = ref(false);
         </div>
         <div class="hero-image">
           <img alt="Hero Image"
-               src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80">
+            src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80">
         </div>
       </div>
       <div class="hero-bg"></div>
@@ -382,7 +329,7 @@ const aiAssistantVisible = ref(false);
         <div v-for="category in categories" :key="category.id" class="category-card" @click="navigateToLibrary">
           <div class="category-icon">{{ category.icon }}</div>
           <h3>{{ category.name }}</h3>
-          <p>{{ category.count }}+ 本书籍</p>
+          <p>{{ category.count }} 本书籍</p>
         </div>
       </div>
     </section>
@@ -398,9 +345,9 @@ const aiAssistantVisible = ref(false);
       </div>
       <div class="display-books">
         <div v-for="book in recommendedBooks" :key="book.id" class="recommended-book"
-             @click="navigateToBookDetail(book.id)">
+          @click="navigateToBookDetail(book.id)">
           <div class="display-book-cover">
-            <img :src="book.cover" alt="书籍封面"/>
+            <img :src="book.cover" alt="书籍封面" />
           </div>
           <div class="display-book-info">
             <h3>{{ book.title }}</h3>
@@ -423,7 +370,7 @@ const aiAssistantVisible = ref(false);
       <div class="display-books">
         <div v-for="book in newArrivals" :key="book.id" class="new-book" @click="navigateToBookDetail(book.id)">
           <div class="display-book-cover">
-            <img :src="book.cover" alt="书籍封面"/>
+            <img :src="book.cover" alt="书籍封面" />
             <div class="new-tag">NEW</div>
           </div>
           <div class="display-book-info">
@@ -451,7 +398,7 @@ const aiAssistantVisible = ref(false);
             </div>
           </div>
           <div class="featured-image" @click="navigateToBookDetail(featuredBook.id)">
-            <img :src="featuredBook.cover" alt="特色书籍封面"/>
+            <img :src="featuredBook.cover" alt="特色书籍封面" />
           </div>
         </div>
       </div>
@@ -460,22 +407,8 @@ const aiAssistantVisible = ref(false);
 
     <!--  用户社区展示-->
     <section class="community-section">
-      <h2 class="community-title">加入番茄书城社区</h2>
+      <h2 class="community-title">加入枕石书屋社区</h2>
       <p class="community-subtitle">与全国书友分享阅读体验，参与读书活动，获取专属推荐</p>
-      <div class="community-stats">
-        <div class="stat-item">
-          <span class="stat-number">28.5 万</span>
-          <span class="stat-label">活跃书友</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">43.2 万</span>
-          <span class="stat-label">书评笔记</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">1274</span>
-          <span class="stat-label">读书小组</span>
-        </div>
-      </div>
       <button class="community-btn">敬请期待</button>
     </section>
 
@@ -485,20 +418,20 @@ const aiAssistantVisible = ref(false);
         <h2>订阅获取更新</h2>
         <p>第一时间获取新书资讯和独家优惠</p>
         <div class="subscribe-form">
-          <input placeholder="输入您的邮箱地址（功能预览，敬请期待）" type="email"/>
-          <button>订阅</button>
+          <input placeholder="输入您的邮箱地址（功能预览，敬请期待）" type="email" />
+          <button disabled>敬请期待</button>
         </div>
       </div>
     </section>
 
     <!-- 页脚 -->
-    <Footer/>
+    <Footer />
 
     <!-- AI助手对话框 -->
-    <AIAssistantDialog v-model:visible="aiAssistantVisible"/>
+    <AIAssistantDialog v-model:visible="aiAssistantVisible" />
 
     <!-- 页面底部回顶部按钮 -->
-    <el-backtop :bottom="50" :right="30"/>
+    <el-backtop :bottom="50" :right="30" />
   </div>
 </template>
 
@@ -727,7 +660,7 @@ const aiAssistantVisible = ref(false);
 
 .hero-text {
   flex: 0 0 50%;
-  padding-right: 40px;
+  padding-left: 2%;
 }
 
 .hero-text h1 {

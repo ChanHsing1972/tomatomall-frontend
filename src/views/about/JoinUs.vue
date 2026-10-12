@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import Header from "../../components/Header.vue";
 import Footer from "../../components/Footer.vue";
-import {onMounted, ref} from "vue";
-import {ElMessage} from "element-plus";
+import { onMounted, ref } from "vue";
+import { ElMessage } from "element-plus";
 
 // 岗位数据
 const jobPositions = ref([
@@ -13,7 +13,7 @@ const jobPositions = ref([
     location: "上海",
     type: "全职",
     experience: "3-5年",
-    description: "负责番茄书城Web及移动端前端开发，优化用户界面和交互体验，使用Vue.js、TypeScript等技术栈。",
+    description: "负责枕石书屋Web及移动端前端开发，优化用户界面和交互体验，使用Vue.js、TypeScript等技术栈。",
     requirements: [
       "计算机或相关专业本科及以上学历",
       "3年以上前端开发经验，熟练掌握HTML、CSS、JavaScript",
@@ -29,7 +29,7 @@ const jobPositions = ref([
     location: "北京",
     type: "全职",
     experience: "5-8年",
-    description: "负责番茄书城产品规划和迭代，把控产品方向，提升用户体验，推动产品商业目标达成。",
+    description: "负责枕石书屋产品规划和迭代，把控产品方向，提升用户体验，推动产品商业目标达成。",
     requirements: [
       "本科及以上学历，5年以上互联网产品经理经验",
       "有图书、阅读或内容产品经验者优先",
@@ -45,7 +45,7 @@ const jobPositions = ref([
     location: "广州",
     type: "全职",
     experience: "1-3年",
-    description: "负责番茄书城内容规划和运营，策划活动，进行内容推荐，提升用户参与度。",
+    description: "负责枕石书屋内容规划和运营，策划活动，进行内容推荐，提升用户参与度。",
     requirements: [
       "本科及以上学历，中文、新闻、编辑等相关专业优先",
       "热爱阅读，有良好的文字功底和审美能力",
@@ -61,7 +61,7 @@ const jobPositions = ref([
     location: "深圳",
     type: "全职",
     experience: "3-5年",
-    description: "负责番茄书城后端服务开发和优化，确保系统高可用性、安全性和性能。",
+    description: "负责枕石书屋后端服务开发和优化，确保系统高可用性、安全性和性能。",
     requirements: [
       "计算机相关专业本科及以上学历",
       "熟练掌握Java/Go/Python等后端语言，了解分布式系统架构",
@@ -131,12 +131,12 @@ const hiringSteps = ref([
   {
     step: "05",
     title: "终轮面试",
-    description: "与部门负责人或公司高管面谈，确保您与番茄书城的文化和价值观契合。"
+    description: "与部门负责人或公司高管面谈，确保您与枕石书屋的文化和价值观契合。"
   },
   {
     step: "06",
     title: "录用通知",
-    description: "如果一切顺利，我们会向您发出录用通知，欢迎您加入番茄书城大家庭！"
+    description: "如果一切顺利，我们会向您发出录用通知，欢迎您加入枕石书屋大家庭！"
   }
 ]);
 
@@ -163,7 +163,7 @@ const handleFileChange = (e: Event) => {
 const submitApplication = () => {
   // 在实际应用中，这里会调用API提交表单数据
   ElMessage({
-    message: '您的申请已成功提交，我们会尽快与您联系！',
+    message: '这是界面演示，申请尚未提交。项目当前不提供招聘服务。',
     type: 'success'
   });
 
@@ -213,18 +213,18 @@ onMounted(() => {
 
 <template>
   <div class="join-us-page">
-    <Header/>
+    <Header />
 
     <!-- 英雄区域 -->
     <section class="hero">
       <div class="hero-content">
-        <h1>加入番茄书城</h1>
+        <h1>加入枕石书屋</h1>
         <p>成为改变阅读体验的一份子</p>
       </div>
     </section>
 
     <!-- 主要内容 -->
-    <div class="container">
+    <div class="container"><p class="demo-notice">本页为课程项目的界面演示。公司、招聘、客服和商业服务文案为设计示例。</p>
       <!-- 公司文化 -->
       <section class="culture-section">
         <div class="section-header">
@@ -234,7 +234,7 @@ onMounted(() => {
 
         <div class="culture-content">
           <p>
-            在番茄书城，我们深信阅读能改变人生，而我们的使命就是让这种改变触手可及。我们打造的不仅是一个购书平台，更是一个知识分享的社区，一个思想碰撞的空间。</p>
+            在枕石书屋，我们深信阅读能改变人生，而我们的使命就是让这种改变触手可及。我们打造的不仅是一个购书平台，更是一个知识分享的社区，一个思想碰撞的空间。</p>
 
           <div class="culture-pillars">
             <div class="pillar">
@@ -293,7 +293,7 @@ onMounted(() => {
       <section class="benefits-section">
         <div class="section-header">
           <span class="section-tag">员工福利</span>
-          <h2>为什么选择番茄书城</h2>
+          <h2>为什么选择枕石书屋</h2>
         </div>
 
         <div class="benefits-grid">
@@ -332,24 +332,20 @@ onMounted(() => {
 
         <div class="workplace-gallery">
           <div class="gallery-item">
-            <img
-                alt="办公空间"
-                src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8b2ZmaWNlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60">
+            <img alt="办公空间"
+              src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8b2ZmaWNlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60">
           </div>
           <div class="gallery-item">
-            <img
-                alt="会议室"
-                src="https://images.unsplash.com/photo-1600494603989-9650cf6ddd3d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTh8fG9mZmljZXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60">
+            <img alt="会议室"
+              src="https://images.unsplash.com/photo-1600494603989-9650cf6ddd3d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTh8fG9mZmljZXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60">
           </div>
           <div class="gallery-item">
-            <img
-                alt="团队协作"
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTJ8fHRlYW18ZW58MHx8MHx8&auto=format&fit=crop&w=800&q=60">
+            <img alt="团队协作"
+              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTJ8fHRlYW18ZW58MHx8MHx8&auto=format&fit=crop&w=800&q=60">
           </div>
           <div class="gallery-item">
-            <img
-                alt="休息区"
-                src="https://images.unsplash.com/photo-1520881363902-a0ff4e722963?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8Y2FmZXRlcmlhfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60">
+            <img alt="休息区"
+              src="https://images.unsplash.com/photo-1520881363902-a0ff4e722963?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8Y2FmZXRlcmlhfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60">
           </div>
         </div>
       </section>
@@ -419,7 +415,7 @@ onMounted(() => {
 
     <!-- 职位详情对话框 -->
     <el-dialog v-model="showPositionDetails" :title="currentPosition ? currentPosition.title : ''" destroy-on-close
-               width="50%">
+      width="50%">
       <div v-if="currentPosition" class="position-details">
         <div class="position-header">
           <div class="position-meta">
@@ -450,7 +446,7 @@ onMounted(() => {
       </div>
     </el-dialog>
 
-    <Footer/>
+    <Footer />
   </div>
 </template>
 

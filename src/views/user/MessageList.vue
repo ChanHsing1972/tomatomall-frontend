@@ -1,11 +1,19 @@
 <script lang="ts" setup>
-import {onMounted, ref} from 'vue';
-import {useRouter} from 'vue-router';
-import {getRecentChats, sendMessage} from '../../api/message';
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { getRecentChats, sendMessage } from '../../api/message';
 import Header from '../../components/Header.vue';
-import {ElMessage} from 'element-plus';
-import {accountInfo, getAllUsers} from '../../api/account';
-
+import { ElMessage } from 'element-plus';
+import { accountInfo, getAllUsers } from '../../api/account'; import {
+  Plus,
+  ChatDotRound,
+  Refresh,
+  ChatLineSquare,
+  ArrowRight,
+  Search,
+  Loading,
+  InfoFilled
+} from '@element-plus/icons-vue';
 interface User {
   id: string;
   name: string;
@@ -189,175 +197,279 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="message-page">
-    <Header/>
-    <div class="message-container">
-      <h1 class="page-title">我的消息</h1>
+  <div class="page-wrapper">
+    <Header />
+    <div class="message-content">
+      <div class="page-header">
+        <h1>我的消息</h1>
+        <div class="header-actions">
+          <button class="icon-btn" @click="openSearchUserDialog" title="新消息">
+            <el-icon>
+              <Plus />
+            </el-icon>
+          </button>
+          <button v-if="currentUserRole === 'admin'" class="icon-btn" @click="openBroadcastDialog" title="群发消息">
+            <el-icon>
+              <ChatDotRound />
+            </el-icon>
+          </button>
+          <button class="icon-btn" @click="fetchRecentChats" :disabled="loading" title="刷新">
+            <el-icon :class="{ 'rotating': loading }">
+              <Refresh />
+            </el-icon>
+          </button>
+        </div>
+      </div>
 
-      <el-card class="message-card" shadow="hover">
-        <template #header>
-          <div class="card-header">
-            <span class="header-title">最近联系人</span>
-            <div class="header-actions">
-              <el-button plain size="small" type="primary" @click="openSearchUserDialog">
-                <i class="el-icon-plus"></i> 新建对话
-              </el-button>
-              <!-- 管理员群发功能 -->
-              <el-button v-if="currentUserRole === 'admin'" plain size="small" type="warning"
-                         @click="openBroadcastDialog">
-                <i class="el-icon-chat-dot-round"></i> 群发消息
-              </el-button>
-              <el-button :loading="loading" size="small" type="primary" @click="fetchRecentChats">
-                <i class="el-icon-refresh"></i> 刷新
-              </el-button>
-            </div>
-          </div>
-        </template>
-
-        <el-skeleton v-if="loading" :loading="loading" :rows="3" animated>
-        </el-skeleton>
+      <div class="message-list-container">
+        <div v-if="loading && chats.length === 0" class="loading-state">
+          <el-skeleton :rows="3" animated />
+        </div>
 
         <div v-else-if="chats.length === 0" class="empty-state">
-          <el-empty description="暂无消息"/>
-          <p class="empty-hint">开始新的对话或等待他人联系您</p>
+          <div class="empty-icon">
+            <el-icon>
+              <ChatLineSquare />
+            </el-icon>
+          </div>
+          <h3>暂无消息</h3>
+          <p>开始新的对话或等待他人联系您。</p>
+          <button class="primary-btn" @click="openSearchUserDialog">开始聊天</button>
         </div>
 
         <div v-else class="chat-list">
           <div v-for="chat in chats" :key="chat.id" class="chat-item" @click="openConversation(chat)">
-            <div class="avatar-container">
-              <!-- 优先显示头像，如果没有头像则使用 el-avatar -->
-              <img v-if="getOtherUserAvatar(chat)" :alt="getOtherUserName(chat)" :src="getOtherUserAvatar(chat)"
-                   class="avatar-image"/>
-              <el-avatar v-else :size="40">{{ getOtherUserName(chat).charAt(0) }}</el-avatar>
-              <div v-if="!chat.isRead && chat.receiverId === currentUserId" class="unread-badge"></div>
+            <div class="avatar-wrapper">
+              <img v-if="getOtherUserAvatar(chat)" :src="getOtherUserAvatar(chat)" :alt="getOtherUserName(chat)"
+                class="avatar-img" />
+              <div v-else class="avatar-placeholder">{{ getOtherUserName(chat).charAt(0) }}</div>
+              <div v-if="!chat.isRead && chat.receiverId === currentUserId" class="unread-dot"></div>
             </div>
 
-            <div class="chat-info">
+            <div class="chat-content">
               <div class="chat-header">
-                <span class="username">{{ getOtherUserName(chat) }}</span>
-                <span class="time">{{ new Date(chat.createTime).toLocaleString() }}</span>
+                <span class="chat-name">{{ getOtherUserName(chat) }}</span>
+                <span class="chat-time">{{ new Date(chat.createTime).toLocaleDateString() }}</span>
               </div>
-              <div :class="{ 'unread-message': !chat.isRead && chat.receiverId === currentUserId }"
-                   class="last-message">
+              <div class="chat-preview" :class="{ 'unread': !chat.isRead && chat.receiverId === currentUserId }">
                 {{ chat.content }}
               </div>
             </div>
+
+            <div class="chat-arrow">
+              <el-icon>
+                <ArrowRight />
+              </el-icon>
+            </div>
           </div>
         </div>
-      </el-card>
+      </div>
     </div>
   </div>
 
-  <!-- 搜索用户对话框 -->
-  <el-dialog v-model="searchDialogVisible" destroy-on-close title="搜索用户" width="30%" @close="closeSearchDialog">
+  <!-- Search Dialog -->
+  <el-dialog v-model="searchDialogVisible" title="新消息" width="400px" destroy-on-close custom-class="apple-dialog">
     <div class="search-container">
-      <el-input v-model="searchKeyword" clearable placeholder="输入用户名搜索" @keyup.enter="searchUsers">
-        <template #append>
-          <el-button :loading="searchLoading" @click="searchUsers">搜索</el-button>
-        </template>
-      </el-input>
-
-      <div v-if="user" class="user-list">
-        <div class="user-item" @click="startConversation(user.id)">
-          <el-avatar :size="32" class="user-avatar">{{ user.name.charAt(0) }}</el-avatar>
-          <div class="user-info">
-            <div class="username">{{ user.name }}</div>
-            <div class="user-id">@{{ user.username }}</div>
-          </div>
-          <el-button class="start-chat-btn" plain size="small" type="primary">开始聊天</el-button>
-        </div>
+      <div class="search-input-wrapper">
+        <el-icon>
+          <Search />
+        </el-icon>
+        <input v-model="searchKeyword" placeholder="搜索用户..." @keyup.enter="searchUsers" class="apple-input">
       </div>
 
-      <div v-else-if="searchKeyword && !searchLoading" class="no-results">
-        <i class="el-icon-search no-results-icon"></i>
-        <p>未找到匹配的用户</p>
+      <div v-if="searchLoading" class="search-loading">
+        <el-icon class="is-loading">
+          <Loading />
+        </el-icon>
+      </div>
+
+      <div v-else-if="user" class="user-result" @click="startConversation(user.id)">
+        <div class="user-avatar-small">
+          {{ user.name.charAt(0) }}
+        </div>
+        <div class="user-info">
+          <div class="user-name">{{ user.name }}</div>
+          <div class="user-username">@{{ user.username }}</div>
+        </div>
+        <el-icon class="action-icon">
+          <ChatDotRound />
+        </el-icon>
+      </div>
+
+      <div v-else-if="searchKeyword && !user" class="no-results">
+        未找到用户
       </div>
     </div>
   </el-dialog>
 
-  <!-- 群发消息对话框 -->
-  <el-dialog v-model="broadcastDialogVisible" destroy-on-close title="群发消息" width="50%"
-             @close="closeBroadcastDialog">
+  <!-- Broadcast Dialog -->
+  <el-dialog v-model="broadcastDialogVisible" title="群发消息" width="500px" destroy-on-close custom-class="apple-dialog">
     <div class="broadcast-container">
-      <div class="broadcast-info">
-        <i class="el-icon-info-filled info-icon"></i>
-        <p>将向商城所有用户（除您之外）发送消息，共 {{ userList.length }} 位用户</p>
+      <div class="info-banner">
+        <el-icon>
+          <InfoFilled />
+        </el-icon>
+        <span>正在发送给 {{ userList.length }} 位用户</span>
       </div>
 
-      <el-input v-model="broadcastMessage" :rows="6" maxlength="500" placeholder="请输入要群发的消息内容..."
-                show-word-limit
-                type="textarea"/>
+      <textarea v-model="broadcastMessage" class="apple-textarea" placeholder="输入消息内容..." rows="6"></textarea>
 
-      <div v-if="userList.length > 0" class="user-preview">
-        <h4>接收用户预览：</h4>
-        <div class="user-tags">
-          <el-tag v-for="user in userList.slice(0, 10)" :key="user.id" class="user-tag" effect="light" size="small">
-            {{ user.name }}
-          </el-tag>
-          <el-tag v-if="userList.length > 10" class="more-tag" effect="plain" size="small" type="info">
-            还有 {{ userList.length - 10 }} 位用户...
-          </el-tag>
-        </div>
+      <div class="dialog-footer">
+        <button class="secondary-btn" @click="closeBroadcastDialog">取消</button>
+        <button class="primary-btn" :disabled="!broadcastMessage.trim() || broadcastLoading"
+          @click="sendBroadcastMessage">
+          {{ broadcastLoading ? '发送中...' : '发送' }}
+        </button>
       </div>
     </div>
-
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="closeBroadcastDialog">取消</el-button>
-        <el-button :disabled="!broadcastMessage.trim()" :loading="broadcastLoading" type="primary"
-                   @click="sendBroadcastMessage">
-          <i class="el-icon-message"></i> 发送群发消息
-        </el-button>
-      </div>
-    </template>
   </el-dialog>
 </template>
 
 <style scoped>
-.message-page {
+.page-wrapper {
+  background-color: #f5f5f7;
   min-height: 100vh;
-  background-color: #f5f7fa;
+  padding-top: 60px;
+  font-family: "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.message-container {
+.message-content {
   max-width: 800px;
   margin: 0 auto;
-  padding: 100px 20px 40px;
+  padding: 40px 20px;
 }
 
-.page-title {
-  font-size: 28px;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin-bottom: 24px;
-  position: relative;
-  padding-bottom: 12px;
-}
-
-.message-card {
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  border: none;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  margin-bottom: 30px;
 }
 
-.header-title {
-  font-size: 18px;
-  font-weight: 400;
+.page-header h1 {
+  font-size: 40px;
+  font-weight: 600;
   color: #1d1d1f;
+  margin: 0;
 }
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #e8e8ed;
+  color: #1d1d1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 18px;
+}
+
+.icon-btn:hover {
+  background: #d2d2d7;
+}
+
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rotating {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.message-list-container {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  min-height: 400px;
+}
+
+.loading-state {
+  padding: 40px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: #d2d2d7;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 8px;
+}
+
+.empty-state p {
+  color: #86868b;
+  margin: 0 0 24px;
+}
+
+.primary-btn {
+  background: #2D6FE3;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.primary-btn:hover {
+  background: #0077ed;
+}
+
+.primary-btn:disabled {
+  background: #e5e5e5;
+  cursor: not-allowed;
+}
+
+.secondary-btn {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.secondary-btn:hover {
+  background: #e8e8ed;
 }
 
 .chat-list {
@@ -367,297 +479,228 @@ onMounted(() => {
 
 .chat-item {
   display: flex;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
-  transition: all 0.3s ease;
+  align-items: center;
+  padding: 16px 24px;
+  gap: 16px;
   cursor: pointer;
-  position: relative;
-}
-
-.chat-item::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 3px;
-  background-color: transparent;
-  transition: background-color 0.3s ease;
-}
-
-.chat-item:hover {
-  background-color: #f9fafc;
-}
-
-.chat-item:hover::after {
-  background-color: rgb(0, 113, 227);
+  transition: background 0.2s;
+  border-bottom: 1px solid #f5f5f7;
 }
 
 .chat-item:last-child {
   border-bottom: none;
 }
 
-.avatar-container {
+.chat-item:hover {
+  background: #f5f5f7;
+}
+
+.avatar-wrapper {
   position: relative;
-  margin-right: 16px;
+  width: 48px;
+  height: 48px;
 }
 
-.unread-badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 10px;
-  height: 10px;
-  background-color: #f56c6c;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.avatar-image {
-  width: 40px;
-  height: 40px;
+.avatar-img {
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.chat-info {
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #e8e8ed;
+  color: #1d1d1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.unread-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  background: #ff3b30;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.chat-content {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
 }
 
 .chat-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 6px;
+  align-items: baseline;
+  margin-bottom: 4px;
 }
 
-.username {
-  font-weight: 400;
+.chat-name {
+  font-size: 16px;
+  font-weight: 600;
   color: #1d1d1f;
-  font-size: 15px;
 }
 
-.time {
+.chat-time {
   font-size: 12px;
-  color: #909399;
+  color: #86868b;
 }
 
-.last-message {
+.chat-preview {
   font-size: 14px;
-  color: #606266;
+  color: #86868b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.4;
-  max-width: 100%;
 }
 
-.unread-message {
-  font-weight: 600;
-  color: #303133;
+.chat-preview.unread {
+  color: #1d1d1f;
+  font-weight: 500;
 }
 
-.empty-state {
-  padding: 40px 0;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.empty-hint {
-  color: #909399;
-  margin-top: 10px;
+.chat-arrow {
+  color: #d2d2d7;
   font-size: 14px;
 }
 
-/* 搜索对话框样式 */
+/* Dialog Styles */
 .search-container {
   padding: 10px 0;
 }
 
-.user-list {
-  margin-top: 20px;
-}
-
-.user-item {
+.search-input-wrapper {
   display: flex;
   align-items: center;
-  padding: 14px;
-  border-radius: 8px;
+  background: #f5f5f7;
+  border-radius: 10px;
+  padding: 8px 12px;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.search-input-wrapper i {
+  color: #86868b;
+}
+
+.apple-input {
+  border: none;
+  background: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+  color: #1d1d1f;
+}
+
+.user-result {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f5f9ff;
   cursor: pointer;
-  transition: all 0.3s;
-  background-color: #f5f7fa;
-  margin-bottom: 10px;
+  transition: background 0.2s;
 }
 
-.user-item:hover {
-  background-color: #ecf5ff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+.user-result:hover {
+  background: #e8f2ff;
 }
 
-.user-avatar {
-  background-color: rgb(0, 113, 227);
-  color: white;
+.user-avatar-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2D6FE3;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-right: 12px;
 }
 
 .user-info {
-  margin-left: 14px;
   flex: 1;
 }
 
-.user-item .username {
-  font-size: 15px;
+.user-name {
+  font-size: 14px;
   font-weight: 600;
+  color: #1d1d1f;
 }
 
-.user-id {
-  font-size: 13px;
-  color: #909399;
+.user-username {
+  font-size: 12px;
+  color: #86868b;
 }
 
-.start-chat-btn {
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.user-item:hover .start-chat-btn {
-  opacity: 1;
+.action-icon {
+  color: #2D6FE3;
+  font-size: 20px;
 }
 
 .no-results {
   text-align: center;
-  color: #909399;
-  padding: 30px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  color: #86868b;
+  padding: 20px;
 }
 
-.no-results-icon {
-  font-size: 32px;
-  margin-bottom: 10px;
-  color: #dcdfe6;
-}
-
-/* 群发消息对话框样式 */
+/* Broadcast Dialog */
 .broadcast-container {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.broadcast-info {
+.info-banner {
+  background: #f5f9ff;
+  color: #2D6FE3;
+  padding: 12px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  background-color: #f0f9ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  padding: 14px;
-  color: rgb(0, 113, 227);
-}
-
-.info-icon {
-  font-size: 20px;
-  margin-right: 10px;
-  color: rgb(0, 113, 227);
-}
-
-.broadcast-info p {
-  margin: 0;
-}
-
-.user-preview {
-  margin-top: 10px;
-  background-color: #f9f9f9;
-  padding: 15px;
-  border-radius: 8px;
-}
-
-.user-preview h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  color: #606266;
-  font-weight: 600;
-}
-
-.user-tags {
-  display: flex;
-  flex-wrap: wrap;
   gap: 8px;
+  font-size: 14px;
 }
 
-.user-tag {
-  transition: all 0.3s;
+.apple-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d2d2d7;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
 }
 
-.user-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.more-tag {
-  font-style: italic;
+.apple-textarea:focus {
+  border-color: #2D6FE3;
 }
 
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding-top: 20px;
+  gap: 12px;
 }
 
 @media (max-width: 768px) {
-  .message-container {
-    padding: 80px 15px 30px;
+  .message-content {
+    padding: 20px;
   }
 
-  .page-title {
-    font-size: 24px;
-  }
-
-  .header-actions {
-    flex-wrap: wrap;
-  }
-
-  .chat-item {
-    padding: 12px 15px;
-  }
-
-  .avatar-container {
-    margin-right: 12px;
-  }
-
-  .avatar-image {
-    width: 36px;
-    height: 36px;
-  }
-}
-
-@media (max-width: 576px) {
-  .message-container {
-    padding: 70px 10px 20px;
-  }
-
-  .page-title {
-    font-size: 22px;
-  }
-
-  .card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .header-actions {
-    width: 100%;
-    justify-content: space-between;
+  .page-header h1 {
+    font-size: 32px;
   }
 }
 </style>

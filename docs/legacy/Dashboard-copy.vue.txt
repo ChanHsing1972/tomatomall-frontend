@@ -1,0 +1,610 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from "vue";
+import { accountInfo, accountInfoUpdate } from "../../api/account.ts";
+import { parseRole, parseTime } from "../../utils";
+import { useRouter } from "vue-router";
+import Header from "../../components/Header.vue";
+import { ElMessage, ElMessageBox, UploadProps } from "element-plus";
+import { UserFilled, Camera, ArrowRight, ShieldCheck, CreditCard, Refresh, Monitor, iPhone } from "@element-plus/icons-vue";
+
+const router = useRouter();
+const role = sessionStorage.getItem("role") || "user";
+const username = sessionStorage.getItem("username") || "游客";
+
+// 数据状态
+const name = ref("");
+const telephone = ref("");
+const location = ref("");
+const email = ref("");
+const avatar = ref("");
+const isEditing = ref(false);
+
+// 表单状态
+const editForm = ref({
+  name: "",
+  email: "",
+  location: "",
+  telephone: "",
+  password: "",
+  confirmPassword: ""
+});
+
+function getUserInfo() {
+  accountInfo(username).then((res) => {
+    const result = res.data.data;
+    name.value = result.name;
+    telephone.value = result.telephone;
+    location.value = result.location;
+    avatar.value = result.avatar;
+    email.value = result.email;
+
+    // 同步到编辑表单
+    editForm.value = { ...editForm.value, ...result, password: "", confirmPassword: "" };
+  });
+}
+
+onMounted(getUserInfo);
+
+const saveChanges = async () => {
+  if (editForm.value.password && editForm.value.password !== editForm.value.confirmPassword) {
+    ElMessage.error("两次输入的密码不一致");
+    return;
+  }
+
+  accountInfoUpdate({
+    name: editForm.value.name,
+    location: editForm.value.location,
+    telephone: editForm.value.telephone,
+    email: editForm.value.email,
+    password: editForm.value.password || undefined
+  }).then((res) => {
+    if (res.data.code === "200") {
+      ElMessage.success("设置已更新");
+      isEditing.value = false;
+      getUserInfo();
+    }
+  });
+};
+
+const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
+  if (res.code === "200") {
+    avatar.value = res.data;
+    accountInfoUpdate({ avatar: res.data }).then(() => {
+      ElMessage.success("头像更新成功");
+      getUserInfo();
+    });
+  }
+};
+</script>
+
+<template>
+  <Header />
+  <div class="apple-bg">
+    <div class="apple-container">
+      <div class="apple-layout">
+        <main class="apple-main">
+
+          <div class="profile-summary-row">
+            <div class="content-column">
+              <div class="profile-header">
+                <el-upload class="avatar-uploader" action="/api/upload" :show-file-list="false"
+                  :on-success="handleAvatarSuccess">
+                  <div class="avatar-circle">
+                    <img v-if="avatar" :src="avatar" class="avatar-img" />
+                    <el-avatar v-else :icon="UserFilled" :size="72" />
+                    <div class="avatar-overlay"><el-icon>
+                        <Camera />
+                      </el-icon></div>
+                  </div>
+                </el-upload>
+                <div class="profile-text">
+                  <div class="display-name">{{ name || username }}</div>
+                  <div class="display-role">{{ parseRole(role) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <transition name="fade" mode="out-in">
+            <div v-if="!isEditing" class="content-body">
+
+              <section class="apple-row">
+                <div class="label-column">送货</div>
+                <div class="content-column">
+                  <div class="info-split">
+                    <div class="info-block">
+                      <div class="sub-label">送货地址</div>
+                      <div class="address-text">
+                        <p class="name-line">{{ name }}</p>
+                        <p v-for="(line, index) in (location || '').split('\n')" :key="index">{{ line }}</p>
+                        <p class="phone-line">{{ telephone }}</p>
+                      </div>
+                      <a class="edit-link" @click="isEditing = true">编辑</a>
+                    </div>
+                    <div class="info-block">
+                      <div class="sub-label">联系信息</div>
+                      <div class="address-text">
+                        <p>{{ email }}</p>
+                        <p>{{ telephone }}</p>
+                      </div>
+                      <a class="edit-link" @click="isEditing = true">编辑</a>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="apple-row">
+                <div class="label-column">付款与账单</div>
+                <div class="content-column">
+                  <div class="info-block">
+                    <div class="sub-label">付款方式</div>
+                    <div class="payment-card">
+                      <el-icon class="payment-icon">
+                        <CreditCard />
+                      </el-icon>
+                      <span class="payment-desc">支付宝 ({{ email.split('@')[0] }}...)</span>
+                    </div>
+                    <a class="apple-link mt-8">管理付款方式 <el-icon>
+                        <ArrowRight />
+                      </el-icon></a>
+                  </div>
+                </div>
+              </section>
+
+              <section class="apple-row">
+                <div class="label-column">安全</div>
+                <div class="content-column">
+                  <div class="info-split">
+                    <div class="info-block">
+                      <div class="sub-label">账户密码</div>
+                      <p class="apple-desc">上次更改时间：2024年12月</p>
+                      <a class="edit-link" @click="isEditing = true">更改密码</a>
+                    </div>
+                    <div class="info-block">
+                      <div class="sub-label">受信任电话号码</div>
+                      <p class="apple-desc">{{ telephone }} (已验证)</p>
+                      <a class="edit-link">管理号码</a>
+                    </div>
+                  </div>
+                  <div class="security-footer mt-16">
+                    <el-icon class="security-badge">
+                      <ShieldCheck />
+                    </el-icon>
+                    <span>双重认证已开启，账户更安全。</span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="apple-row">
+                <div class="label-column">订阅</div>
+                <div class="content-column">
+                  <div class="subscription-card">
+                    <div class="sub-icon">📚</div>
+                    <div class="sub-info">
+                      <div class="sub-title">枕石书屋 会员服务</div>
+                      <div class="sub-detail">下次续订日期：2026年2月5日</div>
+                    </div>
+                    <a class="apple-link">管理 <el-icon>
+                        <ArrowRight />
+                      </el-icon></a>
+                  </div>
+                </div>
+              </section>
+
+              <section class="apple-row">
+                <div class="label-column">设备</div>
+                <div class="content-column">
+                  <div class="device-list">
+                    <div class="device-item">
+                      <el-icon class="device-icon">
+                        <Monitor />
+                      </el-icon>
+                      <div class="device-name">MacBook Air</div>
+                      <div class="device-status">本机</div>
+                    </div>
+                    <div class="device-item">
+                      <el-icon class="device-icon">
+                        <iPhone />
+                      </el-icon>
+                      <div class="device-name">iPhone 15 Pro</div>
+                      <div class="device-status">在线</div>
+                    </div>
+                  </div>
+                  <p class="apple-desc small mt-12">使用你的 Apple ID 登录的设备将显示在这里。</p>
+                </div>
+              </section>
+
+              <section class="apple-row">
+                <div class="label-column">隐私</div>
+                <div class="content-column">
+                  <div class="sub-label">个人信息</div>
+                  <p class="apple-desc">你可以自己掌控你的个人信息，并可随时管理你的数据或删除你的账户。枕石书屋致力于保护你的隐私。</p>
+                  <a class="apple-link">管理我的个人信息 <el-icon class="arrow-icon">
+                      <ArrowRight />
+                    </el-icon></a>
+                </div>
+              </section>
+
+              <section v-if="role === 'admin'" class="apple-row admin-border">
+                <div class="label-column">管理</div>
+                <div class="content-column">
+                  <div class="admin-links">
+                    <button class="admin-btn" @click="router.push('/manage/products')">管理产品 <el-icon>
+                        <ArrowRight />
+                      </el-icon></button>
+                    <button class="admin-btn" @click="router.push('/manage/ads')">管理广告 <el-icon>
+                        <ArrowRight />
+                      </el-icon></button>
+                    <button class="admin-btn" @click="router.push('/manage/coupons')">管理优惠券 <el-icon>
+                        <ArrowRight />
+                      </el-icon></button>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div v-else class="content-body">
+              <section class="apple-row">
+                <div class="label-column">编辑账户</div>
+                <div class="content-column">
+                  <div class="edit-grid">
+                    <div class="field">
+                      <label>姓名</label>
+                      <input v-model="editForm.name" class="apple-input" type="text" />
+                    </div>
+                    <div class="field">
+                      <label>联系电话</label>
+                      <input v-model="editForm.telephone" class="apple-input" type="text" />
+                    </div>
+                    <div class="field full">
+                      <label>送货地址</label>
+                      <textarea v-model="editForm.location" class="apple-input apple-textarea" rows="3"></textarea>
+                    </div>
+                    <div class="field">
+                      <label>新密码</label>
+                      <input v-model="editForm.password" class="apple-input" type="password" placeholder="••••••••" />
+                    </div>
+                    <div class="field">
+                      <label>确认新密码</label>
+                      <input v-model="editForm.confirmPassword" class="apple-input" type="password"
+                        placeholder="••••••••" />
+                    </div>
+                  </div>
+                  <div class="edit-actions">
+                    <button class="btn-secondary" @click="isEditing = false">取消</button>
+                    <button class="btn-primary" @click="saveChanges">保存</button>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </transition>
+        </main>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+/* 保持原有基础样式，新增部分细节 */
+.apple-bg {
+  background-color: #fff;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  padding-top: 60px;
+  color: #1d1d1f;
+}
+
+.apple-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 22px;
+}
+
+.apple-row {
+  display: flex;
+  padding: 32px 0;
+  border-top: 1px solid #d2d2d7;
+}
+
+.label-column {
+  width: 30%;
+  font-size: 20px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.content-column {
+  flex: 1;
+}
+
+/* 概要部分 */
+.profile-summary-row {
+  display: flex;
+  margin-bottom: 40px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  background: #f5f5f7;
+  cursor: pointer;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.avatar-circle:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.display-name {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.display-role {
+  font-size: 13px;
+  color: #86868b;
+  margin-top: 4px;
+}
+
+/* 内容详情样式 */
+.info-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.sub-label {
+  font-size: 13px;
+  color: #86868b;
+  margin-bottom: 8px;
+}
+
+.address-text {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.address-text p {
+  margin: 0;
+}
+
+.name-line {
+  font-weight: 500;
+}
+
+.edit-link {
+  font-size: 14px;
+  color: #0066cc;
+  margin-top: 10px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.apple-desc {
+  font-size: 15px;
+  color: #1d1d1f;
+  margin: 4px 0;
+}
+
+.apple-desc.small {
+  font-size: 13px;
+  color: #86868b;
+}
+
+.apple-link {
+  color: #0066cc;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 新增栏目样式 */
+.payment-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.payment-icon {
+  font-size: 20px;
+  color: #86868b;
+}
+
+.security-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #008000;
+  font-weight: 500;
+}
+
+.security-badge {
+  font-size: 18px;
+}
+
+.subscription-card {
+  display: flex;
+  align-items: center;
+  background: #fbfbfd;
+  border: 1px solid #d2d2d7;
+  border-radius: 12px;
+  padding: 16px;
+  gap: 16px;
+}
+
+.sub-icon {
+  font-size: 32px;
+}
+
+.sub-info {
+  flex: 1;
+}
+
+.sub-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.sub-detail {
+  font-size: 13px;
+  color: #86868b;
+}
+
+.device-list {
+  display: flex;
+  gap: 20px;
+}
+
+.device-item {
+  text-align: center;
+  background: #f5f5f7;
+  padding: 12px;
+  border-radius: 12px;
+  min-width: 100px;
+}
+
+.device-icon {
+  font-size: 32px;
+  color: #1d1d1f;
+  margin-bottom: 8px;
+}
+
+.device-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.device-status {
+  font-size: 11px;
+  color: #86868b;
+}
+
+/* 表单与交互 */
+.edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 640px;
+}
+
+.field.full {
+  grid-column: 1 / span 2;
+}
+
+.apple-input {
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 16px;
+  transition: all 0.2s;
+  background: #fff;
+}
+
+.apple-input:focus {
+  border-color: #0071e3;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+  outline: none;
+}
+
+.edit-actions {
+  margin-top: 40px;
+  display: flex;
+  gap: 16px;
+}
+
+.btn-primary {
+  background: #0071e3;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #f5f5f7;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+/* 管理员按钮 */
+.admin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 320px;
+  background: none;
+  border: 1px solid #d2d2d7;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.2s;
+}
+
+.admin-btn:hover {
+  background: #f5f5f7;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+.mt-12 {
+  margin-top: 12px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

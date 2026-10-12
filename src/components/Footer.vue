@@ -2,7 +2,7 @@
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-logo">
-        <h2>番茄书城</h2>
+        <h2>枕石书屋</h2>
         <p>纯粹阅读，非凡生活</p>
       </div>
       <div class="footer-links">
@@ -53,13 +53,14 @@
       </div>
     </div>
     <div class="copyright">
-      © 2025 番茄书城. 版权所有.
+      © 2026 枕石书屋 · 课程项目演示 · 演示支付不会扣款。
     </div>
   </footer>
 </template>
 
 <style scoped>
 .footer {
+  font-family: "sf pro display medium", sans-serif;
   background-color: #f5f5f7;
   padding: 60px 20px 20px;
   color: #515154;

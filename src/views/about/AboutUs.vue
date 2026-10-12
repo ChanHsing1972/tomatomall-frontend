@@ -1,19 +1,19 @@
 <script lang="ts" setup>
 import Header from "../../components/Header.vue";
 import Footer from "../../components/Footer.vue";
-import {onMounted, ref} from "vue";
+import { onMounted, ref } from "vue";
 
 // 数据部分
 const milestones = ref([
   {
     year: "2020",
-    title: "番茄书城成立",
-    description: "在数字阅读蓬勃发展的时代，我们怀揣让阅读更简单、更美好的愿景，创立了番茄书城。"
+    title: "枕石书屋成立",
+    description: "在数字阅读蓬勃发展的时代，我们怀揣让阅读更简单、更美好的愿景，创立了枕石书屋。"
   },
   {
     year: "2021",
     title: "用户突破100万",
-    description: "依靠精选的书籍内容和优质的用户体验，番茄书城在短时间内聚集了大量忠实读者。"
+    description: "依靠精选的书籍内容和优质的用户体验，枕石书屋在短时间内聚集了大量忠实读者。"
   },
   {
     year: "2022",
@@ -84,18 +84,18 @@ onMounted(() => {
 
 <template>
   <div class="about-page">
-    <Header/>
+    <Header />
 
     <!-- 英雄区域 -->
     <section class="hero">
       <div class="hero-content">
-        <h1>关于番茄书城</h1>
+        <h1>关于枕石书屋</h1>
         <p>纯粹阅读，非凡生活</p>
       </div>
     </section>
 
     <!-- 主要内容 -->
-    <div class="container">
+    <div class="container"><p class="demo-notice">本页为课程项目的界面演示。公司、招聘、客服和商业服务文案为设计示例。</p>
       <!-- 我们的故事 -->
       <section class="story-section">
         <div class="section-header">
@@ -106,16 +106,15 @@ onMounted(() => {
         <div class="content-wrapper">
           <div class="text-content">
             <p>
-              番茄书城源于一个简单而坚定的信念：阅读能够改变生活。在这个信息爆炸的时代，我们希望为读者提供一个安静而丰富的阅读空间。</p>
+              枕石书屋源于一个简单而坚定的信念：阅读能够改变生活。在这个信息爆炸的时代，我们希望为读者提供一个安静而丰富的阅读空间。</p>
             <p>
-              自2020年成立以来，番茄书城始终坚持"品质阅读"的理念，精选全球优质书籍，覆盖文学、科技、艺术、生活等多个领域，致力于满足不同读者的阅读需求。</p>
+              自2020年成立以来，枕石书屋始终坚持"品质阅读"的理念，精选全球优质书籍，覆盖文学、科技、艺术、生活等多个领域，致力于满足不同读者的阅读需求。</p>
             <p>
               我们不仅是一个图书销售平台，更是一个阅读社区。在这里，知识自由流动，思想碰撞交融，读者与作者、读者与读者之间建立起紧密的联系。</p>
           </div>
           <div class="image-content">
-            <img
-                alt="书城图片"
-                src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8bGlicmFyeXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60"/>
+            <img alt="书城图片"
+              src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8bGlicmFyeXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60" />
           </div>
         </div>
       </section>
@@ -165,7 +164,7 @@ onMounted(() => {
         <div class="team-grid">
           <div v-for="(member, index) in teamMembers" :key="index" class="team-card">
             <div class="member-avatar">
-              <img :alt="member.name" :src="member.avatar"/>
+              <img :alt="member.name" :src="member.avatar" />
             </div>
             <div class="member-info">
               <h3>{{ member.name }}</h3>
@@ -190,7 +189,7 @@ onMounted(() => {
 
     </div>
 
-    <Footer/>
+    <Footer />
   </div>
 </template>
 

@@ -188,7 +188,7 @@ onMounted(() => {
         <el-table-column fixed="right" label="操作" width="160">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button plain size="small" type="primary" @click="openEditDialog(row)">编辑</el-button>
+              <el-button plain size="small" type="primary" @click="openEditDialog(row as Advertisement)">编辑</el-button>
               <el-button plain size="small" type="danger" @click="handleDeleteAd(row.id)">删除</el-button>
             </div>
           </template>
@@ -202,7 +202,7 @@ onMounted(() => {
           <el-input v-model="newAd.title"/>
         </el-form-item>
         <el-form-item label="内容" required>
-          <el-input v-model="newAd.content" rows="4" type="textarea"/>
+          <el-input v-model="newAd.content" :rows="4" type="textarea"/>
         </el-form-item>
         <el-form-item label="图片 URL" required>
           <el-input v-model="newAd.imgUrl"/>
@@ -225,7 +225,7 @@ onMounted(() => {
           <el-input v-model="currentAd.title"/>
         </el-form-item>
         <el-form-item label="内容" required>
-          <el-input v-model="currentAd.content" rows="4" type="textarea"/>
+          <el-input v-model="currentAd.content" :rows="4" type="textarea"/>
         </el-form-item>
         <el-form-item label="图片 URL" required>
           <el-input v-model="currentAd.imgUrl"/>

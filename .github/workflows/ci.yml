@@ -1,0 +1,80 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --registry=https://registry.npmjs.org
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high --registry=https://registry.npmjs.org
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: frontend-dist
+          path: dist
+  image:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/chanhsing1972/tomatomall-frontend:main
+            ghcr.io/chanhsing1972/tomatomall-frontend:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/ChanHsing1972/tomatomall-frontend
+            org.opencontainers.image.revision=${{ github.sha }}
+  report:
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, image]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Record release result for SSH-only repository access
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          TEST_RESULT: ${{ needs.test.result }}
+          IMAGE_RESULT: ${{ needs.image.result }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if git fetch --depth=1 origin ci-status; then
+            git switch --detach FETCH_HEAD
+          else
+            git switch --orphan ci-status
+          fi
+          jq -n --arg sha "$SOURCE_SHA" --arg tests "$TEST_RESULT" --arg image "$IMAGE_RESULT" --arg url "$RUN_URL" '{commit: $sha, tests: $tests, image: $image, run_url: $url}' > status.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add status.json
+          git commit -m "Record CI release result"
+          git push origin HEAD:ci-status

@@ -5,23 +5,42 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "build": "vite build",
+    "preview": "vite preview",
+    "format": "prettier --write \"src/**/*.{js,ts,vue,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,ts,vue,json,css,md}\"",
+    "prepare": "husky",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "lint-staged": {
+    "*.{js,ts,vue,json,css,md}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
-    "@element-plus/icons-vue": "^2.3.1",
-    "axios": "^1.6.2",
-    "axios-mock-adapter": "^2.1.0",
-    "element-plus": "^2.5.3",
-    "vue": "^3.3.8",
-    "vue-router": "^4.2.5"
+    "@element-plus/icons-vue": "^2.3.2",
+    "axios": "^1.20.0",
+    "element-plus": "^2.14.7",
+    "vue": "^3.5.43",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^4.5.0",
-    "typescript": "^5.2.2",
-    "unplugin-auto-import": "^0.16.7",
-    "unplugin-vue-components": "^0.25.2",
-    "vite": "5.1.2",
-    "vue-tsc": "^1.8.22"
+    "@vitejs/plugin-vue": "^6.0.10",
+    "@vitest/coverage-v8": "^5.0.4",
+    "@vue/test-utils": "^2.5.1",
+    "happy-dom": "^21.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4",
+    "vue-tsc": "^3.3.13",
+    "axios-mock-adapter": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

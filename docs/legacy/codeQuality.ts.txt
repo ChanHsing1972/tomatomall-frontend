@@ -1,0 +1,71 @@
+/**
+ * 代码质量测试 - 用于触发 CI/CD 质量检查警告
+ *
+ * 这个文件包含各种需要改进的代码示例
+ */
+
+// TODO: 需要添加错误处理和重试机制
+export function fetchData(url: string) {
+  // FIXME: 缺少错误处理
+  return fetch(url).then((res) => res.json());
+}
+
+// FIXME: 这个函数有类型安全问题
+export function processData(data: any) {
+  // XXX: 不应该使用 any 类型
+  // TODO: 添加数据验证
+  return data.map((item: any) => item.value);
+}
+
+// HACK: 临时解决方案，需要改进
+export function getApiUrl() {
+  // HACK: 硬编码的 API 地址
+  const API_URL = 'http://8.159.137.223:8080'; // FIXME: 应该从环境变量读取
+  return API_URL;
+}
+
+// XXX: 性能问题 - O(n²) 复杂度
+export function slowFunction(arr: number[]) {
+  const results: number[] = [];
+  // TODO: 优化算法，使用更高效的方法
+  for (let i = 0; i < arr.length; i++) {
+    for (let j = 0; j < arr.length; j++) {
+      results.push(arr[i] + arr[j]);
+    }
+  }
+  return results;
+}
+
+// TODO: 实现缓存机制
+export class DataCache {
+  private cache: Map<string, any> = new Map();
+
+  // FIXME: 没有过期时间机制
+  get(key: string) {
+    // TODO: 添加 TTL (Time To Live) 支持
+    return this.cache.get(key);
+  }
+
+  // XXX: 缓存可能无限增长
+  set(key: string, value: any) {
+    // HACK: 简单的缓存实现，没有 LRU 策略
+    this.cache.set(key, value);
+  }
+}
+
+// TODO: 添加输入验证
+export function validateEmail(email: string): boolean {
+  // FIXME: 正则表达式不够严格
+  const regex = /.*@.*/; // XXX: 太简单的验证规则
+  return regex.test(email);
+}
+
+// HACK: 全局变量，应该避免
+let globalCounter = 0; // FIXME: 使用全局状态不是好的实践
+
+// TODO: 实现更好的状态管理
+export function incrementCounter() {
+  // XXX: 多线程环境下不安全
+  globalCounter++;
+  return globalCounter;
+}

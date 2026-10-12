@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
-import {useRoute, useRouter} from 'vue-router';
-import {ElButton, ElDrawer, ElIcon, ElMessage, ElSkeleton, ElSkeletonItem} from 'element-plus';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { ElButton, ElDrawer, ElIcon, ElMessage, ElSkeleton, ElSkeletonItem } from 'element-plus';
 import Header from '../../components/Header.vue';
-import {type Chapter, getChapterDetail, getChapterList} from '../../api/reader.ts';
-import {getProductDetail} from "../../api/product.ts";
+import { type Chapter, getChapterDetail, getChapterList } from '../../api/reader.ts';
+import { getProductDetail } from "../../api/product.ts";
 import SettingsPanel from '../../components/reader/SettingsPanel.vue';
-import {ArrowLeft, ArrowRight, Menu, Setting} from '@element-plus/icons-vue';
+import { ArrowLeft, ArrowRight, Menu, Setting } from '@element-plus/icons-vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -55,15 +55,15 @@ const prevChapterAvailable = computed(() => {
 const readerThemeStyle = computed(() => {
   switch (theme.value) {
     case 'eye-care':
-      return {background: '#e8f0d9', color: '#3a3a3a'};
+      return { background: '#e8f0d9', color: '#3a3a3a' };
     case 'night':
-      return {background: '#252525', color: '#c8c8c8'};
+      return { background: '#252525', color: '#c8c8c8' };
     case 'paper':
-      return {background: '#f8f1e3', color: '#333333'};
+      return { background: '#f8f1e3', color: '#333333' };
     case 'sepia':
-      return {background: '#f1e9d4', color: '#5f4b32'};
+      return { background: '#f1e9d4', color: '#5f4b32' };
     default:
-      return {background: '#ffffff', color: '#333333'};
+      return { background: '#ffffff', color: '#333333' };
   }
 });
 
@@ -91,7 +91,7 @@ const fetchBookInfo = async () => {
     const response = await getProductDetail(productId.value);
     if (response.data.code === '200') {
       book.value = response.data.data;
-      document.title = `${book.value.title} - 阅读中 | 番茄书城`;
+      document.title = `${book.value.title} - 阅读中 | 枕石书屋`;
     } else {
       ElMessage.error('获取书籍信息失败');
     }
@@ -130,7 +130,7 @@ const loadChapter = async (id: number) => {
       currentChapter.value = response.data.data;
       // 更新URL参数使用 query 更新
       await router.replace({
-        query: {...route.query, chapterId: id.toString()}
+        query: { ...route.query, chapterId: id.toString() }
       });
       window.scrollTo(0, 0);
     } else {
@@ -248,7 +248,7 @@ onUnmounted(() => {
 
 <template>
   <div :class="theme" class="reader-page" @click="showControls">
-    <Header/>
+    <Header />
 
     <!-- 阅读器容器 -->
     <div class="reader-container" :style="readerThemeStyle">
@@ -258,14 +258,14 @@ onUnmounted(() => {
           <div class="controls-left">
             <el-button class="return-button" text @click="goToBookDetails">
               <el-icon>
-                <ArrowLeft/>
+                <ArrowLeft />
               </el-icon>
               返回
             </el-button>
             <div v-if="book" class="book-info">
               <div class="title">{{ book.title }}</div>
               <div class="author">
-                {{ book.specifications.find((spec: any) => spec.item === "作者")?.value || "未知作者" }}
+                {{book.specifications.find((spec: any) => spec.item === "作者")?.value || "未知作者"}}
               </div>
             </div>
           </div>
@@ -273,12 +273,12 @@ onUnmounted(() => {
           <div class="controls-right">
             <el-button circle class="control-button" @click="chapterDrawerVisible = true">
               <el-icon>
-                <Menu/>
+                <Menu />
               </el-icon>
             </el-button>
             <el-button circle class="control-button" @click="settingsDrawerVisible = true">
               <el-icon>
-                <Setting/>
+                <Setting />
               </el-icon>
             </el-button>
           </div>
@@ -300,7 +300,7 @@ onUnmounted(() => {
               <div class="chapter-navigation">
                 <el-button :disabled="!prevChapterAvailable" class="nav-button prev-chapter" @click="goToPrevChapter">
                   <el-icon>
-                    <ArrowLeft/>
+                    <ArrowLeft />
                   </el-icon>
                   上一章
                 </el-button>
@@ -312,7 +312,7 @@ onUnmounted(() => {
                   <div class="progress-indicator">
                     <div class="progress-track">
                       <div :style="{ width: `${(currentChapterIndex + 1) / chapters.length * 100}%` }"
-                           class="progress-fill"></div>
+                        class="progress-fill"></div>
                     </div>
                   </div>
                 </div>
@@ -320,7 +320,7 @@ onUnmounted(() => {
                 <el-button :disabled="!nextChapterAvailable" class="nav-button next-chapter" @click="goToNextChapter">
                   下一章
                   <el-icon>
-                    <ArrowRight/>
+                    <ArrowRight />
                   </el-icon>
                 </el-button>
               </div>
@@ -330,14 +330,14 @@ onUnmounted(() => {
           <!-- 骨架屏 -->
           <template #template>
             <div class="skeleton-content">
-              <el-skeleton-item class="skeleton-title" variant="h1"/>
-              <el-skeleton-item class="skeleton-author" variant="text"/>
-              <el-skeleton-item class="skeleton-chapter" variant="h3"/>
+              <el-skeleton-item class="skeleton-title" variant="h1" />
+              <el-skeleton-item class="skeleton-author" variant="text" />
+              <el-skeleton-item class="skeleton-chapter" variant="h3" />
               <div class="skeleton-paragraphs">
                 <div v-for="i in 8" :key="i" class="skeleton-paragraph">
-                  <el-skeleton-item variant="text"/>
-                  <el-skeleton-item variant="text"/>
-                  <el-skeleton-item variant="text"/>
+                  <el-skeleton-item variant="text" />
+                  <el-skeleton-item variant="text" />
+                  <el-skeleton-item variant="text" />
                 </div>
               </div>
             </div>
@@ -347,8 +347,7 @@ onUnmounted(() => {
 
       <!-- 章节列表抽屉 -->
       <el-drawer v-model="chapterDrawerVisible" :show-close="true" :with-header="true" class="chapter-drawer"
-                 direction="ltr"
-                 size="320px" title="目录">
+        direction="ltr" size="320px" title="目录">
         <div class="chapter-list-header">
           <div class="title">{{ book?.title }}</div>
           <div class="author">共 {{ chapters.length }} 章</div>
@@ -367,15 +366,14 @@ onUnmounted(() => {
 
       <!-- 设置抽屉 -->
       <el-drawer v-model="settingsDrawerVisible" :show-close="true" :with-header="true" class="settings-drawer"
-                 direction="rtl"
-                 size="380px" title="阅读设置">
+        direction="rtl" size="380px" title="阅读设置">
         <SettingsPanel v-model:fontFamily="fontFamily" v-model:fontSize="fontSize" v-model:lineHeight="lineHeight"
-                       v-model:theme="theme"/>
+          v-model:theme="theme" />
       </el-drawer>
     </div>
   </div>
 
-  <el-backtop :bottom="50" :right="30"/>
+  <el-backtop :bottom="50" :right="30" />
 </template>
 
 <style scoped>
@@ -440,8 +438,8 @@ onUnmounted(() => {
   width: 100%;
   padding: 15px 20px;
   background: linear-gradient(to bottom,
-  rgba(var(--bg-color-rgb, 255, 255, 255), 0.95),
-  rgba(var(--bg-color-rgb, 255, 255, 255), 0.85));
+      rgba(var(--bg-color-rgb, 255, 255, 255), 0.95),
+      rgba(var(--bg-color-rgb, 255, 255, 255), 0.85));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   z-index: 10;

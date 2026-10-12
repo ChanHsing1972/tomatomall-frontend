@@ -128,6 +128,7 @@ const handleCurrentChange = (val: number) => {
 
 // 获取已完成订单的书籍数据
 const fetchPurchasedBooks = async () => {
+  if (!sessionStorage.getItem("token")) return;
   try {
     const response = await getOrders();
     if (response.code === "200" && response.data) {
@@ -207,7 +208,6 @@ watch(
 );
 
 onMounted(() => {
-  fetchProducts();
   fetchPurchasedBooks();
   fetchLikedBooks();
 
@@ -268,7 +268,12 @@ onMounted(() => {
       <!-- 书籍列表 - 添加骨架屏 -->
       <!-- 加载时显示骨架屏 -->
       <div v-if="loading" class="product-grid">
-        <el-skeleton v-for="i in pageSize" :key="i" animated class="product-card-skeleton">
+        <el-skeleton
+          v-for="i in pageSize"
+          :key="i"
+          animated
+          class="product-card product-card-skeleton"
+        >
           <template #template>
             <div class="skeleton-card">
               <el-skeleton-item class="skeleton-image" variant="image"/>
@@ -1017,5 +1022,128 @@ onMounted(() => {
   .el-icon-lock:before {
     content: "🔒";
   }
+
+  /* 骨架屏样式调整 */
+  /* 骨架屏样式调整 - 美化与匹配真实卡片 */
+  .product-card-skeleton {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #f8f8fa, #f3f4f6);
+    min-height: 420px; /* 与实际卡片高度一致 */
+    display: flex;
+    flex-direction: column;
+    cursor: default;
+    box-shadow: 0 6px 18px rgba(16,24,40,0.04);
+    transition: transform 0.2s ease;
+    padding: 10px;
+  }
+
+  .product-card-skeleton:hover {
+    transform: translateY(0);
+    box-shadow: 0 8px 20px rgba(16,24,40,0.06);
+  }
+
+  .skeleton-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  /* 统一骨架元素的 shimmer 风格 */
+  .skeleton-placeholder {
+    background: linear-gradient(90deg, #ececec 25%, #f7f7f9 50%, #ececec 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s linear infinite;
+    border-radius: 8px;
+  }
+
+  .skeleton-image {
+    width: 100%;
+    height: 280px; /* 与 .card-image-wrapper 高度一致 */
+    border-radius: 12px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .skeleton-image .el-skeleton-item,
+  .product-card-skeleton .skeleton-image {
+    border-radius: 12px;
+  }
+
+  .skeleton-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 6px 6px 6px;
+    justify-content: space-between;
+  }
+
+  .skeleton-title {
+    width: 78%;
+    height: 20px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+  }
+
+  .skeleton-desc {
+    width: 100%;
+    height: 14px;
+    margin-bottom: 14px;
+    border-radius: 6px;
+  }
+
+  .skeleton-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-bottom: 6px;
+  }
+
+  .skeleton-price {
+    width: 80px;
+    height: 18px;
+    border-radius: 6px;
+  }
+
+  .skeleton-rate {
+    width: 70px;
+    height: 18px;
+    border-radius: 6px;
+  }
+
+  /* 将 el-skeleton-item 的具体占位子元素也应用 shimmer */
+  .product-card-skeleton .el-skeleton-item,
+  .product-card-skeleton .skeleton-title,
+  .product-card-skeleton .skeleton-desc,
+  .product-card-skeleton .skeleton-price,
+  .product-card-skeleton .skeleton-rate,
+  .product-card-skeleton .skeleton-image {
+    background: linear-gradient(90deg, #ececec 25%, #f7f7f9 50%, #ececec 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s linear infinite;
+  }
+
+
+
+  @media (max-width: 1024px) {
+    .product-card-skeleton { min-height: 380px; }
+    .skeleton-image { height: 240px; }
+  }
+
+  @media (max-width: 768px) {
+    .product-card-skeleton {
+      min-height: 340px;
+      padding: 8px;
+    }
+    .skeleton-image {
+      height: 180px;
+    }
+  }
 }
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 </style>

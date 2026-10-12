@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import {computed, ref} from 'vue';
-import {ElButton, ElMessage} from "element-plus";
-import {accountInfo, accountLogin} from "../../api/account.ts";
-import {useRouter} from 'vue-router'
+import { computed, ref } from 'vue';
+import { ElButton, ElMessage } from "element-plus";
+import { accountInfo, accountLogin } from "../../api/account.ts";
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 // 输入框值
@@ -24,7 +24,6 @@ function handleLogin() {
       ElMessage({
         message: "登录成功！",
         type: 'success',
-        center: true,
         duration: 1000
       });
       const token = res.data.data;
@@ -36,17 +35,16 @@ function handleLogin() {
         sessionStorage.setItem('telephone', res.data.data.telephone);
         sessionStorage.setItem('location', res.data.data.location);
         sessionStorage.setItem('id', res.data.data.id);
-        router.push({path: "/home"});
+        router.push({ path: "/home" });
       });
     } else if (res.data.code === '401') {
       ElMessage({
         message: res.data.msg,
         type: 'error',
-        center: true,
       });
       password.value = '';
     }
-  });
+  }).catch((error) => ElMessage.error(error.message || '登录失败，请检查用户名和密码'));
 }
 </script>
 
@@ -54,18 +52,19 @@ function handleLogin() {
   <div class="apple-login-wrapper">
     <div class="login-box">
       <h1 class="login-title">欢迎登录</h1>
-      <p class="login-subtitle">番茄书城欢迎您</p>
+      <p class="login-subtitle">枕石书屋欢迎您</p>
+      <p class="demo-login">演示账户：demo<br />密码：ZhenshiDemo2026!<br />演示支付不会扣款。</p>
       <div class="login-form-box" @keyup.enter="handleLogin">
         <div class="login-input-group">
           <label for="username" class="login-input-label">用户名</label>
           <div class="form-group">
-            <input id="username" v-model="username" class="input-field" placeholder="请输入用户名" type="text"/>
+            <input id="username" v-model="username" class="input-field" placeholder="请输入用户名" type="text" />
           </div>
         </div>
         <div class="login-input-group">
           <label for="password" class="login-input-label">密码</label>
           <div class="form-group">
-            <input id="password" v-model="password" class="input-field" placeholder="••••••••" type="password"/>
+            <input id="password" v-model="password" class="input-field" placeholder="••••••••" type="password" />
           </div>
         </div>
         <div class="login-button-group">

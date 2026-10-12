@@ -1,38 +1,34 @@
 <script setup lang="ts">
-import {computed, onMounted, ref} from "vue";
-import {accountInfo, accountInfoUpdate} from "../../api/account.ts";
-import {parseRole, parseTime} from "../../utils";
-import {useRouter} from "vue-router";
+import { onMounted, ref } from "vue";
+import { accountInfo, accountInfoUpdate } from "../../api/account.ts";
+import { parseRole } from "../../utils";
+import { useRouter } from "vue-router";
 import Header from "../../components/Header.vue";
-import {ElMessage, ElMessageBox, UploadProps} from "element-plus";
-import {Camera, UserFilled} from "@element-plus/icons-vue";
+import { ElMessage, UploadProps } from "element-plus";
+import { UserFilled, Camera, CreditCard, ArrowRight } from "@element-plus/icons-vue";
 
 const router = useRouter();
+const uploadHeaders = { token: sessionStorage.getItem("token") || "" };
 const role = sessionStorage.getItem("role") || "user";
-const name = ref("");
 const username = sessionStorage.getItem("username") || "游客";
+
+// 数据状态
+const name = ref("");
 const telephone = ref("");
 const location = ref("");
-const createTime = ref("");
 const email = ref("");
-const avatar = ref(""); // 用于存储头像的 URL
+const avatar = ref("");
+const isEditing = ref(false);
 
-// 新建的变量
-const newName = ref("");
-const newEmail = ref("");
-const newLocation = ref("");
-const newTelephone = ref("");
-
-const showInfoEdit = ref(true); // true：编辑个人信息；false：修改密码
-
-const password = ref("");
-const confirmPassword = ref("");
-
-const hasConfirmPasswordInput = computed(() => confirmPassword.value !== "");
-const isPasswordIdentical = computed(() => password.value === confirmPassword.value);
-const changeDisabled = computed(
-    () => !(hasConfirmPasswordInput.value && isPasswordIdentical.value)
-);
+// 表单状态
+const editForm = ref({
+  name: "",
+  email: "",
+  location: "",
+  telephone: "",
+  password: "",
+  confirmPassword: ""
+});
 
 function getUserInfo() {
   accountInfo(username).then((res) => {
@@ -41,511 +37,525 @@ function getUserInfo() {
     telephone.value = result.telephone;
     location.value = result.location;
     avatar.value = result.avatar;
-    createTime.value = parseTime(result.createTime);
     email.value = result.email;
-    newName.value = name.value;
-    newEmail.value = email.value;
-    newLocation.value = location.value;
-    newTelephone.value = telephone.value;
+
+    // 同步到编辑表单
+    editForm.value = { ...editForm.value, ...result, password: "", confirmPassword: "" };
   });
 }
 
-onMounted(() => {
-  getUserInfo();
-});
+onMounted(getUserInfo);
 
-function updateInfo() {
+const saveChanges = async () => {
+  if (editForm.value.password && editForm.value.password !== editForm.value.confirmPassword) {
+    ElMessage.error("两次输入的密码不一致");
+    return;
+  }
+
   accountInfoUpdate({
-    name: newName.value,
-    location: newLocation.value,
-    telephone: newTelephone.value,
-    email: newEmail.value,
+    name: editForm.value.name,
+    location: editForm.value.location,
+    telephone: editForm.value.telephone,
+    email: editForm.value.email,
+    password: editForm.value.password || undefined
   }).then((res) => {
     if (res.data.code === "200") {
-      ElMessage({
-        customClass: "customMessage",
-        type: "success",
-        message: "更新成功！",
-      });
+      ElMessage.success("设置已更新");
+      isEditing.value = false;
       getUserInfo();
-    } else if (res.data.code === "401") {
-      ElMessage({
-        customClass: "customMessage",
-        type: "error",
-        message: res.data.msg,
-      });
     }
   });
-}
+};
 
-function updatePassword() {
-  accountInfoUpdate({
-    name: undefined,
-    password: password.value,
-    location: undefined,
-    avatar: undefined,
-  }).then((res) => {
-    if (res.data.code === "200") {
-      password.value = "";
-      confirmPassword.value = "";
-      ElMessageBox.alert(`请重新登录`, "修改成功", {
-        customClass: "customDialog",
-        confirmButtonText: "跳转到登录",
-        type: "success",
-        showClose: false,
-        roundButton: true,
-        center: true,
-      }).then(() => router.push({path: "/login"}));
-    } else if (res.data.code === "401") {
-      ElMessage({
-        customClass: "customMessage",
-        type: "error",
-        message: res.data.msg,
-      });
-      password.value = "";
-      confirmPassword.value = "";
-    }
-  });
-}
-
-const handleAvatarSuccess = (res: any) => {
+const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
   if (res.code === "200") {
     avatar.value = res.data;
-    accountInfoUpdate({
-      avatar: res.data,
-    }).then((res) => {
-      if (res.data.code === "200") {
-        ElMessage({
-          type: "success",
-          message: "头像更新成功！",
-          duration: 1000
-        });
-        getUserInfo();
-      } else if (res.data.code === "401") {
-        ElMessage({
-          customClass: "customMessage",
-          type: "error",
-          message: res.data.msg,
-          duration: 1000
-        });
-      }
+    accountInfoUpdate({ avatar: res.data }).then(() => {
+      ElMessage.success("头像更新成功");
+      getUserInfo();
     });
-  } else {
-    ElMessage.error("上传失败");
   }
-};
-
-
-const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
-  if (rawFile.size / 1024 / 1024 > 10) {
-    ElMessage.error('图片大小需要小于 10 MB!')
-    return false
-  }
-  avatar.value = URL.createObjectURL(rawFile);
-  return true
-}
-
-const goToManagement = () => {
-  router.push({path: "/manage/products"});
-};
-
-const goToAd = () => {
-  router.push({path: "/manage/ads"});
-};
-
-const goToCouponManagement = () => {
-  router.push({path: "/manage/coupons"});
 };
 </script>
 
 <template>
-  <Header/>
-  <div class="dashboard-container">
-    <!-- 左侧：完整用户信息展示卡片 -->
-    <div class="user-summary">
-      <div class="header-info">
-        <el-upload :show-file-list="false" action="http://138.68.21.119:8080/api/files/images" class="avatar-uploader"
-                   :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
-          <div class="avatar-container">
-            <img v-if="avatar" :src="avatar" alt="avatar" class="user-avatar">
-            <el-avatar v-else :icon="UserFilled" :size="80" class="user-avatar"/>
-            <div class="avatar-overlay">
-              <div class="upload-icon">
-                <el-icon class="upload-icon">
-                  <Camera/>
-                </el-icon>
+  <Header />
+  <div class="apple-bg">
+    <div class="apple-container">
+      <div class="apple-layout">
+        <main class="apple-main">
+
+          <div class="profile-summary-row">
+            <div class="content-column">
+              <div class="profile-header">
+                <el-upload class="avatar-uploader" action="/api/files/images" :headers="uploadHeaders" :show-file-list="false"
+                  :on-success="handleAvatarSuccess">
+                  <div class="avatar-circle">
+                    <img v-if="avatar" :src="avatar" class="avatar-img" />
+                    <el-avatar v-else :icon="UserFilled" :size="72" />
+                    <div class="avatar-overlay"><el-icon>
+                        <Camera />
+                      </el-icon></div>
+                  </div>
+                </el-upload>
+                <div class="profile-text">
+                  <div class="display-name">{{ name || username }}</div>
+                  <div class="display-role">{{ parseRole(role) }}</div>
+                </div>
               </div>
             </div>
           </div>
-        </el-upload>
-        <div class="welcome-name">
-          <span class="welcome-text">欢迎回来,</span>
-          <span class="user-name">{{ name }}</span>
-        </div>
-      </div>
-      <div class="info-details">
-        <div class="info-item">
-          <div class="info-label">身份</div>
-          <div class="info-value">{{ parseRole(role) }}</div>
-        </div>
 
-        <div class="info-item">
-          <div class="info-label">用户名</div>
-          <div class="info-value">{{ username }}</div>
-        </div>
+          <transition name="fade" mode="out-in">
+            <div v-if="!isEditing" class="content-body">
 
-        <div class="info-item">
-          <div class="info-label">注册时间</div>
-          <div class="info-value">{{ createTime.substring(0, 10) }}</div>
-        </div>
+              <section class="apple-row">
+                <div class="label-column">送货</div>
+                <div class="content-column">
+                  <div class="info-split">
+                    <div class="info-block">
+                      <div class="sub-label">送货地址</div>
+                      <div class="address-text">
+                        <p class="name-line">{{ name }}</p>
+                        <p v-for="(line, index) in (location || '').split('\n')" :key="index">{{ line }}</p>
+                        <p class="phone-line">{{ telephone }}</p>
+                      </div>
+                      <a class="edit-link" @click="isEditing = true"><u>编辑</u></a>
+                    </div>
+                    <div class="info-block">
+                      <div class="sub-label">联系信息</div>
+                      <div class="address-text">
+                        <p>{{ email }}</p>
+                        <p>{{ telephone }}</p>
+                      </div>
+                      <a class="edit-link" @click="isEditing = true"><u>编辑</u></a>
+                    </div>
+                  </div>
+                </div>
+              </section>
 
-        <div class="info-item">
-          <div class="info-label">联系电话</div>
-          <div class="info-value">{{ telephone }}</div>
-        </div>
+              <section class="apple-row">
+                <div class="label-column">付款与账单</div>
+                <div class="content-column">
+                  <div class="info-block">
+                    <div class="sub-label">付款方式</div>
+                    <div class="payment-card">
+                      <el-icon class="payment-icon">
+                        <CreditCard />
+                      </el-icon>
+                      <span class="payment-desc">支付宝</span>
+                    </div>
+                    <a class="apple-link mt-8">管理付款方式 <el-icon>
+                        <ArrowRight />
+                      </el-icon></a>
+                  </div>
+                </div>
+              </section>
 
-        <div class="info-item">
-          <div class="info-label">地址</div>
-          <div class="info-value">{{ location }}</div>
-        </div>
+              <section class="apple-row">
+                <div class="label-column">隐私</div>
+                <div class="content-column">
+                  <div class="sub-label">个人信息</div>
+                  <p class="apple-desc">你可以自己掌控你的个人信息，并可随时管理你的数据或删除你的账户。枕石书屋致力于保护你的隐私。</p>
+                  <a class="apple-link">管理我的个人信息 <el-icon class="arrow-icon">
+                      <ArrowRight />
+                    </el-icon></a>
+                </div>
+              </section>
 
-        <div class="info-item">
-          <div class="info-label">邮箱</div>
-          <div class="info-value">{{ email }}</div>
-        </div>
 
-        <div v-if="role === 'admin'" class="management-btn-container">
-          <button class="management-btn" @click="goToManagement">管理商品</button>
-          <button class="management-btn" @click="goToAd">管理广告</button>
-          <button class="management-btn" @click="goToCouponManagement">管理优惠券</button>
-        </div>
-      </div>
-    </div>
-    <!-- 右侧：编辑/修改表单区域 -->
-    <div class="edit-section">
-      <div class="tab-bar">
-        <div class="tab-item" :class="{ active: showInfoEdit }" @click="showInfoEdit = true">
-          个人信息
-        </div>
-        <div class="tab-item" :class="{ active: !showInfoEdit }" @click="showInfoEdit = false">
-          修改密码
-        </div>
-      </div>
-      <div v-if="showInfoEdit" class="form-container">
-        <form class="custom-form" @submit.prevent="updateInfo">
-          <div class="form-group">
-            <label for="name">昵称</label>
-            <input id="name" v-model="newName" placeholder="请输入昵称" type="text">
-          </div>
-          <div class="form-group">
-            <label for="telephone">联系电话</label>
-            <input id="telephone" v-model="newTelephone" placeholder="请输入手机号" type="tel">
-          </div>
-          <div class="form-group">
-            <label for="email">邮箱</label>
-            <input id="email" v-model="newEmail" placeholder="请输入邮箱" type="email">
-          </div>
-          <div class="form-group">
-            <label for="location">收货地址</label>
-            <textarea id="location" v-model="newLocation" placeholder="请输入地址" rows="4"></textarea>
-          </div>
-          <div class="form-submit">
-            <button class="submit-btn" type="submit">更新资料</button>
-          </div>
-        </form>
-      </div>
-      <div v-else class="form-container">
-        <form class="custom-form" @submit.prevent="updatePassword">
-          <div class="form-group">
-            <label for="password">新密码</label>
-            <input id="password" v-model="password" placeholder="••••••••" type="password">
-          </div>
-          <div class="form-group">
-            <label :class="{ 'error-label': hasConfirmPasswordInput && !isPasswordIdentical }" for="confirmPassword">
-              {{ hasConfirmPasswordInput && !isPasswordIdentical ? '密码不一致' : '确认新密码' }}
-            </label>
-            <input id="confirmPassword" v-model="confirmPassword"
-                   :class="{ 'error-input': hasConfirmPasswordInput && !isPasswordIdentical }" placeholder="••••••••"
-                   type="password">
-          </div>
-          <div class="form-submit">
-            <button :disabled="changeDisabled" class="submit-btn" type="submit">修改密码</button>
-          </div>
-        </form>
+              <section v-if="role === 'admin'" class="apple-row admin-border">
+                <div class="label-column">管理</div>
+                <div class="content-column">
+                  <div class="admin-links">
+                    <button class="admin-btn" @click="router.push('/manage/products')">管理产品 <el-icon>
+                        <ArrowRight />
+                      </el-icon></button>
+                    <button class="admin-btn" @click="router.push('/manage/ads')">管理广告 <el-icon>
+                        <ArrowRight />
+                      </el-icon></button>
+                    <button class="admin-btn" @click="router.push('/manage/coupons')">管理优惠券 <el-icon>
+                        <ArrowRight />
+                      </el-icon></button>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div v-else class="content-body">
+              <section class="apple-row">
+                <div class="label-column">编辑账户</div>
+                <div class="content-column">
+                  <div class="edit-grid">
+                    <div class="field">
+                      <label>姓名</label>
+                      <input v-model="editForm.name" class="apple-input" type="text" />
+                    </div>
+                    <div class="field">
+                      <label>联系电话</label>
+                      <input v-model="editForm.telephone" class="apple-input" type="text" />
+                    </div>
+                    <div class="field full">
+                      <label>电子邮箱</label>
+                      <input v-model="editForm.email" class="apple-input" type="text" />
+                    </div>
+                    <div class="field full">
+                      <label>送货地址</label>
+                      <textarea v-model="editForm.location" class="apple-input apple-textarea" rows="3"></textarea>
+                    </div>
+                    <div class="field">
+                      <label>新密码</label>
+                      <input v-model="editForm.password" class="apple-input" type="password" placeholder="••••••••" />
+                    </div>
+                    <div class="field">
+                      <label>确认新密码</label>
+                      <input v-model="editForm.confirmPassword" class="apple-input" type="password"
+                        placeholder="••••••••" />
+                    </div>
+                  </div>
+                  <div class="edit-actions">
+                    <button class="btn-secondary" @click="isEditing = false">取消</button>
+                    <button class="btn-primary" @click="saveChanges">保存</button>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </transition>
+        </main>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* 修改后的 dashboard-container */
-.dashboard-container {
-  margin-left: 10%;
-  padding: 100px;
-  display: flex;
-  gap: 40px;
-  font-family: "sf pro display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: #333;
+/* 核心设计基础 */
+.apple-bg {
+  background-color: #fff;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  padding-top: 60px;
+  color: #1d1d1f;
 }
 
-/* 修改后的左侧：用户信息展示卡片 */
-.user-summary {
-  background-color: #f9f9f9;
-  border-radius: 16px;
-  padding: 60px 50px 100px;
-  flex: 1 1 40%;
-  text-align: left;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+.apple-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 22px;
 }
 
-/* 保持 header-info 样式不变 */
-.header-info {
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 50px;
+}
+
+/* 核心对齐布局：模拟苹果样式 */
+.apple-row {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  padding: 30px 0;
+  border-top: 1px solid #d2d2d7;
+}
+
+.no-border {
+  border-top: none;
+}
+
+.admin-border {
+  border-top: 1px solid #d2d2d7;
+  margin-top: 20px;
+}
+
+.label-column {
+  width: 30%;
+  /* 左侧标签固定宽度 */
+  font-size: 20px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.content-column {
+  flex: 1;
+}
+
+/* 顶部个人简况对齐 */
+.profile-summary-row {
+  display: flex;
   margin-bottom: 30px;
 }
 
-.welcome-name {
+.profile-header {
   display: flex;
-  flex-direction: column;
-}
-
-.welcome-text {
-  font-size: 14px;
-  color: #777;
-}
-
-.user-name {
-  font-size: 24px;
-  color: #333;
-}
-
-.info-details {
-  display: flex;
-  flex-direction: column;
+  align-items: flex-start;
   gap: 20px;
-  margin-left: 10px;
 }
 
-.info-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.info-label {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 0;
-}
-
-.info-value {
-  font-size: 16px;
-  color: #555;
-}
-
-/* 修改右侧：编辑区域 */
-.edit-section {
-  background-color: #ffffff;
-  border-radius: 16px;
-  padding: 60px;
-  flex: 1 1 100%;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  margin-right: 12%;
-}
-
-/* 修改 Tab 栏 */
-.tab-bar {
-  display: flex;
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 40px;
-  gap: 30px;
-}
-
-.tab-item {
-  padding: 12px 24px;
+.avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  background: #f5f5f7;
   cursor: pointer;
-  font-size: 18px;
-  color: #555;
-  transition: color 0.3s ease, border-color 0.3s ease;
 }
 
-.tab-item.active {
-  border-bottom: 2px solid #06c;
-  color: #06c;
-  font-weight: 500;
-}
-
-/* 自定义表单和输入框样式 */
-.custom-form {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  max-width: 600px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group label {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-}
-
-.error-label {
-  color: #ff3b30;
-}
-
-.form-group input,
-.form-group textarea {
-  padding: 12px 15px;
-  border: 1px solid #d2d2d7;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  border-color: #06c;
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.15);
-}
-
-.error-input {
-  border-color: #ff3b30;
-  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
-}
-
-/* 提交按钮样式 - 与ContactUs保持一致 */
-.form-submit {
-  margin-top: 10px;
-}
-
-.submit-btn {
-  background: rgb(0, 113, 227);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 14px 30px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.submit-btn:hover {
-  background-color: rgb(64, 158, 255);
-}
-
-.submit-btn:disabled {
-  background: #cccccc;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* 管理按钮容器 - 垂直居中排列 */
-.management-btn-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 10px;
-  align-items: center;
-}
-
-/* 管理按钮样式 */
-.management-btn {
+.avatar-img {
   width: 100%;
-  background-color: #f5f5f7;
-  color: #444;
-  border: 1px solid #d2d2d7;
-  border-radius: 8px;
-  padding: 12px 20px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: left;
-}
-
-.management-btn:hover {
-  background-color: rgba(0, 102, 204, 0.1);
-  border-color: #06c;
-  box-shadow: 0 5px 15px rgba(0, 102, 204, 0.15);
-}
-
-.avatar-uploader {
-  position: relative;
-  cursor: pointer;
-}
-
-.avatar-container {
-  position: relative;
-  display: inline-block;
-}
-
-.user-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+  height: 100%;
   object-fit: cover;
-  transition: filter 0.3s ease;
 }
 
 .avatar-overlay {
   position: absolute;
   top: 0;
   left: 0;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  color: #fff;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s;
 }
 
-.avatar-container:hover .avatar-overlay {
+.avatar-circle:hover .avatar-overlay {
   opacity: 1;
 }
 
-.avatar-container:hover .user-avatar {
-  filter: brightness(0.7);
+.display-name {
+  font-size: 26px;
+  font-weight: 600;
 }
 
-.upload-icon {
-  font-size: 24px;
-  color: white;
+.display-role {
+  font-size: 13px;
+  color: #86868b;
 }
 
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .dashboard-container {
+/* 内容详情样式 */
+.info-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.sub-label {
+  font-size: 13px;
+  color: #86868b;
+  margin-bottom: 8px;
+  font-weight: 400;
+}
+
+.address-text {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.address-text p {
+  margin: 0;
+}
+
+.name-line {
+  font-weight: 500;
+}
+
+.edit-link {
+  display: inline-block;
+  font-size: 15px;
+  color: #0066cc;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.apple-desc {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 10px 0;
+  color: #1d1d1f;
+}
+
+.apple-link {
+  color: #0066cc;
+  font-size: 15px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.arrow-icon {
+  margin-left: 4px;
+  font-size: 12px;
+}
+
+/* Apple ID 区域 */
+.apple-id-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.email-text {
+  font-size: 15px;
+}
+
+.icon-bar {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.app-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f5f5f7;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+}
+
+/* 编辑表单修复 */
+.edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 600px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field.full {
+  grid-column: 1 / span 2;
+}
+
+.field label {
+  font-size: 13px;
+  color: #86868b;
+  margin-bottom: 6px;
+}
+
+/* 高亮渐变边框效果 */
+.apple-input {
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #fff;
+}
+
+.apple-textarea {
+  resize: none;
+}
+
+/* 修复输入框高亮效果：渐变蓝色光晕 */
+.apple-input:focus {
+  border-color: #0071e3;
+  /* 使用多层 box-shadow 模拟渐变深度的蓝色光晕 */
+  box-shadow: 0 0 0 1px #0071e3, 0 0 0 4px rgba(0, 113, 227, 0.15);
+}
+
+.edit-actions {
+  margin-top: 40px;
+  display: flex;
+  gap: 16px;
+}
+
+.btn-primary {
+  background: #0071e3;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #f5f5f7;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+/* 管理员按钮 */
+.admin-label {
+  color: #86868b;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.admin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 320px;
+  background: none;
+  border: 1px solid #d2d2d7;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.2s;
+}
+
+.admin-btn:hover {
+  background: #f9f9f9;
+}
+
+/* 动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@media (max-width: 800px) {
+
+  .apple-row,
+  .profile-summary-row {
     flex-direction: column;
-    margin: 60px auto;
-    padding: 20px;
-    gap: 20px;
   }
 
-  .user-summary,
-  .edit-section {
-    flex: none;
+  .label-column {
+    margin-bottom: 12px;
+    font-size: 18px;
   }
 
-  .custom-form {
-    max-width: 100%;
+  .info-split,
+  .edit-grid {
+    grid-template-columns: 1fr;
   }
 
-  .management-btn {
-    width: 100%;
+  .field.full {
+    grid-column: auto;
   }
+}
+
+.payment-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.payment-icon {
+  font-size: 20px;
+  color: #86868b;
 }
 </style>

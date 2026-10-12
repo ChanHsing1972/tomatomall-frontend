@@ -357,9 +357,9 @@ onMounted(() => {
         <el-table-column fixed="right" label="操作" width="180">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button plain size="small" type="primary" @click="openEditDialog(row)">编辑</el-button>
+              <el-button plain size="small" type="primary" @click="openEditDialog(row as Product)">编辑</el-button>
               <el-button plain size="small" type="danger" @click="handleDeleteProduct(row.id)">删除</el-button>
-              <el-button plain size="small" type="warning" @click="openStockDialog(row)">库存</el-button>
+              <el-button plain size="small" type="warning" @click="openStockDialog(row as Product)">库存</el-button>
             </div>
           </template>
         </el-table-column>

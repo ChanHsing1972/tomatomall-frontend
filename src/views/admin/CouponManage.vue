@@ -130,7 +130,7 @@ const submitForm = async () => {
         ElMessage.error('操作失败，请重试');
       }
     } else {
-      return false;
+      return;
     }
   });
 };
@@ -200,7 +200,7 @@ onMounted(() => {
       </el-table-column>
       <el-table-column fixed="right" label="操作" width="120">
         <template #default="scope">
-          <el-button :icon="Edit" circle type="primary" @click="openEditDialog(scope.row)"/>
+          <el-button :icon="Edit" circle type="primary" @click="openEditDialog(scope.row as CouponVO)"/>
         </template>
       </el-table-column>
     </el-table>
@@ -245,14 +245,14 @@ onMounted(() => {
               <el-form-item prop="startDate">
                 <el-date-picker v-model="currentCoupon.startDate" placeholder="开始日期" style="width: 100%"
                                 type="datetime"
-                                value-format="YYYY-MM-DD HH:mm:ss"/>
+                                value-format="YYYY-MM-DDTHH:mm:ss"/>
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item prop="endDate">
                 <el-date-picker v-model="currentCoupon.endDate" placeholder="结束日期" style="width: 100%"
                                 type="datetime"
-                                value-format="YYYY-MM-DD HH:mm:ss"/>
+                                value-format="YYYY-MM-DDTHH:mm:ss"/>
               </el-form-item>
             </el-col>
           </el-row>

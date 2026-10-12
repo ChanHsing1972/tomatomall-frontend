@@ -44,7 +44,8 @@ export type ResultVO<T> = {
 
 // 支付响应类型
 export type PaymentResponse = {
-    paymentForm: any;       // 支付表单HTML或数据
+    demo?: boolean;
+    paymentForm?: string;       // 支付表单HTML或数据
     orderId: number;        // 订单ID
     totalAmount: string;    // 支付金额
     paymentMethod: string;  // 支付方式
