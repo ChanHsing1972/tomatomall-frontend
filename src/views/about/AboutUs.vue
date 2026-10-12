@@ -95,7 +95,7 @@ onMounted(() => {
     </section>
 
     <!-- 主要内容 -->
-    <div class="container"><p class="demo-notice">本页为课程项目的界面演示。公司、招聘、客服和商业服务文案为设计示例。</p>
+    <div class="container">
       <!-- 我们的故事 -->
       <section class="story-section">
         <div class="section-header">

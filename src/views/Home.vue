@@ -377,7 +377,6 @@ const aiAssistantVisible = ref(false);
         <div v-for="book in newArrivals" :key="book.id" class="new-book" @click="navigateToBookDetail(book.id)">
           <div class="display-book-cover">
             <img :src="book.cover" @error="coverFallback($event, book.title)" alt="书籍封面" />
-            <div class="new-tag">NEW</div>
           </div>
           <div class="display-book-info">
             <h3>{{ book.title }}</h3>
@@ -410,25 +409,6 @@ const aiAssistantVisible = ref(false);
       </div>
     </section>
 
-
-    <!--  用户社区展示-->
-    <section class="community-section">
-      <h2 class="community-title">加入枕石书屋社区</h2>
-      <p class="community-subtitle">与全国书友分享阅读体验，参与读书活动，获取专属推荐</p>
-      <button class="community-btn">敬请期待</button>
-    </section>
-
-    <!-- 订阅区域 -->
-    <section class="subscribe-section" :class="{ 'visible': heroVisible }">
-      <div class="subscribe-content">
-        <h2>订阅获取更新</h2>
-        <p>第一时间获取新书资讯和独家优惠</p>
-        <div class="subscribe-form">
-          <input placeholder="输入您的邮箱地址（功能预览，敬请期待）" type="email" />
-          <button disabled>敬请期待</button>
-        </div>
-      </div>
-    </section>
 
     <!-- 页脚 -->
     <Footer />
