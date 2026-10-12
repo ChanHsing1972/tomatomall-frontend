@@ -125,7 +125,7 @@ const recommendedBooks = ref<
   { id: number; title: string; cover: string; desc: string; price: number }[]
 >([]);
 
-// 新书上架
+// 思想与生活
 const newArrivals = ref<
   { id: number; title: string; cover: string; author: string; price: number }[]
 >([]);
@@ -180,7 +180,7 @@ onMounted(async () => {
         id: Number(book.id), title: book.title, cover: book.cover,
         desc: book.description, price: Number(book.price)
       }));
-      newArrivals.value = books.slice(-4).reverse().map((book: any) => ({
+      newArrivals.value = books.filter((book: any) => ['散文随笔', '人物传记', '哲学心理'].includes(book.specifications?.find((spec: any) => spec.item === '类别')?.value)).slice(0, 4).map((book: any) => ({
         id: Number(book.id), title: book.title, cover: book.cover,
         author: book.specifications?.find((spec: any) => spec.item === '作者')?.value || '枕石书屋',
         price: Number(book.price)
@@ -213,7 +213,7 @@ onMounted(async () => {
 
 // 格式化价格
 const formatPrice = (price: number) => {
-  return `RMB ${price.toFixed(2)}`;
+  return `¥ ${price.toFixed(2)}`;
 };
 
 // AI助手对话框
@@ -280,7 +280,7 @@ const aiAssistantVisible = ref(false);
           <div class="product-info">
             <h2>{{ currentProduct.title }}</h2>
             <div class="product-price">价格: {{ currentProduct.price }}</div>
-            <div class="product-rate">评分: {{ currentProduct.rate }}/10</div>
+
           </div>
         </div>
         <div class="product-description">
@@ -340,7 +340,7 @@ const aiAssistantVisible = ref(false);
       <div class="section-title">
         <div class="title-wrapper">
           <span class="subtitle">专属推荐</span>
-          <h2>今日热门</h2>
+          <h2>书屋精选</h2>
         </div>
         <a class="view-all" href="javascript:void(0)" @click="navigateToLibrary">查看全部</a>
       </div>
@@ -359,12 +359,12 @@ const aiAssistantVisible = ref(false);
       </div>
     </section>
 
-    <!-- 新书上架-->
+    <!-- 思想与生活-->
     <section class="new-arrivals-section" :class="{ 'visible': heroVisible }">
       <div class="section-title">
         <div class="title-wrapper">
           <span class="subtitle">书库已更新</span>
-          <h2>新书上架</h2>
+          <h2>思想与生活</h2>
         </div>
         <a class="view-all" href="javascript:void(0)" @click="navigateToLibrary">查看全部</a>
       </div>
@@ -874,7 +874,7 @@ const aiAssistantVisible = ref(false);
 
 }
 
-/* 新书上架区域 */
+/* 思想与生活区域 */
 .new-arrivals-section {
   padding: 80px 0;
   background-color: #f5f5f7;

@@ -75,7 +75,6 @@ const replyingTo = ref("");
 const isLiked = ref(false); // 是否已收藏
 const likeCount = ref(0); // 收藏人数
 // 添加描述展开/收起状态
-const isDescriptionExpanded = ref(false);
 // 添加产品详情展开/收起状态
 const isDetailExpanded = ref(false);
 
@@ -123,9 +122,7 @@ const handleProductLike = async () => {
 };
 
 // 切换描述展开状态
-const toggleDescription = () => {
-  isDescriptionExpanded.value = !isDescriptionExpanded.value;
-};
+
 
 // 切换产品详情展开状态
 const toggleDetail = () => {
@@ -407,11 +404,8 @@ onMounted(() => {
                   </div>
 
                   <div class="product-meta">
-                    <div class="meta-price">RMB {{ currentProduct.price }}</div>
-                    <div class="meta-rating">
-                      <el-rate v-model="currentProduct.rate" allow-half disabled />
-                      <span>{{ currentProduct.rate.toFixed(1) }}</span>
-                    </div>
+                    <div class="meta-price">¥ {{ currentProduct.price }}</div>
+
                   </div>
                 </div>
 
@@ -420,19 +414,7 @@ onMounted(() => {
                     <div class="spec-label">{{ spec.item }}</div>
                     <div class="spec-value">{{ spec.value }}</div>
                   </div>
-                  <div class="spec-item">
-                    <div class="spec-label">描述</div>
-                    <div class="spec-value description">
-                      {{
-                        isDescriptionExpanded ? currentProduct.description : currentProduct.description.substr(0, 50) +
-                          (currentProduct.description.length > 50 ? '...' : '')
-                      }}
-                      <span v-if="currentProduct.description.length > 50" class="toggle-description"
-                        @click="toggleDescription">
-                        {{ isDescriptionExpanded ? '收起' : '展开' }}
-                      </span>
-                    </div>
-                  </div>
+
                 </div>
 
                 <div class="product-detail-container">

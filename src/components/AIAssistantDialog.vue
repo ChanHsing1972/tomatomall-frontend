@@ -63,7 +63,7 @@ const submitQuestion = async () => {
   const aiThinkingIndex = chatHistory.value.length;
   chatHistory.value.push({
     role: 'ai',
-    content: '思考中，预计等待10s',
+    content: '正在结合书库挑选…',
     thinking: true
   });
 
@@ -88,7 +88,7 @@ const submitQuestion = async () => {
     // 更新为错误消息
     chatHistory.value[aiThinkingIndex] = {
       role: 'ai',
-      content: '抱歉，我遇到了一些问题，无法回答您的问题。'
+      content: '书城助手暂时无法连接，请稍后再试。您也可以使用书库搜索继续选书。'
     };
     ElMessage.error('获取AI助手回答失败，请稍后再试');
   } finally {
@@ -171,10 +171,10 @@ const clearHistory = () => {
               {{ q }}
             </div>
           </div>
-          <el-button size="small" type="text" @click="clearHistory">清空对话</el-button>
+          <el-button size="small" text @click="clearHistory">清空对话</el-button>
         </div>
         <div class="input-wrapper">
-          <el-input v-model="question" :rows="3" placeholder="请输入您的问题..." resize="none" type="textarea"
+          <el-input v-model="question" :rows="3" placeholder="请输入您的问题..." resize="none" type="textarea" :maxlength="1000" show-word-limit
             @keydown="handleKeyDown" />
           <el-button :disabled="loading" :loading="loading" type="primary" @click="submitQuestion">
             发送

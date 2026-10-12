@@ -41,14 +41,13 @@ const categories = [
   "全部",
   "文学小说",
   "散文随笔",
-  "自传他传",
+  "人物传记",
   "诗歌戏剧",
   "哲学心理",
   "历史文化",
   "生活健康",
-  "科技探索",
+  "科技科普",
   "经济管理",
-  "科普读物"
 ];
 const loading = ref(true);
 const showLikedOnly = ref(false);
@@ -299,11 +298,11 @@ onMounted(() => {
           </div>
           <div class="card-info">
             <h2 class="product-title" :title="product.title">{{ product.title }}</h2>
+            <p class="product-author">{{ product.specifications.find(spec => spec.item === '作者')?.value }}</p>
             <p class="product-description">{{ product.description }}</p>
             <div class="price-rate">
-              <span class="product-price">RMB {{ product.price }}</span>
-              <el-rate v-model="product.rate" allow-half class="product-rate" disabled/>
-              <span class="product-score">{{ product.rate.toFixed(1) }}</span>
+              <span class="product-price">¥ {{ product.price }}</span>
+              <span class="catalog-category">{{ product.specifications.find(spec => spec.item === '类别')?.value }}</span>
             </div>
           </div>
         </el-card>
