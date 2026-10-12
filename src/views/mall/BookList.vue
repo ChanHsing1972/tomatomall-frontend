@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { coverFallback } from "../../utils";
 import {computed, onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {ElDrawer, ElMessage} from "element-plus";
@@ -294,7 +295,7 @@ onMounted(() => {
         <el-card v-for="product in paginatedProductList" :key="product.id" class="product-card" shadow="hover"
                  @click="openDetailDialog(product)">
           <div class="card-image-wrapper">
-            <img :src="product.cover" alt="封面" class="product-image"/>
+            <img :src="product.cover" @error="coverFallback($event, product.title)" alt="封面" class="product-image"/>
           </div>
           <div class="card-info">
             <h2 class="product-title" :title="product.title">{{ product.title }}</h2>

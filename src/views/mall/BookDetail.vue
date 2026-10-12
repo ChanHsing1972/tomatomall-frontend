@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { coverFallback } from "../../utils";
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
@@ -383,7 +384,7 @@ onMounted(() => {
             <div class="product-main-content">
               <!-- 左侧大图区域 -->
               <div class="dialog-image">
-                <el-image :src="currentProduct.cover" class="detail-cover" fit="cover" />
+                <img alt="图书封面" style="object-fit: cover" :src="currentProduct.cover" @error="coverFallback($event, currentProduct.title)" class="detail-cover" />
                 <div class="product-actions">
                   <el-button :disabled="!hasPurchased" class="action-button read-button" @click="goToReader">
                     {{ hasPurchased ? '阅读' : '阅读 - 请先购买' }}

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { coverFallback } from "../utils";
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
 import AIAssistantDialog from "../components/AIAssistantDialog.vue";
@@ -275,7 +276,7 @@ const aiAssistantVisible = ref(false);
     <el-dialog v-model="detailDialogVisible" title="商品详情" width="50%">
       <div class="product-detail">
         <div class="detail-header">
-          <img :src="currentProduct.cover" alt="封面" class="product-cover" />
+          <img :src="currentProduct.cover" @error="coverFallback($event, currentProduct.title)" alt="封面" class="product-cover" />
           <div class="product-info">
             <h2>{{ currentProduct.title }}</h2>
             <div class="product-price">价格: {{ currentProduct.price }}</div>
@@ -347,7 +348,7 @@ const aiAssistantVisible = ref(false);
         <div v-for="book in recommendedBooks" :key="book.id" class="recommended-book"
           @click="navigateToBookDetail(book.id)">
           <div class="display-book-cover">
-            <img :src="book.cover" alt="书籍封面" />
+            <img :src="book.cover" @error="coverFallback($event, book.title)" alt="书籍封面" />
           </div>
           <div class="display-book-info">
             <h3>{{ book.title }}</h3>
@@ -370,7 +371,7 @@ const aiAssistantVisible = ref(false);
       <div class="display-books">
         <div v-for="book in newArrivals" :key="book.id" class="new-book" @click="navigateToBookDetail(book.id)">
           <div class="display-book-cover">
-            <img :src="book.cover" alt="书籍封面" />
+            <img :src="book.cover" @error="coverFallback($event, book.title)" alt="书籍封面" />
             <div class="new-tag">NEW</div>
           </div>
           <div class="display-book-info">
@@ -398,7 +399,7 @@ const aiAssistantVisible = ref(false);
             </div>
           </div>
           <div class="featured-image" @click="navigateToBookDetail(featuredBook.id)">
-            <img :src="featuredBook.cover" alt="特色书籍封面" />
+            <img :src="featuredBook.cover" @error="coverFallback($event, featuredBook.title)" alt="特色书籍封面" />
           </div>
         </div>
       </div>

@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { coverFallback } from "../../utils";
 import { computed, onMounted, ref } from 'vue'
 import Header from '../../components/Header.vue'
 import { checkoutCart, getCartList, OrderInfo, removeFromCart, updateCartItem, } from '../../api/cart.ts'
 import { getProductDetail } from '../../api/product.ts'
-import { ElImage, ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { ArrowDownBold } from "@element-plus/icons-vue";
 import { useRouter } from 'vue-router'
 import Footer from "../../components/Footer.vue";
@@ -159,7 +160,7 @@ onMounted(() => {
     <div v-if="cartItems.length > 0" class="product-list">
       <div v-for="(item) in cartItems" :key="item.id" class="product-section">
         <div class="product-image">
-          <el-image :src="item.cover" class="rounded-image" fit="cover" />
+          <img alt="图书封面" style="object-fit: cover" :src="item.cover" @error="coverFallback($event, item.title)" class="rounded-image" />
         </div>
         <div class="product-details">
           <div class="info-left">
@@ -224,7 +225,7 @@ onMounted(() => {
     <el-dialog v-model="detailDialogVisible" class="detail-dialog" top="10vh" width="60%">
       <div class="dialog-content">
         <div class="dialog-image">
-          <el-image :src="currentProduct.cover" class="detail-cover" fit="cover" />
+          <img alt="图书封面" style="object-fit: cover" :src="currentProduct.cover" @error="coverFallback($event, currentProduct.title)" class="detail-cover" />
         </div>
         <div class="dialog-info">
           <div class="info-section">

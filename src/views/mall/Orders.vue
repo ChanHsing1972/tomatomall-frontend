@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { coverFallback } from "../../utils";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { ElMessage, ElNotification } from "element-plus";
 import { deleteOrder, getOrders, type OrderItem, type OrderStatus, type OrderVO, payOrder } from "../../api/order";
@@ -459,7 +460,7 @@ window.scrollTo(0, 0);
           <div class="order-items">
             <div v-for="item in order.items" :key="item.productId" class="order-item">
               <div class="item-image">
-                <img v-if="item.cover" :src="item.cover" alt="商品图片" />
+                <img v-if="item.cover" :src="item.cover" @error="coverFallback($event, item.title)" alt="商品图片" />
                 <div v-else class="placeholder-image"><el-icon>
                     <Picture />
                   </el-icon></div>
