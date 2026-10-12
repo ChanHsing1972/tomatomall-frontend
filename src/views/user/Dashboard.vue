@@ -11,6 +11,7 @@ const router = useRouter();
 const uploadHeaders = { token: sessionStorage.getItem("token") || "" };
 const role = sessionStorage.getItem("role") || "user";
 const username = sessionStorage.getItem("username") || "游客";
+const sharedDemo = username === "demo";
 
 // 数据状态
 const name = ref("");
@@ -82,6 +83,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
   <Header />
   <div class="apple-bg">
     <div class="apple-container">
+      <p v-if="sharedDemo">共享演示账户资料只读，请勿在此填写个人联系方式。</p>
       <div class="apple-layout">
         <main class="apple-main">
 
@@ -89,7 +91,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
             <div class="content-column">
               <div class="profile-header">
                 <el-upload class="avatar-uploader" action="/api/files/images" :headers="uploadHeaders" :show-file-list="false"
-                  :on-success="handleAvatarSuccess">
+                  :on-success="handleAvatarSuccess" :disabled="sharedDemo">
                   <div class="avatar-circle">
                     <img v-if="avatar" :src="avatar" class="avatar-img" />
                     <el-avatar v-else :icon="UserFilled" :size="72" />
@@ -120,7 +122,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
                         <p v-for="(line, index) in (location || '').split('\n')" :key="index">{{ line }}</p>
                         <p class="phone-line">{{ telephone }}</p>
                       </div>
-                      <a class="edit-link" @click="isEditing = true"><u>编辑</u></a>
+                      <a v-if="!sharedDemo" class="edit-link" @click="isEditing = true"><u>编辑</u></a>
                     </div>
                     <div class="info-block">
                       <div class="sub-label">联系信息</div>
@@ -128,7 +130,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
                         <p>{{ email }}</p>
                         <p>{{ telephone }}</p>
                       </div>
-                      <a class="edit-link" @click="isEditing = true"><u>编辑</u></a>
+                      <a v-if="!sharedDemo" class="edit-link" @click="isEditing = true"><u>编辑</u></a>
                     </div>
                   </div>
                 </div>
