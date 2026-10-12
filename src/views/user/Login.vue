@@ -12,7 +12,8 @@ const password = ref('');
 // 输入框验证
 const hasUsernameInput = computed(() => username.value.trim() !== '');
 const hasPasswordInput = computed(() => password.value.trim() !== '');
-const loginDisabled = computed(() => !(hasUsernameInput.value && hasPasswordInput.value));
+const insecureDemo = window.location.hostname === 'zhenshi.qd.je' && window.location.protocol !== 'https:';
+const loginDisabled = computed(() => !(hasUsernameInput.value && hasPasswordInput.value) || (insecureDemo && username.value.trim() !== 'demo'));
 
 // 登录操作
 function handleLogin() {
@@ -72,7 +73,7 @@ function handleLogin() {
             登入
           </el-button>
           <router-link to="/register" custom v-slot="{ navigate }">
-            <el-button @click="navigate" class="register-button">注册</el-button>
+            <el-button @click="navigate" :disabled="insecureDemo" class="register-button">注册</el-button>
           </router-link>
         </div>
       </div>

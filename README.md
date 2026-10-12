@@ -20,7 +20,7 @@
 
 ## 构建与发布
 
-GitHub Actions 对 main 推送和 Pull Request 执行严格类型检查、测试、构建及生产依赖审计。main 验证通过后构建 Nginx 静态镜像，发布到 `ghcr.io/chanhsing1972/tomatomall-frontend`，同时使用 main 和提交 SHA 标签。发布结果记录在 `ci-status` 分支。Actions 固定提交 SHA，Dependabot 每周维护依赖。
+GitHub Actions 对 main 推送和 Pull Request 执行严格类型检查、测试、构建及生产依赖审计。main 验证通过后构建 Nginx 静态镜像，发布到 `ghcr.io/chanhsing1972/tomatomall-frontend`，同时使用 main 和提交 SHA 标签。发布结果记录在 `ci-status` 分支。服务器每 5 分钟安装测试通过的 main 镜像，并在健康验证失败时恢复上一版本。Actions 固定提交 SHA，Dependabot 每周维护依赖。
 
 Docker 镜像通过 8080 端口提供静态资源、SPA 路由、健康检查和 `/api` 代理。数据库、Redis、HTTPS 证书与服务器发布脚本在私有后端仓库统一维护。入口 HTTP 在证书签发成功后自动重定向至 HTTPS；证书签发状态见部署交付记录，不能把尚未签发的证书描述为已启用。
 
