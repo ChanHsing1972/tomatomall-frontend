@@ -14,7 +14,21 @@
 
 ## 本地开发与验证
 
-请安装 Node.js 24，然后运行 `npm ci` 和 `npm run dev`。开发服务器将 `/api` 转发至 `http://localhost:8080`；生产构建使用同域反向代理。只有特殊开发场景才需设置 `VITE_API_BASE_URL`，请勿写死历史服务器地址。
+请安装 Node.js 24。只修改前端并使用线上真实书目预览时，在本地仓库运行：
+
+```sh
+cd /Users/chenxin/Documents/1-Dev/3-Archive/2024-10-tomatomall/tomatomall-frontend
+npm ci --cache .npm-cache
+npm run dev:online
+```
+
+打开终端显示的地址，默认是 `http://localhost:3000`。修改 `src` 中的 Vue、TypeScript 或 CSS 文件并保存后，Vite 会自动更新浏览器。主页位于 `src/views/Home.vue`，订单位于 `src/views/mall/Orders.vue`，AI 页面位于 `src/views/AI.vue`，AI 对话组件位于 `src/components/AIConversation.vue`，消息列表位于 `src/views/user/MessageList.vue`。按 `Ctrl+C` 停止预览。
+
+`dev:online` 将 `/api` 与 `/catalog-covers` 通过开发代理转发至 `https://zhenshi.qd.je`，无需启动本地 Java、MySQL 或 Redis。此模式使用线上数据，登录后的下单、评论及消息操作也会写入线上数据库；仅修改本地页面文件不会发布网站。依赖缓存放在已忽略的 `.npm-cache` 目录，避免旧全局 npm 缓存的权限问题。
+
+同时开发本地后端时，运行 `npm run dev`，默认代理目标为 `http://localhost:8080`；也可用 `DEV_API_PROXY=http://localhost:你的端口 npm run dev` 指定地址。生产构建仍使用同域反向代理，通常保持 `VITE_API_BASE_URL` 为空。
+
+两个本地仓库的 `main` 已对齐各自 GitHub 仓库，`origin` 指向 GitHub。开始新修改前运行 `git pull --ff-only`，再用 `git switch -c feat/你的修改名称` 建立工作分支并提交。向 `main` 推送通过流水线后会发布网站，普通本地保存和预览不会触发部署。
 
 提交前运行 `npm run typecheck`、`npm test` 和 `npm run build`。类型检查保持严格模式，测试覆盖组件交互、同域请求、token 传递和业务错误。还可使用 `npm audit --registry=https://registry.npmjs.org` 检查依赖。
 

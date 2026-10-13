@@ -10,9 +10,7 @@ import '../styles/store.css';
     <div class="store-shell ai-page-shell">
       <header class="store-heading">
         <div>
-          <span class="store-eyebrow">枕石书屋 · AI</span>
           <h1>为你，找到下一本。</h1>
-          <p>在想法与书页之间，开启新的探索。</p>
         </div>
       </header>
       <AIConversation page />

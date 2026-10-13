@@ -155,9 +155,7 @@ onUnmounted(() => window.clearInterval(timer));
     <div class="store-shell">
       <header class="store-heading">
         <div>
-          <span class="store-eyebrow">枕石书屋 · 订单</span>
           <h1>你订购的图书。</h1>
-          <p>查看订单进度，继续你的阅读旅程。</p>
         </div>
         <router-link to="/booklist" class="store-link browse-link"
           >继续选书 <el-icon><ArrowRight /></el-icon

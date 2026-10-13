@@ -47,3 +47,6 @@ coverage/
 uploads/
 *.pem
 *.key
+
+# Project-local npm cache avoids permission issues in a shared global cache.
+.npm-cache/

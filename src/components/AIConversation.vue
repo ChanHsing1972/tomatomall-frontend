@@ -71,7 +71,6 @@ function clear() {
         </div>
         <h2 v-if="!page">下一本好书，<br />从你的好奇开始。</h2>
         <h2 v-else>聊聊你的阅读兴趣。</h2>
-        <p>告诉我你的兴趣、想探索的话题，<br class="desktop-break" />或最近喜欢的一本书。</p>
         <div class="ai-suggestions">
           <button
             v-for="suggestion in suggestions"
@@ -142,10 +141,6 @@ function clear() {
           <el-icon :size="22"><ArrowUp /></el-icon>
         </button>
       </form>
-      <div class="composer-note">
-        <span>推荐基于当前书库。按 Enter 发送，Shift + Enter 换行。</span
-        ><span>{{ question.length }} / 1000</span>
-      </div>
     </div>
   </section>
 </template>
@@ -337,18 +332,6 @@ function clear() {
   background: #d2d2d7;
   cursor: default;
 }
-.composer-note {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  font-size: 11px;
-  color: #86868b;
-  line-height: 1.5;
-  padding-top: 10px;
-}
-.composer-note > span:last-child {
-  white-space: nowrap;
-}
 @media (max-width: 600px) {
   .ai-conversation {
     min-height: calc(100dvh - 260px);
@@ -380,9 +363,6 @@ function clear() {
   .answer-content,
   .ai-question p {
     font-size: 16px;
-  }
-  .composer-note > span:first-child {
-    max-width: 230px;
   }
   .ai-composer form {
     padding: 13px;

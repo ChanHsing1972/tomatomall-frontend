@@ -152,7 +152,6 @@ onUnmounted(() => {
           <el-icon :size="20"><ArrowLeft /></el-icon>
         </button>
         <div class="conversation-person">
-          <span class="store-eyebrow">书友对话</span>
           <h1>{{ otherName || '正在加载…' }}</h1>
         </div>
         <button
@@ -227,8 +226,8 @@ onUnmounted(() => {
           :disabled="sending || loading || !!loadError || !draft.trim()"
           :aria-label="sending ? '正在发送' : '发送消息'"
         >
-          <el-icon :size="22"><ArrowUp /></el-icon></button
-        ><small>Enter 发送，Shift + Enter 换行</small>
+          <el-icon :size="22"><ArrowUp /></el-icon>
+        </button>
       </form>
     </div>
   </main>
@@ -335,7 +334,7 @@ onUnmounted(() => {
   gap: 12px;
   border-top: 1px solid #d2d2d7;
   padding-top: 22px;
-  padding-bottom: 26px;
+  padding-bottom: 0;
 }
 .conversation-composer textarea {
   flex: 1;
@@ -373,13 +372,6 @@ onUnmounted(() => {
 .message-send:disabled {
   background: #d2d2d7;
   cursor: default;
-}
-.conversation-composer small {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  color: #86868b;
-  font-size: 11px;
 }
 .skeleton-bubble {
   width: 55%;

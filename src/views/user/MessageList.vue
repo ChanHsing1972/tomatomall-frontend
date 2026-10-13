@@ -226,9 +226,7 @@ onMounted(() => {
     <div class="store-shell messages-shell">
       <header class="store-heading">
         <div>
-          <span class="store-eyebrow">枕石书屋 · 消息</span>
           <h1>让阅读，连接彼此。</h1>
-          <p>你的书友对话，都在这里。</p>
         </div>
         <div class="message-actions">
           <button
