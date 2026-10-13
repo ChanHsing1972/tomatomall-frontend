@@ -21,6 +21,11 @@ const search = ref('');
 const filter = ref('all');
 const busy = ref<string | null>(null);
 const expanded = ref(new Set<string>());
+const expandedBooks = ref(new Set<string>());
+const visibleItems = (order: OrderVO) =>
+  expandedBooks.value.has(order.orderId) ? order.orderItems : order.orderItems.slice(0, 3);
+const toggleBooks = (id: string) =>
+  expandedBooks.value.has(id) ? expandedBooks.value.delete(id) : expandedBooks.value.add(id);
 const coupons = ref<UserCouponVO[]>([]);
 const couponOrder = ref<OrderVO | null>(null);
 const couponLoading = ref(false);
@@ -233,19 +238,24 @@ onUnmounted(() => window.clearInterval(timer));
             </div>
           </div>
           <div class="order-overview">
-            <div class="order-covers">
+            <div class="order-covers" :class="{ multiple: order.orderItems.length > 1 }">
               <router-link
-                v-for="item in order.orderItems"
+                v-for="(item, index) in order.orderItems.slice(0, 3)"
                 :key="item.productId"
+                :style="
+                  order.orderItems.length > 1 ? { left: `${index * 44}px`, zIndex: 3 - index } : {}
+                "
                 :to="`/bookdetail/${item.productId}`"
                 ><img
                   :src="item.cover"
                   :alt="item.title"
                   @error="coverFallback($event, item.title)"
               /></router-link>
+              <span v-if="order.orderItems.length > 3" class="cover-count"
+                >+{{ order.orderItems.length - 3 }}</span
+              >
             </div>
             <div class="order-progress">
-              <span class="order-label">{{ order.orderItems.map((i) => i.title).join('、') }}</span>
               <h2>{{ status(order) }}</h2>
               <div
                 class="progress-track"
@@ -271,11 +281,25 @@ onUnmounted(() => window.clearInterval(timer));
               </p>
             </div>
           </div>
-          <div class="order-item" v-for="item in order.orderItems" :key="item.cartItemId">
-            <router-link :to="`/bookdetail/${item.productId}`">{{ item.title }}</router-link
-            ><span>数量 {{ item.quantity }}</span
-            ><strong>{{ money(Number(item.price) * item.quantity) }}</strong>
+          <div class="order-books" :class="{ expanded: expandedBooks.has(order.orderId) }">
+            <div class="order-item" v-for="item in visibleItems(order)" :key="item.cartItemId">
+              <router-link :to="`/bookdetail/${item.productId}`">{{ item.title }}</router-link
+              ><span>数量 {{ item.quantity }}</span
+              ><strong>{{ money(Number(item.price) * item.quantity) }}</strong>
+            </div>
           </div>
+          <button
+            v-if="order.orderItems.length > 3"
+            class="store-link expand-books"
+            :aria-expanded="expandedBooks.has(order.orderId)"
+            @click="toggleBooks(order.orderId)"
+          >
+            {{
+              expandedBooks.has(order.orderId)
+                ? '收起书目'
+                : `展开全部 ${order.orderItems.length} 本图书`
+            }}
+          </button>
           <div class="order-footer">
             <div>
               <span class="order-label">订单金额</span
@@ -460,13 +484,48 @@ onUnmounted(() => window.clearInterval(timer));
   grid-template-columns: 260px minmax(0, 1fr);
   align-items: center;
   gap: 56px;
-  margin: 44px 0;
+  margin: 28px 0;
 }
 .order-covers {
   display: flex;
   justify-content: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+.order-covers.multiple {
+  position: relative;
+  width: 230px;
+  height: 180px;
+  margin: auto;
+}
+.order-covers.multiple a {
+  position: absolute;
+  top: 0;
+}
+.order-covers.multiple img {
+  width: 118px;
+  height: 174px;
+  background: white;
+  box-shadow: 0 3px 12px #00000014;
+}
+.cover-count {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  background: #f5f5f7;
+  border: 1px solid #d2d2d7;
+  border-radius: 18px;
+  padding: 7px 12px;
+  font-size: 14px;
+}
+.order-books.expanded {
+  max-height: 340px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.expand-books {
+  margin-top: 16px;
 }
 .order-covers img {
   width: 128px;

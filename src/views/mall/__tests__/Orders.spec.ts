@@ -69,4 +69,36 @@ describe('orders storefront', () => {
     expect(wrapper.get('[role="alert"]').text()).toContain('重新加载');
     expect(wrapper.find('.store-empty').exists()).toBe(false);
   });
+  it('keeps multi-book orders compact and expands the complete item list on demand', async () => {
+    vi.mocked(getOrders).mockResolvedValue({
+      code: '200',
+      data: [
+        {
+          orderId: '500',
+          createTime: '2026-10-13T01:00:00',
+          expireTime: '2020-01-01T00:00:00',
+          status: 'EXPIRED',
+          totalAmount: '360',
+          shippingAddress: { name: 'Reader' },
+          orderItems: Array.from({ length: 8 }, (_, i) => ({
+            productId: String(i + 1),
+            cartItemId: String(i + 1),
+            title: `Book ${i + 1}`,
+            price: '45',
+            quantity: 1,
+          })),
+        },
+      ],
+    });
+    wrapper = mount(Orders, {
+      global: { plugins: [router], stubs: { ElDialog: { template: '<div/>' } } },
+    });
+    await flushPromises();
+    expect(wrapper.findAll('.order-covers img')).toHaveLength(3);
+    expect(wrapper.findAll('.order-item')).toHaveLength(3);
+    expect(wrapper.get('.order-progress').text()).not.toContain('Book');
+    await wrapper.get('.expand-books').trigger('click');
+    expect(wrapper.findAll('.order-item')).toHaveLength(8);
+    expect(wrapper.get('.expand-books').attributes('aria-expanded')).toBe('true');
+  });
 });

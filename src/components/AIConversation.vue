@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
+import { aiHistoryKey, restoreAIHistory, saveAIHistory, type AIEntry } from '../utils/aiHistory';
 import { useRouter } from 'vue-router';
 import { ArrowUp, Reading } from '@element-plus/icons-vue';
 import { askAIAssistant } from '../api/aiService';
@@ -9,10 +10,18 @@ const router = useRouter();
 const question = ref('');
 const loading = ref(false);
 const transcript = ref<HTMLElement | null>(null);
-const history = ref<
-  { id: number; question: string; answer: string; error: boolean; pending: boolean }[]
->([]);
-let nextId = 0;
+const storageKey = aiHistoryKey();
+const history = ref<AIEntry[]>(restoreAIHistory(storageKey));
+const historySaveFailed = ref(false);
+let nextId = Math.max(-1, ...history.value.map((entry) => entry.id)) + 1;
+watch(
+  history,
+  (entries) => {
+    historySaveFailed.value = !saveAIHistory(storageKey, entries);
+  },
+  { deep: true }
+);
+onMounted(scrollToBottom);
 const suggestions = ['想读一本轻松的小说', '推荐一些计算机类书籍', '适合了解历史的书有哪些？'];
 async function scrollToBottom() {
   await nextTick();
@@ -52,7 +61,6 @@ function keydown(event: KeyboardEvent) {
     send();
   }
 }
-
 </script>
 <template>
   <section class="ai-conversation" :class="{ 'page-mode': page }" aria-label="AI 选书对话">
@@ -114,6 +122,9 @@ function keydown(event: KeyboardEvent) {
       </article>
     </div>
     <div class="ai-composer">
+      <p v-if="historySaveFailed" class="history-error" role="alert">
+        此浏览器暂时无法保存历史对话，请检查可用存储空间。
+      </p>
       <form @submit.prevent="send()">
         <textarea
           id="ai-question"
@@ -374,60 +385,49 @@ function keydown(event: KeyboardEvent) {
   }
 }
 .page-mode {
-  height: calc(100dvh - 300px);
-  min-height: 420px;
+  height: 100%;
+  min-height: 0;
 }
 .page-mode .ai-transcript {
   min-height: 0;
   max-height: none;
+  padding-bottom: 150px;
+  overflow-y: auto;
+}
+.page-mode .ai-composer {
+  position: fixed;
+  z-index: 15;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(912px, calc(100% - 48px));
+  padding: 16px 0 calc(20px + env(safe-area-inset-bottom));
+  background: #fff;
 }
 .page-mode .ai-welcome {
-  padding: 0 16px 20px;
-}
-.page-mode .ai-mark {
-  width: 44px;
-  height: 44px;
-  margin-bottom: 14px;
-  border-radius: 14px;
+  padding: 48px 0 32px;
 }
 .page-mode .ai-welcome h2 {
   font-size: 28px;
-  margin-bottom: 12px;
 }
-.page-mode .ai-welcome p {
-  font-size: 16px;
-}
-.page-mode .ai-suggestions {
-  margin-top: 20px;
-}
-.page-mode .ai-suggestions button {
-  padding: 12px 14px;
+.history-error {
+  color: #b42318;
+  font-size: 13px;
+  margin: 0 0 10px;
 }
 @media (max-width: 600px) {
-  .page-mode {
-    height: calc(100dvh - 300px);
-    min-height: 430px;
-  }
-  .page-mode .ai-transcript {
-    min-height: 0;
+  .page-mode .ai-composer {
+    width: calc(100% - 40px);
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
   .page-mode .ai-welcome {
-    padding: 0 0 20px;
+    padding: 24px 0;
   }
   .page-mode .ai-welcome h2 {
     font-size: 25px;
   }
-  .page-mode .ai-welcome p {
-    font-size: 15px;
-  }
-  .page-mode .ai-suggestions {
-    gap: 8px;
-  }
-  .page-mode .ai-suggestions button {
-    font-size: 13px;
-  }
-  .page-mode .ai-composer {
-    padding-top: 12px;
+  .page-mode .ai-transcript {
+    padding-bottom: 150px;
   }
 }
 </style>

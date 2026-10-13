@@ -4,8 +4,9 @@ import { useRoute, useRouter } from 'vue-router';
 import { ElButton, ElDrawer, ElIcon, ElMessage, ElSkeleton, ElSkeletonItem } from 'element-plus';
 import Header from '../../components/Header.vue';
 import { type Chapter, getChapterDetail, getChapterList } from '../../api/reader.ts';
-import { getProductDetail } from "../../api/product.ts";
+import { getProductDetail } from '../../api/product.ts';
 import SettingsPanel from '../../components/reader/SettingsPanel.vue';
+import { chapterParagraphs } from '../../utils/reader';
 import { ArrowLeft, ArrowRight, Menu, Setting } from '@element-plus/icons-vue';
 
 const route = useRoute();
@@ -16,6 +17,19 @@ const loading = ref(true);
 const book = ref<any>(null);
 const chapters = ref<Chapter[]>([]);
 const currentChapter = ref<Chapter | null>(null);
+const paragraphs = computed(() => chapterParagraphs(currentChapter.value?.chapterContent || ''));
+const loadError = ref('');
+const sourceUrl = computed(() => {
+  const value = book.value?.specifications?.find(
+    (spec: { item: string; value: string }) => spec.item === '原文来源'
+  )?.value;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname === 'zh.wikisource.org' ? url.href : '';
+  } catch {
+    return '';
+  }
+});
 const chapterDrawerVisible = ref(false);
 const settingsDrawerVisible = ref(false);
 const controlsVisible = ref(true);
@@ -33,22 +47,26 @@ const readingProgress = ref(0);
 let controlsTimer: number | null = null;
 
 // 获取当前书籍ID和章节ID
-const productId = computed(() => route.query.productId as string || '1');
+const productId = computed(() => (route.query.productId as string) || '1');
 const chapterId = computed(() => route.query.chapterId as string);
 
 // 当前章节索引
 const currentChapterIndex = computed(() => {
   if (!currentChapter.value) return 0;
-  return chapters.value.findIndex(c => c.chapterId === currentChapter.value?.chapterId);
+  return chapters.value.findIndex((c) => c.chapterId === currentChapter.value?.chapterId);
 });
 
 // 上/下一章可用性判断
 const nextChapterAvailable = computed(() => {
-  return currentChapter.value?.nextChapterNo !== 0;
+  return (
+    !!currentChapter.value &&
+    currentChapterIndex.value >= 0 &&
+    currentChapterIndex.value < chapters.value.length - 1
+  );
 });
 
 const prevChapterAvailable = computed(() => {
-  return currentChapter.value?.prevChapterNo !== 0;
+  return !!currentChapter.value && currentChapterIndex.value > 0;
 });
 
 // 根据主题返回完整样式
@@ -73,7 +91,7 @@ const contentStyle = computed(() => {
     fontSize: `${fontSize.value}px`,
     lineHeight: lineHeight.value,
     fontFamily: fontFamily.value,
-    ...readerThemeStyle.value
+    ...readerThemeStyle.value,
   };
 });
 
@@ -106,31 +124,38 @@ const fetchChapterList = async () => {
   try {
     const response = await getChapterList(productId.value);
     if (response.data.code === '200') {
-      chapters.value = response.data.data;
+      chapters.value = response.data.data.sort(
+        (a: Chapter, b: Chapter) => a.chapterNo - b.chapterNo
+      );
       if (!chapterId.value && chapters.value.length > 0) {
         await loadChapter(chapters.value[0].chapterId);
       } else if (chapterId.value) {
-        await loadChapter(Number(chapterId.value));
+        const chosen = chapters.value.find(
+          (chapter) => chapter.chapterId === Number(chapterId.value)
+        );
+        if (chosen) await loadChapter(chosen.chapterId);
+        else if (chapters.value[0]) await loadChapter(chapters.value[0].chapterId);
       }
     } else {
       ElMessage.error('获取章节列表失败');
     }
   } catch (error) {
     console.error('获取章节列表错误:', error);
-    ElMessage.error('获取章节列表失败');
+    loadError.value = error instanceof Error ? error.message : '获取章节列表失败';
   }
 };
 
 // 加载指定章节
 const loadChapter = async (id: number) => {
   loading.value = true;
+  loadError.value = '';
   try {
     const response = await getChapterDetail(productId.value, id);
     if (response.data.code === '200') {
       currentChapter.value = response.data.data;
       // 更新URL参数使用 query 更新
       await router.replace({
-        query: { ...route.query, chapterId: id.toString() }
+        query: { ...route.query, chapterId: id.toString() },
       });
       window.scrollTo(0, 0);
     } else {
@@ -138,7 +163,7 @@ const loadChapter = async (id: number) => {
     }
   } catch (error) {
     console.error('获取章节内容错误:', error);
-    ElMessage.error('获取章节内容失败');
+    loadError.value = error instanceof Error ? error.message : '获取章节内容失败';
   } finally {
     loading.value = false;
   }
@@ -146,16 +171,14 @@ const loadChapter = async (id: number) => {
 
 // 下一章
 const goToNextChapter = () => {
-  if (currentChapter.value?.nextChapterNo) {
-    loadChapter(currentChapter.value.nextChapterNo);
-  }
+  if (nextChapterAvailable.value)
+    loadChapter(chapters.value[currentChapterIndex.value + 1]!.chapterId);
 };
 
 // 上一章
 const goToPrevChapter = () => {
-  if (currentChapter.value?.prevChapterNo) {
-    loadChapter(currentChapter.value.prevChapterNo);
-  }
+  if (prevChapterAvailable.value)
+    loadChapter(chapters.value[currentChapterIndex.value - 1]!.chapterId);
 };
 
 // 选择章节
@@ -170,7 +193,7 @@ const saveReaderSettings = () => {
     fontSize: fontSize.value,
     theme: theme.value,
     lineHeight: lineHeight.value,
-    fontFamily: fontFamily.value
+    fontFamily: fontFamily.value,
   };
   localStorage.setItem('readerSettings', JSON.stringify(settings));
 };
@@ -198,7 +221,8 @@ const handleScroll = () => {
 
   // 计算阅读进度
   const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-  readingProgress.value = scrollHeight > 0 ? Math.min(Math.round((window.scrollY / scrollHeight) * 100), 100) : 0;
+  readingProgress.value =
+    scrollHeight > 0 ? Math.min(Math.round((window.scrollY / scrollHeight) * 100), 100) : 0;
 
   // 自动隐藏控制条
   showControls();
@@ -253,7 +277,7 @@ onUnmounted(() => {
     <!-- 阅读器容器 -->
     <div class="reader-container" :style="readerThemeStyle">
       <!-- 顶部控制条 -->
-      <div :class="{ 'visible': controlsVisible }" class="reader-controls top-controls">
+      <div :class="{ visible: controlsVisible }" class="reader-controls top-controls">
         <div class="controls-wrapper">
           <div class="controls-left">
             <el-button class="return-button" text @click="goToBookDetails">
@@ -265,7 +289,9 @@ onUnmounted(() => {
             <div v-if="book" class="book-info">
               <div class="title">{{ book.title }}</div>
               <div class="author">
-                {{book.specifications.find((spec: any) => spec.item === "作者")?.value || "未知作者"}}
+                {{
+                  book.specifications.find((spec: any) => spec.item === '作者')?.value || '未知作者'
+                }}
               </div>
             </div>
           </div>
@@ -292,13 +318,38 @@ onUnmounted(() => {
       <div class="reader-content" @click="showControls">
         <el-skeleton :loading="loading" animated>
           <template #default>
-            <div v-if="currentChapter" class="chapter">
+            <div v-if="loadError" class="reader-error" role="alert">
+              <p>{{ loadError }}</p>
+              <el-button @click="fetchChapterList">重新加载</el-button>
+            </div>
+            <div v-else-if="!currentChapter" class="reader-empty">此书暂未提供阅读章节。</div>
+            <div v-else class="chapter">
               <h2 class="chapter-title">{{ currentChapter.chapterTitle }}</h2>
-              <div class="chapter-content" :style="contentStyle" v-html="currentChapter.chapterContent"></div>
+              <div class="chapter-content" :style="contentStyle">
+                <p v-for="(paragraph, index) in paragraphs" :key="index">{{ paragraph }}</p>
+              </div>
+
+              <p v-if="sourceUrl" class="reading-source">
+                原文来源：<a :href="sourceUrl" target="_blank" rel="noopener noreferrer"
+                  >维基文库</a
+                >
+                · 原作公版，编辑内容依
+                <a
+                  href="https://creativecommons.org/licenses/by-sa/4.0/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >CC BY-SA 4.0</a
+                >
+                署名。
+              </p>
 
               <!-- 底部章节导航 -->
               <div class="chapter-navigation">
-                <el-button :disabled="!prevChapterAvailable" class="nav-button prev-chapter" @click="goToPrevChapter">
+                <el-button
+                  :disabled="!prevChapterAvailable"
+                  class="nav-button prev-chapter"
+                  @click="goToPrevChapter"
+                >
                   <el-icon>
                     <ArrowLeft />
                   </el-icon>
@@ -311,13 +362,21 @@ onUnmounted(() => {
                   </span>
                   <div class="progress-indicator">
                     <div class="progress-track">
-                      <div :style="{ width: `${(currentChapterIndex + 1) / chapters.length * 100}%` }"
-                        class="progress-fill"></div>
+                      <div
+                        :style="{
+                          width: `${((currentChapterIndex + 1) / chapters.length) * 100}%`,
+                        }"
+                        class="progress-fill"
+                      ></div>
                     </div>
                   </div>
                 </div>
 
-                <el-button :disabled="!nextChapterAvailable" class="nav-button next-chapter" @click="goToNextChapter">
+                <el-button
+                  :disabled="!nextChapterAvailable"
+                  class="nav-button next-chapter"
+                  @click="goToNextChapter"
+                >
                   下一章
                   <el-icon>
                     <ArrowRight />
@@ -346,29 +405,55 @@ onUnmounted(() => {
       </div>
 
       <!-- 章节列表抽屉 -->
-      <el-drawer v-model="chapterDrawerVisible" :show-close="true" :with-header="true" class="chapter-drawer"
-        direction="ltr" size="320px" title="目录">
+      <el-drawer
+        v-model="chapterDrawerVisible"
+        :show-close="true"
+        :with-header="true"
+        class="chapter-drawer"
+        direction="ltr"
+        size="min(320px, 100vw)"
+        title="目录"
+      >
         <div class="chapter-list-header">
           <div class="title">{{ book?.title }}</div>
           <div class="author">共 {{ chapters.length }} 章</div>
         </div>
         <div class="chapter-list">
-          <div v-for="(chapter, index) in chapters" :key="chapter.chapterId" :class="{
-            'active': currentChapter?.chapterId === chapter.chapterId,
-            'read': index <= currentChapterIndex
-          }" class="chapter-item" @click="selectChapter(chapter)">
+          <div
+            v-for="(chapter, index) in chapters"
+            :key="chapter.chapterId"
+            :class="{
+              active: currentChapter?.chapterId === chapter.chapterId,
+              read: index <= currentChapterIndex,
+            }"
+            class="chapter-item"
+            @click="selectChapter(chapter)"
+          >
             <span class="chapter-number">{{ index + 1 }}</span>
             <span class="chapter-item-title">{{ chapter.chapterTitle }}</span>
-            <span v-if="currentChapter?.chapterId === chapter.chapterId" class="reading-badge">阅读中</span>
+            <span v-if="currentChapter?.chapterId === chapter.chapterId" class="reading-badge"
+              >阅读中</span
+            >
           </div>
         </div>
       </el-drawer>
 
       <!-- 设置抽屉 -->
-      <el-drawer v-model="settingsDrawerVisible" :show-close="true" :with-header="true" class="settings-drawer"
-        direction="rtl" size="380px" title="阅读设置">
-        <SettingsPanel v-model:fontFamily="fontFamily" v-model:fontSize="fontSize" v-model:lineHeight="lineHeight"
-          v-model:theme="theme" />
+      <el-drawer
+        v-model="settingsDrawerVisible"
+        :show-close="true"
+        :with-header="true"
+        class="settings-drawer"
+        direction="rtl"
+        size="min(380px, 100vw)"
+        title="阅读设置"
+      >
+        <SettingsPanel
+          v-model:fontFamily="fontFamily"
+          v-model:fontSize="fontSize"
+          v-model:lineHeight="lineHeight"
+          v-model:theme="theme"
+        />
       </el-drawer>
     </div>
   </div>
@@ -422,7 +507,7 @@ onUnmounted(() => {
 }
 
 .reader-container {
-  max-width: 800px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 100px 40px 100px;
   min-height: calc(100vh - 60px);
@@ -437,9 +522,11 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   padding: 15px 20px;
-  background: linear-gradient(to bottom,
-      rgba(var(--bg-color-rgb, 255, 255, 255), 0.95),
-      rgba(var(--bg-color-rgb, 255, 255, 255), 0.85));
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--bg-color-rgb, 255, 255, 255), 0.95),
+    rgba(var(--bg-color-rgb, 255, 255, 255), 0.85)
+  );
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   z-index: 10;
@@ -449,7 +536,9 @@ onUnmounted(() => {
   align-items: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transform: translateY(-100%);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
   opacity: 0;
 }
 
@@ -506,7 +595,7 @@ onUnmounted(() => {
   top: 60px;
   left: 0;
   height: 2px;
-  background-color: #409EFF;
+  background-color: #409eff;
   z-index: 11;
   transition: width 0.3s ease;
 }
@@ -518,7 +607,7 @@ onUnmounted(() => {
 }
 
 .chapter-title {
-  font-family: "sf pro display", "Segoe UI", Roboto, serif;
+  font-family: 'sf pro display', 'Segoe UI', Roboto, serif;
   font-size: 26px;
   font-weight: 600;
   margin-bottom: 40px;
@@ -550,17 +639,10 @@ onUnmounted(() => {
 
 /* 美化章节内容样式 */
 .chapter-content p {
-  margin-bottom: 20px;
+  margin: 0 0 1.25em;
   text-indent: 2em;
-}
-
-.chapter-content p:first-of-type::first-letter {
-  font-size: 2.5em;
-  float: left;
-  line-height: 1;
-  margin-right: 6px;
-  color: #333;
-  font-weight: 500;
+  text-align: justify;
+  overflow-wrap: anywhere;
 }
 
 .chapter-content h3 {
@@ -705,7 +787,7 @@ onUnmounted(() => {
 }
 
 .chapter-item.read .chapter-number {
-  color: #409EFF;
+  color: #409eff;
 }
 
 .chapter-number {
@@ -728,7 +810,7 @@ onUnmounted(() => {
   right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: #409EFF;
+  background-color: #409eff;
   color: white;
   padding: 2px 8px;
   border-radius: 12px;
@@ -867,6 +949,33 @@ onUnmounted(() => {
 
   .controls-right {
     min-width: 80px;
+  }
+}
+.reading-source {
+  margin-top: 36px;
+  font-size: 13px;
+  color: var(--text-color, #6e6e73);
+  line-height: 1.7;
+}
+.reading-source a {
+  color: #0066cc;
+}
+.reader-empty,
+.reader-error {
+  padding: 48px 0;
+  text-align: center;
+}
+@media (max-width: 767px) {
+  .reader-page {
+    margin-top: 104px;
+  }
+  .reader-controls,
+  .reading-progress-bar {
+    top: 104px;
+  }
+  .reader-container {
+    box-sizing: border-box;
+    padding: 90px 20px 50px;
   }
 }
 </style>

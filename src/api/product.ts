@@ -9,6 +9,7 @@ export type CreateProductInfo = {
     description: string;
     cover: string;
     detail: string;
+    freeReading?: boolean;
     specifications: Spec[];
 };
 export type UpdateProductInfo = {
@@ -18,6 +19,7 @@ export type UpdateProductInfo = {
     rate: number;
     cover: string;
     detail: string;
+    freeReading?: boolean;
     specifications: Spec[];
 };
 
@@ -30,6 +32,7 @@ export type Spec = {
 
 export type UpdateStockpileInfo = {
     amount: number;
+    operation?: "set" | "add";
 };
 
 // 创建商品
@@ -70,9 +73,10 @@ export const deleteProduct = (id: string) => {
 };
 
 // 更新库存
-export const updateStockpile = (id: string, amount: number) => {
+export const updateStockpile = (id: string, amount: number, operation: "set" | "add" = "set") => {
     const u: UpdateStockpileInfo = {
         amount: amount,
+        operation,
     };
     return axios
         .patch(`${PRODUCT_MODULE}/stockpile/${id}`, u, {

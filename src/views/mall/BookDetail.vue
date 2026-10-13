@@ -15,6 +15,7 @@ import Footer from "../../components/Footer.vue";
 interface Product {
   id: string;
   title: string;
+  freeReading?: boolean;
   price: string;
   rate: number;
   description: string;
@@ -244,11 +245,11 @@ const addToCartHandle = async () => {
 // 前往阅读器
 const goToReader = () => {
   if (!username) {
-    ElMessage.warning('请先登录');
+    router.push({path:'/login',query:{redirect:`/reader?productId=${productId.value}`}});
     return;
   }
 
-  if (!hasPurchased.value) {
+  if (!hasPurchased.value && !currentProduct.value.freeReading && !isUserAdmin) {
     ElMessage.warning('请先购买此书籍后再阅读');
     return;
   }
@@ -381,10 +382,10 @@ onMounted(() => {
               <div class="dialog-image">
                 <img alt="图书封面" style="object-fit: cover" :src="currentProduct.cover" @error="coverFallback($event, currentProduct.title)" class="detail-cover" />
                 <div class="product-actions">
-                  <el-button :disabled="!hasPurchased" class="action-button read-button" @click="goToReader">
-                    {{ hasPurchased ? '阅读' : '阅读 - 请先购买' }}
+                  <el-button :disabled="!hasPurchased && !currentProduct.freeReading && !isUserAdmin" class="action-button read-button" @click="goToReader">
+                    {{ currentProduct.freeReading ? '免费阅读' : (hasPurchased || isUserAdmin) ? '阅读' : '阅读 - 请先购买' }}
                   </el-button>
-                  <el-button class="action-button cart-button" type="primary" @click="addToCartHandle">
+                  <el-button v-if="!currentProduct.freeReading" class="action-button cart-button" type="primary" @click="addToCartHandle">
                     加入购物袋
                   </el-button>
                 </div>

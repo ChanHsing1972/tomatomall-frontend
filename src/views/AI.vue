@@ -1,33 +1,30 @@
 <script setup lang="ts">
 import Header from '../components/Header.vue';
-import Footer from '../components/Footer.vue';
 import AIConversation from '../components/AIConversation.vue';
 import '../styles/store.css';
 </script>
 <template>
   <Header />
-  <main class="store-page">
+  <main class="store-page ai-page">
     <div class="store-shell ai-page-shell">
       <AIConversation page />
     </div>
   </main>
-  <Footer />
 </template>
 <style scoped>
+.ai-page {
+  height: 100dvh;
+  overflow: hidden;
+}
 .ai-page-shell {
   max-width: 960px;
-  padding-top: 100px;
-  padding-bottom: 32px;
+  height: calc(100dvh - 60px);
+  padding: 32px 24px 0;
 }
-.store-heading {
-  margin-bottom: 30px;
-}
-@media (max-width: 600px) {
+@media (max-width: 767px) {
   .ai-page-shell {
-    padding-top: 36px;
-  }
-  .store-heading {
-    margin-bottom: 24px;
+    height: calc(100dvh - 104px);
+    padding: 24px 20px 0;
   }
 }
 </style>

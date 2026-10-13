@@ -1,356 +1,170 @@
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
-import {ElMessage, ElMessageBox} from "element-plus";
-import {addAd, deleteAd, getAllAds, updateAd} from "../../api/ad.ts";
-import Header from "../../components/Header.vue";
-
-// 广告信息类型
-interface Advertisement {
-  id: string;
-  title: string;
-  content: string;
-  imgUrl: string;
-  productId: string;
+import { computed, onMounted, ref, watch } from 'vue';
+import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus';
+import AdminLayout from '../../components/AdminLayout.vue';
+import { getAllAds, addAd, updateAd, deleteAd } from '../../api/ad';
+import { getProductList } from '../../api/product';
+type Ad = { id: string; title: string; content: string; imgUrl: string; productId: string };
+const ads = ref<Ad[]>([]),
+  books = ref<{ id: string; title: string }[]>([]),
+  loading = ref(false),
+  saving = ref(false),
+  error = ref(''),
+  query = ref(''),
+  page = ref(1),
+  size = ref(20),
+  dialog = ref(false),
+  editing = ref(false),
+  formRef = ref<FormInstance>();
+const blank = (): Ad => ({ id: '', title: '', content: '', imgUrl: '', productId: '' });
+const form = ref<Ad>(blank());
+const filtered = computed(() =>
+  ads.value.filter((ad) =>
+    [ad.id, ad.title, ad.content].join(' ').toLowerCase().includes(query.value.trim().toLowerCase())
+  )
+);
+const visible = computed(() =>
+  filtered.value.slice((page.value - 1) * size.value, page.value * size.value)
+);
+watch([query, size], () => (page.value = 1));
+const titleFor = (id: string) =>
+  books.value.find((b) => b.id === String(id))?.title || `商品 ${id}`;
+const rules = {
+  title: [{ required: true, message: '请输入广告标题', trigger: 'blur' }],
+  content: [{ required: true, message: '请输入广告内容', trigger: 'blur' }],
+  imgUrl: [{ required: true, message: '请输入图片地址', trigger: 'blur' }],
+  productId: [{ required: true, message: '请选择关联商品', trigger: 'change' }],
+};
+async function load() {
+  loading.value = true;
+  error.value = '';
+  try {
+    const [a, b] = await Promise.all([getAllAds(), getProductList()]);
+    ads.value = a.data.data || [];
+    books.value = b.data.data || [];
+    if ((page.value - 1) * size.value >= filtered.value.length) page.value = 1;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '广告无法加载';
+  } finally {
+    loading.value = false;
+  }
 }
-
-// 创建广告表单数据
-interface CreateAdForm {
-  title: string;
-  content: string;
-  imgUrl: string;
-  productId: string;
+function open(ad?: Ad) {
+  editing.value = !!ad;
+  form.value = ad ? { ...ad, productId: String(ad.productId) } : blank();
+  dialog.value = true;
+  formRef.value?.clearValidate();
 }
-
-const adList = ref<Advertisement[]>([]);
-const displayCreateCard = ref(false);
-const editDialogVisible = ref(false);
-const newAd = ref<CreateAdForm>({
-  title: "",
-  content: "",
-  imgUrl: "",
-  productId: ""
-});
-const currentAd = ref<Advertisement>({
-  id: "",
-  title: "",
-  content: "",
-  imgUrl: "",
-  productId: ""
-});
-
-const fetchAds = async () => {
+async function save() {
+  if (saving.value || !(await formRef.value?.validate().catch(() => false))) return;
+  saving.value = true;
   try {
-    const response = await getAllAds();
-    adList.value = response.data.data;
-  } catch (error) {
-    ElMessage.error("获取广告列表失败");
-    console.error(error);
+    if (editing.value) await updateAd(form.value);
+    else await addAd(form.value);
+    dialog.value = false;
+    ElMessage.success('广告已保存');
+    await load();
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '保存失败');
+  } finally {
+    saving.value = false;
   }
-};
-
-const toggleCreateCard = () => {
-  displayCreateCard.value = !displayCreateCard.value;
-  if (!displayCreateCard.value) {
-    resetNewAd();
-  }
-};
-
-const resetNewAd = () => {
-  newAd.value = {
-    title: "",
-    content: "",
-    imgUrl: "",
-    productId: ""
-  };
-};
-
-const handleCreateAd = async () => {
+}
+async function remove(ad: Ad) {
   try {
-    if (
-        !newAd.value.title ||
-        !newAd.value.content ||
-        !newAd.value.imgUrl
-    ) {
-      ElMessage.warning("请填写完整广告信息");
-      return;
-    }
-
-    await addAd(newAd.value);
-
-    ElMessage({
-      type: 'success',
-      message: '添加广告成功',
-      duration: 1000
-    });
-
-    fetchAds();
-    displayCreateCard.value = false;
-    resetNewAd();
-  } catch (error) {
-    ElMessage({
-      type: 'error',
-      message: '添加广告失败',
-      duration: 1000
-    });
+    await ElMessageBox.confirm(`确定删除广告“${ad.title}”？`, '删除广告', { type: 'warning' });
+    await deleteAd(ad.id);
+    await load();
+    ElMessage.success('广告已删除');
+  } catch (e) {
+    if (e !== 'cancel' && e !== 'close')
+      ElMessage.error(e instanceof Error ? e.message : '删除失败');
   }
-};
-
-const openEditDialog = (ad: Advertisement) => {
-  currentAd.value = {...ad};
-  editDialogVisible.value = true;
-};
-
-const handleUpdateAd = async () => {
-  try {
-    if (
-        !currentAd.value.title ||
-        !currentAd.value.content ||
-        !currentAd.value.imgUrl
-    ) {
-      ElMessage.warning("请填写完整广告信息");
-      return;
-    }
-
-    await updateAd(currentAd.value);
-
-    ElMessage({
-      type: 'success',
-      message: '更新广告成功',
-      duration: 1000
-    });
-
-    editDialogVisible.value = false;
-    fetchAds();
-  } catch (error) {
-    ElMessage({
-      type: 'error',
-      message: '更新广告失败',
-      duration: 1000
-    });
-  }
-};
-
-const handleDeleteAd = async (adId: string) => {
-  try {
-    await ElMessageBox.confirm("确定要删除这个广告吗？", "警告", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning",
-    });
-
-    await deleteAd(adId);
-
-    ElMessage({
-      type: 'success',
-      message: '删除广告成功',
-      duration: 1000
-    });
-
-    fetchAds();
-  } catch (error) {
-    if (error !== "cancel") {
-      ElMessage({
-        type: 'error',
-        message: '删除广告失败',
-        duration: 1000
-      });
-    }
-  }
-};
-
-onMounted(() => {
-  fetchAds();
-});
+}
+onMounted(load);
 </script>
-
 <template>
-  <Header/>
-
-  <el-main class="main-container">
-    <div class="management-header">
-      <h1>广告管理</h1>
-      <el-button type="primary" @click="toggleCreateCard">
-        <span>添加广告</span>
-      </el-button>
-    </div>
-
-    <el-card class="data-card">
-      <el-table :data="adList" style="width: 100%" border>
-        <el-table-column label="广告 ID" prop="id" width="80"/>
-        <el-table-column label="标题" min-width="150" prop="title"/>
-        <el-table-column label="图片" width="100">
-          <template #default="{ row }">
-            <img :src="row.imgUrl" alt="ad picture" class="thumbnail"/>
-          </template>
-        </el-table-column>
-        <el-table-column label="内容" min-width="200" prop="content" show-overflow-tooltip/>
-        <el-table-column label="关联商品 ID" prop="productId" width="120"/>
-        <el-table-column fixed="right" label="操作" width="160">
-          <template #default="{ row }">
-            <div class="action-buttons">
-              <el-button plain size="small" type="primary" @click="openEditDialog(row as Advertisement)">编辑</el-button>
-              <el-button plain size="small" type="danger" @click="handleDeleteAd(row.id)">删除</el-button>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
-
-    <el-dialog v-model="displayCreateCard" class="custom-dialog" title="添加广告" width="60%">
-      <el-form :model="newAd" class="form-with-shadow" label-width="100px">
-        <el-form-item label="标题" required>
-          <el-input v-model="newAd.title"/>
-        </el-form-item>
-        <el-form-item label="内容" required>
-          <el-input v-model="newAd.content" :rows="4" type="textarea"/>
-        </el-form-item>
-        <el-form-item label="图片 URL" required>
-          <el-input v-model="newAd.imgUrl"/>
-        </el-form-item>
-        <el-form-item label="商品 ID">
-          <el-input v-model="newAd.productId"/>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="displayCreateCard = false">取消</el-button>
-          <el-button type="primary" @click="handleCreateAd">添加</el-button>
-        </div>
-      </template>
-    </el-dialog>
-
-    <el-dialog v-model="editDialogVisible" class="custom-dialog" title="编辑广告信息" width="60%">
-      <el-form :model="currentAd" class="form-with-shadow" label-width="100px">
-        <el-form-item label="标题" required>
-          <el-input v-model="currentAd.title"/>
-        </el-form-item>
-        <el-form-item label="内容" required>
-          <el-input v-model="currentAd.content" :rows="4" type="textarea"/>
-        </el-form-item>
-        <el-form-item label="图片 URL" required>
-          <el-input v-model="currentAd.imgUrl"/>
-        </el-form-item>
-        <el-form-item label="商品 ID">
-          <el-input v-model="currentAd.productId"/>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="editDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleUpdateAd">保存</el-button>
-        </div>
-      </template>
-    </el-dialog>
-  </el-main>
+  <AdminLayout title="广告管理"
+    ><template #actions
+      ><el-button @click="load" :disabled="loading">刷新</el-button
+      ><el-button type="primary" @click="open()">添加广告</el-button></template
+    >
+    <section class="admin-panel">
+      <div class="admin-toolbar">
+        <el-input v-model="query" clearable placeholder="搜索广告标题、内容或 ID" /><span
+          class="count"
+          >共 {{ filtered.length }} 条广告</span
+        >
+      </div>
+      <div v-if="error" role="alert" class="admin-error">
+        {{ error }} <el-button text @click="load">重试</el-button>
+      </div>
+      <el-table
+        v-else
+        :data="visible"
+        v-loading="loading"
+        stripe
+        border
+        row-key="id"
+        height="calc(100dvh - 330px)"
+        empty-text="没有匹配的广告"
+        ><el-table-column prop="id" label="ID" width="64" /><el-table-column label="图片" width="92"
+          ><template #default="{ row }"
+            ><el-image :src="row.imgUrl" fit="contain" style="width: 60px; height: 45px"
+              ><template #error><span>无图片</span></template></el-image
+            ></template
+          ></el-table-column
+        ><el-table-column
+          prop="title"
+          label="标题"
+          min-width="180"
+          show-overflow-tooltip
+        /><el-table-column
+          prop="content"
+          label="内容"
+          min-width="260"
+          show-overflow-tooltip
+        /><el-table-column label="关联商品" min-width="160"
+          ><template #default="{ row }">{{ titleFor(row.productId) }}</template></el-table-column
+        ><el-table-column label="操作" fixed="right" width="124"
+          ><template #default="{ row }"
+            ><el-button link type="primary" @click="open(row as Ad)">编辑</el-button
+            ><el-button link type="danger" @click="remove(row as Ad)">删除</el-button></template
+          ></el-table-column
+        ></el-table
+      >
+      <div class="admin-pagination">
+        <el-pagination
+          v-model:current-page="page"
+          v-model:page-size="size"
+          :total="filtered.length"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next"
+        />
+      </div></section></AdminLayout
+  ><el-dialog
+    v-model="dialog"
+    :title="editing ? '编辑广告' : '添加广告'"
+    width="640px"
+    class="admin-dialog"
+    :close-on-click-modal="false"
+    :show-close="!saving"
+    ><el-form ref="formRef" :model="form" :rules="rules" label-position="top"
+      ><el-form-item label="广告标题" prop="title"
+        ><el-input v-model="form.title" maxlength="100" /></el-form-item
+      ><el-form-item label="关联商品" prop="productId"
+        ><el-select v-model="form.productId" filterable placeholder="搜索并选择商品"
+          ><el-option
+            v-for="b in books"
+            :key="b.id"
+            :value="String(b.id)"
+            :label="`${b.title}（${b.id}）`" /></el-select></el-form-item
+      ><el-form-item label="图片地址" prop="imgUrl"><el-input v-model="form.imgUrl" /></el-form-item
+      ><el-form-item label="广告内容" prop="content"
+        ><el-input v-model="form.content" type="textarea" :rows="4" /></el-form-item></el-form
+    ><template #footer
+      ><el-button :disabled="saving" @click="dialog = false">取消</el-button
+      ><el-button type="primary" :loading="saving" @click="save">保存</el-button></template
+    ></el-dialog
+  >
 </template>
-
-<style scoped>
-/* 全局背景与布局 */
-.main-container {
-  font-family: "Segoe UI", "Helvetica Neue", "PingFang SC", sans-serif;
-  padding: 100px 10%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.management-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  margin-bottom: 20px;
-}
-
-.management-header h1 {
-  font-size: 28px;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-}
-
-/* 数据卡片 */
-.data-card {
-  width: 100%;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  padding: 20px;
-  margin-bottom: 40px;
-}
-
-/* 表格样式 */
-.el-table {
-  font-size: 14px;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.el-table th {
-  background-color: #f5f7fa;
-  font-weight: 600;
-  color: #333;
-}
-
-.el-table th,
-.el-table td {
-  text-align: center;
-  padding: 12px;
-}
-
-/* 缩略图样式 */
-.thumbnail {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* 按钮样式 */
-.el-button {
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.3s;
-}
-
-.el-button[type="primary"] {
-  background-color: #409eff;
-}
-
-.el-button[type="primary"]:hover {
-  background-color: #66b1ff;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* 对话框样式 */
-.custom-dialog :deep(.el-dialog__header) {
-  padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.custom-dialog :deep(.el-dialog__body) {
-  padding: 30px 20px;
-}
-
-.custom-dialog :deep(.el-dialog__footer) {
-  padding: 15px 20px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.form-with-shadow {
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-</style>
