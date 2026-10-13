@@ -1,6 +1,6 @@
 {
-  "commit": "18bb0391e9fac3d4006bd794aa57329d5d24da0e",
-  "tests": "success",
-  "image": "success",
-  "run_url": "https://github.com/ChanHsing1972/tomatomall-frontend/actions/runs/38330021080"
+  "commit": "8462b5b930deb88eead4df36d23cebed6d47f3c9",
+  "tests": "failure",
+  "image": "skipped",
+  "run_url": "https://github.com/ChanHsing1972/tomatomall-frontend/actions/runs/38332316799"
 }
