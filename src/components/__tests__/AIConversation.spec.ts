@@ -53,4 +53,19 @@ describe('AI conversation', () => {
     await wrapper.get('textarea').trigger('keydown', { key: 'Enter', isComposing: true });
     expect(askAIAssistant).not.toHaveBeenCalled();
   });
+  it('keeps an in-flight answer across page mounts for the same account', async () => {
+    sessionStorage.setItem('id', 'mount-history-test');
+    let resolve!: (value: any) => void;
+    vi.mocked(askAIAssistant).mockReturnValue(new Promise((r) => (resolve = r)));
+    wrapper = mount(AIConversation, { global: { plugins: [router] } });
+    await wrapper.get('textarea').setValue('想读小说');
+    await wrapper.get('form').trigger('submit');
+    wrapper.unmount();
+    wrapper = mount(AIConversation, { global: { plugins: [router] } });
+    expect(wrapper.find('[role="status"]').exists()).toBe(true);
+    resolve({ data: '同一轮回答已保留' });
+    await flushPromises();
+    expect(wrapper.get('.answer-content').text()).toBe('同一轮回答已保留');
+    expect(askAIAssistant).toHaveBeenCalledTimes(1);
+  });
 });

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from 'vue';
-import { aiHistoryKey, restoreAIHistory, saveAIHistory, type AIEntry } from '../utils/aiHistory';
+import { aiHistoryKey, aiConversationState, saveAIHistory } from '../utils/aiHistory';
 import { useRouter } from 'vue-router';
 import { ArrowUp, Reading } from '@element-plus/icons-vue';
 import { askAIAssistant } from '../api/aiService';
@@ -8,12 +8,11 @@ import '../styles/store.css';
 defineProps<{ page?: boolean }>();
 const router = useRouter();
 const question = ref('');
-const loading = ref(false);
 const transcript = ref<HTMLElement | null>(null);
 const storageKey = aiHistoryKey();
-const history = ref<AIEntry[]>(restoreAIHistory(storageKey));
+const conversation = aiConversationState(storageKey);
+const { history, loading } = conversation;
 const historySaveFailed = ref(false);
-let nextId = Math.max(-1, ...history.value.map((entry) => entry.id)) + 1;
 watch(
   history,
   (entries) => {
@@ -33,7 +32,13 @@ async function send(value = question.value) {
     router.push({ path: '/login', query: { redirect: '/ai' } });
     return;
   }
-  const item = { id: nextId++, question: value.trim(), answer: '', error: false, pending: true };
+  const item = {
+    id: conversation.nextId++,
+    question: value.trim(),
+    answer: '',
+    error: false,
+    pending: true,
+  };
   history.value.push(item);
   question.value = '';
   loading.value = true;
@@ -52,6 +57,7 @@ async function send(value = question.value) {
     const target = history.value.find((i) => i.id === item.id);
     if (target) target.pending = false;
     loading.value = false;
+    historySaveFailed.value = !saveAIHistory(storageKey, history.value);
     scrollToBottom();
   }
 }

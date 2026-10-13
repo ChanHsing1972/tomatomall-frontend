@@ -1,3 +1,4 @@
+import { ref } from 'vue';
 export type AIEntry = {
   id: number;
   question: string;
@@ -46,4 +47,24 @@ export function saveAIHistory(key: string | null, entries: AIEntry[]): boolean {
   } catch {
     return false;
   }
+}
+
+// Share in-flight requests across page/dialog mounts; account keys remain separate.
+const conversations = new Map<string, ReturnType<typeof createConversation>>();
+function createConversation(key: string | null) {
+  const entries = restoreAIHistory(key);
+  return {
+    history: ref<AIEntry[]>(entries),
+    loading: ref(false),
+    nextId: Math.max(-1, ...entries.map((entry) => entry.id)) + 1,
+  };
+}
+export function aiConversationState(key: string | null) {
+  if (!key) return createConversation(null);
+  let state = conversations.get(key);
+  if (!state) {
+    state = createConversation(key);
+    conversations.set(key, state);
+  }
+  return state;
 }
