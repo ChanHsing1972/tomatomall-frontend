@@ -80,9 +80,10 @@ async function save() {
   if (
     !Number.isFinite(form.value.value) ||
     form.value.value <= 0 ||
-    (form.value.type === 'DISCOUNT' && form.value.value >= 100)
+    (form.value.type === 'DISCOUNT' &&
+      (form.value.value >= 100 || !Number.isInteger(form.value.value)))
   )
-    return void ElMessage.warning('优惠金额须大于 0；折扣支付比例须介于 0 与 100%。');
+    return void ElMessage.warning('优惠金额须大于 0；折扣支付比例请使用 1 至 99 的整数。');
   if (!Number.isFinite(form.value.minimumSpend) || form.value.minimumSpend < 0)
     return void ElMessage.warning('使用门槛不能为负数。');
   if (
@@ -226,10 +227,13 @@ onMounted(load);
         ><el-input-number
           v-model="form.value"
           :min="0"
-          :max="form.type === 'DISCOUNT' ? 99.99 : 999999"
-          :precision="2" /></el-form-item
+          :max="form.type === 'DISCOUNT' ? 99 : 999999"
+          :precision="form.type === 'DISCOUNT' ? 0 : 2" /></el-form-item
       ><el-form-item label="最低消费（RMB）"
-        ><el-input-number v-model="form.minimumSpend" :min="0" :precision="2" /></el-form-item
+        ><el-input-number
+          v-model="form.minimumSpend"
+          :min="0"
+          :precision="form.type === 'DISCOUNT' ? 0 : 2" /></el-form-item
       ><el-form-item label="最大发行数量（留空不限）"
         ><el-input-number
           v-model="form.maxQuantity"

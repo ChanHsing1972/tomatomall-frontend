@@ -396,7 +396,7 @@ onUnmounted(() => window.clearInterval(timer));
           ><strong>{{ coupon.name }}</strong
           ><small>满 {{ money(coupon.minimumSpend) }} 可用</small></span
         ><span>{{
-          coupon.type === 'DISCOUNT' ? `${coupon.value} 折` : money(coupon.value)
+          coupon.type === 'DISCOUNT' ? `${coupon.value / 10} 折` : money(coupon.value)
         }}</span></button
       ><button
         v-if="couponOrder?.userCouponId"
