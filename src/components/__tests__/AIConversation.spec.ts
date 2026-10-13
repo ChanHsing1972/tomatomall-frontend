@@ -22,7 +22,7 @@ afterEach(() => {
   sessionStorage.clear();
 });
 describe('AI conversation', () => {
-  it('prevents duplicate sends and clearing the in-flight answer, then renders untrusted model text safely', async () => {
+  it('prevents duplicate sends while an answer is pending and renders untrusted model text safely', async () => {
     let resolve!: (value: any) => void;
     vi.mocked(askAIAssistant).mockReturnValue(new Promise((r) => (resolve = r)));
     wrapper = mount(AIConversation, { global: { plugins: [router] } });
@@ -31,16 +31,12 @@ describe('AI conversation', () => {
     await wrapper.get('form').trigger('submit');
     expect(askAIAssistant).toHaveBeenCalledTimes(1);
     expect(wrapper.find('[role="status"]').exists()).toBe(true);
-    expect(
-      wrapper
-        .findAll('button')
-        .find((b) => b.text().includes('清空对话'))
-        ?.attributes('disabled')
-    ).toBeDefined();
+    expect(wrapper.get('button[aria-label="正在回答"]').attributes('disabled')).toBeDefined();
     resolve({ data: '<img src=x onerror=alert(1)>这是推荐文字' });
     await flushPromises();
     expect(wrapper.get('.answer-content').text()).toContain('<img');
     expect(wrapper.find('.answer-content img').exists()).toBe(false);
+    expect(wrapper.find('[role="status"]').exists()).toBe(false);
   });
   it('keeps a failed question available for retry', async () => {
     vi.mocked(askAIAssistant).mockRejectedValue(new Error('offline'));
