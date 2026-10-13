@@ -54,7 +54,7 @@ function handleLogin() {
   <div class="apple-login-wrapper">
     <div class="login-box">
       <h1 class="login-title">欢迎登录</h1>
-      <p class="login-subtitle">枕石书屋欢迎您</p>
+      <p class="login-subtitle">纯粹阅读，非凡生活</p>
       <div class="login-form-box" @keyup.enter="handleLogin">
         <div class="login-input-group">
           <label for="username" class="login-input-label">用户名</label>

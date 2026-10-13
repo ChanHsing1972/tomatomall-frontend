@@ -131,7 +131,7 @@ const newArrivals = ref<
 >([]);
 
 const categoryIcons: Record<string, string> = {
-  文学小说: '📖', 散文随笔: '🖋️', 人物传记: '👤', 诗歌戏剧: '🎭',
+  文学小说: '📖', 散文随笔: '🖋️', 人物传记: '👤', 诗歌戏剧: '🎭', 艺术设计: '🎨',
   哲学心理: '🧠', 历史文化: '🏛️', 生活健康: '🌿', 科技科普: '🔬', 经济管理: '📊'
 };
 
@@ -198,7 +198,14 @@ onMounted(async () => {
         const value = book.specifications?.find((spec: any) => spec.item === '类别')?.value || '其他';
         value.split('/').forEach((name: string) => counts.set(name.trim(), (counts.get(name.trim()) || 0) + 1));
       });
-      categories.value = Array.from(counts, ([name, count], index) => ({ id: index, name, count, icon: categoryIcons[name] || '📚' }));
+      categories.value = Object.entries(categoryIcons).map(
+        ([name, icon], index) => ({
+          id: index,
+          name,
+          icon,
+          count: counts.get(name) || 1
+        })
+      );      
       const selected = books.find((book: any) => book.title === '我与地坛') || books[0];
       if (selected) featuredBook.value = {
         id: Number(selected.id), title: selected.title, cover: selected.cover,

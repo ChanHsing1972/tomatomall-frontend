@@ -61,7 +61,7 @@ const remaining = (order: OrderVO) =>
   Math.max(0, Math.floor((instant(order.expireTime).getTime() - now.value) / 1000));
 const countdown = (order: OrderVO) => {
   const n = remaining(order);
-  return `${Math.floor(n / 60)}分${String(n % 60).padStart(2, '0')}秒`;
+  return `${Math.floor(n / 60)} 分 ${String(n % 60).padStart(2, '0')} 秒`;
 };
 const pending = (order: OrderVO) => order.status === 'PENDING' && remaining(order) > 0;
 const status = (order: OrderVO) =>
@@ -226,7 +226,7 @@ onUnmounted(() => window.clearInterval(timer));
         <article v-for="order in filteredOrders" :key="order.orderId" class="order-record">
           <div class="order-meta">
             <div>
-              <span class="order-label">订单号</span><strong>{{ order.orderId }}</strong>
+              <span class="order-label">订单号</span><span>{{ order.orderId }}</span>
             </div>
             <div>
               <span class="order-label">下单日期</span><span>{{ date(order.createTime) }}</span>
@@ -265,7 +265,7 @@ onUnmounted(() => window.clearInterval(timer));
                   order.status === 'TRADE_SUCCESS'
                     ? '付款完成。进入图书详情，即可查看可用阅读章节。'
                     : pending(order)
-                      ? `请在 ${countdown(order)} 内完成支付宝沙箱付款。`
+                      ? `请在 ${countdown(order)}内完成付款。`
                       : '预留库存已释放，你可以重新下单。'
                 }}
               </p>
@@ -306,7 +306,7 @@ onUnmounted(() => window.clearInterval(timer));
                 :disabled="!!busy"
                 @click="pay(order)"
               >
-                {{ busy === order.orderId ? '正在打开…' : '支付宝沙箱支付' }}</button
+                {{ busy === order.orderId ? '正在打开…' : '支付' }}</button
               ><router-link
                 v-else-if="order.status === 'TRADE_SUCCESS' && order.orderItems[0]"
                 :to="`/bookdetail/${order.orderItems[0].productId}`"
@@ -324,7 +324,7 @@ onUnmounted(() => window.clearInterval(timer));
             </div>
             <div>
               <h3>付款信息</h3>
-              <p>{{ order.paymentMethod === 'DEMO' ? '历史模拟支付记录' : '支付宝沙箱' }}</p>
+              <p>{{ order.paymentMethod === 'DEMO' ? '历史模拟支付记录' : '支付宝' }}</p>
               <p v-if="order.paymentTime">付款日期：{{ date(order.paymentTime) }}</p>
               <p v-if="order.userCouponId">已使用优惠券，优惠 {{ money(order.discountAmount) }}</p>
             </div>
@@ -339,7 +339,7 @@ onUnmounted(() => window.clearInterval(timer));
       </section>
       <section class="order-help">
         <h2>需要帮助？</h2>
-        <p>订单付款完成后通常会自动更新。若你已在沙箱完成付款，请刷新查看最新状态。</p>
+        <p>订单付款完成后通常会自动更新。若你已完成付款，请刷新查看最新状态。</p>
         <button class="store-link" :disabled="loading" @click="fetchOrders">刷新订单状态</button
         ><router-link to="/about/help" class="store-link"
           >查看购买帮助 <el-icon><ArrowRight /></el-icon
@@ -453,7 +453,6 @@ onUnmounted(() => window.clearInterval(timer));
 .order-label {
   color: var(--store-muted);
   font-size: 14px;
-  line-height: 1.6;
   overflow-wrap: anywhere;
 }
 .order-overview {

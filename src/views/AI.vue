@@ -8,11 +8,6 @@ import '../styles/store.css';
   <Header />
   <main class="store-page">
     <div class="store-shell ai-page-shell">
-      <header class="store-heading">
-        <div>
-          <h1>为你，找到下一本。</h1>
-        </div>
-      </header>
       <AIConversation page />
     </div>
   </main>
@@ -21,7 +16,7 @@ import '../styles/store.css';
 <style scoped>
 .ai-page-shell {
   max-width: 960px;
-  padding-top: 52px;
+  padding-top: 100px;
   padding-bottom: 32px;
 }
 .store-heading {

@@ -116,12 +116,6 @@ function clear() {
       </article>
     </div>
     <div class="ai-composer">
-      <div class="composer-top">
-        <label for="ai-question">你想读什么？</label
-        ><button class="store-link" :disabled="loading || !history.length" @click="clear">
-          <el-icon><Delete /></el-icon> 清空对话
-        </button>
-      </div>
       <form @submit.prevent="send()">
         <textarea
           id="ai-question"
@@ -198,7 +192,7 @@ function clear() {
   margin-top: 30px;
 }
 .ai-suggestions button {
-  border: 1px solid #d2d2d7;
+  border: 0px solid #d2d2d7;
   border-radius: 14px;
   background: #fff;
   color: #1d1d1f;
@@ -207,7 +201,7 @@ function clear() {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
 }
 .ai-suggestions button:hover {
   background: #f5f5f7;
@@ -268,7 +262,6 @@ function clear() {
 }
 .ai-composer {
   padding-top: 20px;
-  border-top: 1px solid #d2d2d7;
   background: #fff;
 }
 .composer-top {
