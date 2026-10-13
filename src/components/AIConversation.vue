@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowUp, Delete, Reading } from '@element-plus/icons-vue';
+import { ArrowUp, Reading } from '@element-plus/icons-vue';
 import { askAIAssistant } from '../api/aiService';
 import '../styles/store.css';
 defineProps<{ page?: boolean }>();
@@ -52,9 +52,7 @@ function keydown(event: KeyboardEvent) {
     send();
   }
 }
-function clear() {
-  if (!loading.value) history.value = [];
-}
+
 </script>
 <template>
   <section class="ai-conversation" :class="{ 'page-mode': page }" aria-label="AI 选书对话">
